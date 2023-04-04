@@ -13,3 +13,11 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+
+#忽略client相关依赖缓存
+node_modules/
+dist/
+package-lock.json
+
+idea/

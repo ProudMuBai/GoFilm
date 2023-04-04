@@ -1,0 +1,443 @@
+<template>
+  <div class="container">
+    <div class="header">
+      <p>{{ d.category.name }}</p>
+      <div class="c_header">
+        <a :class="`nav ${d.list.length >0 && d.list[0].cid == c.id?'active':''}`" href="javascript:;" @click="changeCategory(c.id)"
+           v-for="c in d.category.children">{{ c.name }}</a>
+      </div>
+    </div>
+
+    <div class="c_content" >
+      <div class="item" v-for="item in d.list">
+        <a :href="`/filmDetail?link=${item.id}`" :style="{backgroundImage: `url('${item.picture}')`}">
+          <span class="cus_tag ">{{ item.year }}</span>
+          <span class="cus_tag ">{{ item.cName }}</span>
+          <span class="cus_tag ">{{ item.area }}</span>
+          <span class="cus_remark hidden-md-and-up">{{ item.remarks }}</span>
+        </a>
+        <a :href="`/filmDetail?link=${item.id}`" class="content_text_tag">{{ item.name.split("[")[0] }}</a>
+        <span class="cus_remark hidden-md-and-down">{{ item.remarks }}</span>
+      </div>
+    </div>
+    <div class="pagination_container ">
+      <el-pagination background layout="prev, pager, next"
+                     v-model:current-page="d.page.current"
+                     @current-change="changeCurrent"
+                     :pager-count="5"
+                     :background="true"
+                     :page-size="d.page.pageSize"
+                     :total="d.page.total"
+                     :prev-icon="ArrowLeftBold"
+                     :next-icon="ArrowRightBold"
+                     hide-on-single-page
+                     class="pagination"/>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+
+
+import {onMounted, reactive} from "vue";
+import {useRouter} from "vue-router";
+import {ApiGet} from "../../utils/request";
+import {ElMessage} from "element-plus";
+import {ArrowRightBold, ArrowLeftBold} from '@element-plus/icons-vue'
+
+// 页面所需数据
+const d = reactive({
+  category: {},
+  list: [],
+  page: {
+    current: 0,
+  },
+
+})
+// 获取路由参数查询对应数据
+const router = useRouter()
+
+// 点击分页按钮事件 current-change
+const changeCurrent = (currentVal: number) => {
+  let query = router.currentRoute.value.query
+  // router.push({path: '/categoryFilm', query:{pid: query.pid, cid: query.cid, current: currentVal}})
+  if (query.cid && query.cid != "") {
+    location.href = `/categoryFilm?pid=${query.pid}&cid=${query.cid}&current=${currentVal}`
+  } else {
+    location.href = `/categoryFilm?pid=${query.pid}&&current=${currentVal}`
+  }
+}
+
+// 点击分类事件
+const changeCategory = (cid: any) => {
+  let params = new URLSearchParams(location.search)
+  // location.href = `/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=${params.get('current')?params.get('current'):1}`
+  location.href = `/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=1`
+}
+
+
+const getFilmData = (param: any) => {
+  ApiGet('/filmCategory', {pid: param.pid, cid: param.cid, current: param.current}).then((resp: any) => {
+    if (resp.status === 'ok') {
+      d.category = resp.data.category
+      d.list = resp.data.list
+      d.page = resp.page
+    } else {
+      ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1000})
+    }
+  })
+}
+
+onMounted(() => {
+  let query = router.currentRoute.value.query
+  getFilmData({pid: query.pid, cid: query.cid, current: query.current})
+})
+
+</script>
+
+<!--移动端修改-->
+<style scoped>
+@media (max-width: 650px) {
+    .container {
+        padding: 0 10px;
+
+    }
+    /*顶部内容区域*/
+    .header {
+        width: 100%;
+        margin-bottom: 150px;
+        background: none!important;
+    }
+    .header p {
+        text-align: left;
+        font-weight: 600;
+        font-size: 24px;
+        color: #c9c4c4;
+        margin-top: 0;
+        padding-left: 10px;
+        height: 100%;
+        /*background: rgb(34, 34, 34);*/
+    }
+
+    .c_header {
+        max-width: 100%;
+        display: flex;
+        /*justify-content: start;*/
+        flex-wrap: nowrap;
+        overflow-x: scroll;
+        margin-bottom: 20px;
+    }
+
+    .c_header a {
+        white-space: nowrap;
+        margin-right: 10px;
+        color: #000;
+        font-weight: 400;
+        background: rgba(255, 255, 255, 0.94);
+        padding: 6px 10px;
+        border-radius: 10px;
+    }
+
+    .c_header a:hover {
+        color: orange;
+    }
+
+    .nav:before {
+        width: 36px;
+        height: 4px;
+        background: orange;
+        content: '';
+        position: absolute;
+        left: 35%;
+        bottom: 12px;
+        border-radius: 50px;
+        transform: scaleX(0);
+        transition: transform 0.5s ease-out;
+    }
+
+    .nav:hover:before {
+        width: 36px;
+        height: 4px;
+        background: orange;
+        content: '';
+        position: absolute;
+        left: 35%;
+        bottom: 12px;
+        border-radius: 50px;
+        transform: scaleX(1);
+    }
+    .active {
+        background: rgb(249 230 195)!important;
+        color: #e52424!important;
+    }
+
+
+    /*展示区域*/
+    .c_content {
+        width: 100%;
+        display: flex;
+        flex-flow: wrap;
+        justify-content: space-between;
+    }
+
+    .c_content .item {
+        flex-basis: calc(33% - 5px);
+        max-width: 33%;
+        margin-bottom: 20px;
+        /*width: 100px;*/
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .item a {
+        border-radius: 5px;
+        display: flex;
+        padding-top: 125%;
+        background-size: cover;
+        width: 100%;
+    }
+
+    .cus_tag {
+        display: none;
+    }
+
+    .content_text_tag {
+        font-size: 12px !important;
+        color: rgb(221, 221, 221);
+        width: 100%;
+        padding: 2px 0 2px 0 !important;
+        text-align: left;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cus_remark {
+        display: block;
+        width: 100%;
+        font-size: 12px;
+        color: #c2c2c2;
+        text-align: center;
+        background: rgba(0,0,0,0.55);
+        border-radius:  0 0 5px 5px;
+    }
+
+}
+</style>
+
+<style scoped>
+.container {
+    max-width: 100vw;
+}
+@media (min-width: 650px) {
+
+    /*顶部内容区域*/
+    .header {
+        width: 100%;
+    }
+
+    .header p {
+        text-align: left;
+        font-weight: 800;
+        font-size: 32px;
+        color: #c9c4c4;
+        margin-top: 0;
+        /*border-bottom: 2px solid #ffffff;*/
+        /*padding-bottom: 30px;*/
+    }
+
+    .c_header {
+        width: 100%;
+        display: flex;
+        justify-content: start;
+        /*justify-content: start;*/
+        margin-bottom: 20px;
+    }
+
+    .c_header a {
+        /*flex-basis: calc(14% - 16px);*/
+        margin-right: 20px;
+        color: #000;
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.94);
+        padding: 20px 40px;
+        border-radius: 10px;
+        position: relative;
+    }
+
+    .c_header a:hover {
+        color: orange;
+    }
+
+    .nav:before {
+        width: 36px;
+        height: 4px;
+        background: orange;
+        content: '';
+        position: absolute;
+        left: 35%;
+        bottom: 12px;
+        border-radius: 50px;
+        transform: scaleX(0);
+        transition: transform 0.5s ease-out;
+    }
+
+    .nav:hover:before {
+        width: 36px;
+        height: 4px;
+        background: orange;
+        content: '';
+        position: absolute;
+        left: 35%;
+        bottom: 12px;
+        border-radius: 50px;
+        transform: scaleX(1);
+    }
+    .active {
+        background: rgb(249 230 195)!important;
+        color: #e52424!important;
+    }
+
+
+    .c_content {
+        width: 100%;
+        display: flex;
+        flex-flow: wrap;
+        justify-content: space-between;
+    }
+
+    .c_content .item {
+        flex-basis: calc(14% - 16px);
+        max-width: 14%;
+        margin-bottom: 20px;
+        /*width: 100px;*/
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .item a {
+        border-radius: 5px;
+        display: flex;
+        /*position: relative;*/
+        padding-top: 125%;
+        background-size: cover;
+        width: 100%;
+    }
+
+    .cus_tag {
+        text-align: center;
+        color: rgb(255, 255, 255);
+        padding: 0 3px;
+        margin: 0 0 10px 8px;
+        background: rgba(0, 0, 0, 0.55);
+        font-size: 12px;
+        border-radius: 5px;
+    }
+
+    .content_text_tag {
+        font-size: 14px !important;
+        color: rgb(221, 221, 221);
+        width: 96%;
+        padding: 2px 10px 2px 2px !important;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cus_remark {
+        display: block;
+        width: 100%;
+        padding-left: 3px;
+        font-size: 12px;
+        color: #999999;
+        text-align: left;
+    }
+
+}
+</style>
+
+<style scoped>
+/*分页插件区域*/
+.pagination_container {
+  width: 100%;
+  margin-top: 30px;
+  /*background: deepskyblue;*/
+  text-align: center;
+  /*display: flex;*/
+}
+
+:deep(.el-pagination) {
+  width: 100% !important;
+  margin: 0 auto !important;
+  justify-content: center;
+}
+
+/*分页器样式修改*/
+:deep(.number) {
+  font-weight: bold;
+  width: 45px;
+  height: 45px;
+  background: #2e2e2e !important;
+  color: #ffffff;
+  border-radius: 50%;
+  /*margin: 0 3px!important;*/
+}
+
+:deep(.number:hover) {
+  color: #67d9e8;
+}
+
+:deep(.btn-prev) {
+  font-weight: bold;
+  width: 45px;
+  height: 45px;
+  background: #2e2e2e !important;
+  color: #ffffff;
+  border-radius: 50%;
+}
+
+:deep(.btn-next) {
+  font-weight: bold;
+  width: 45px;
+  height: 45px;
+  background: #2e2e2e !important;
+  color: #ffffff;
+  border-radius: 50%;
+}
+
+:deep(.more) {
+  font-weight: bold;
+  width: 45px;
+  height: 45px;
+  background: #2e2e2e !important;
+  color: #ffffff;
+  border-radius: 50%;
+}
+
+:deep(.is-active) {
+  background: #67d9e8 !important;
+}
+/*移动端缩小*/
+@media (max-width: 650px) {
+    :deep(.number){
+        width: 35px;
+        height: 35px;
+    }
+    :deep(.btn-prev) {
+        width: 35px;
+        height: 35px;
+    }
+    :deep(.btn-next) {
+        width: 35px;
+        height: 35px;
+    }
+    :deep(.more) {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+</style>

@@ -1,0 +1,95 @@
+<template>
+    <el-container>
+        <el-header>
+            <Header/>
+        </el-header>
+        <el-main>
+            <router-view></router-view>
+        </el-main>
+        <el-footer>
+            <Footer/>
+        </el-footer>
+    </el-container>
+</template>
+
+<script setup lang="ts">
+import Header from "../components/Header.vue";
+import Footer from "../components/Footer.vue";
+</script>
+
+
+<style scoped>
+
+:deep(.el-main) {
+    padding-top: 70px !important;
+    padding-bottom: 30px !important;
+    min-height: 85vh;
+}
+
+:deep(.el-header) {
+    padding: 0 !important;
+    position: fixed !important;
+    width: 100% !important;
+    min-height: 60px;
+    transform: translateZ(0);
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.85);
+    top: 0;
+}
+
+
+@media (min-width: 650px) {
+    .el-main {
+        margin: 0 auto;
+        padding: 100px 0;
+        /*padding-top: 100px!important;*/
+    }
+}
+
+@media (max-width: 650px) {
+    .el-main {
+        /*margin: 0 auto;*/
+        padding: 60px 0;
+        /*padding-top: 100px!important;*/
+    }
+}
+
+:deep(.el-menu--horizontal) {
+    border-bottom: 1px solid rgb(46, 46, 46);
+}
+
+/*@media (min-width: 768px){ //>=768的设备 }*/
+/*@media (min-width: 992px){ //>=992的设备 }*/
+/*@media (min-width: 1200){ //>=1200的设备 }*/
+
+@media (min-width: 1024px) {
+    .el-main {
+        width: 1023px
+    }
+}
+
+@media (min-width: 990px) {
+    .el-main {
+        width: 970px
+    }
+}
+
+@media (min-width: 1200px) {
+    .el-main {
+        width: 1180px
+    }
+}
+
+@media (min-width: 1400px) {
+    .el-main {
+        width: 1400px
+    }
+}
+
+@media (min-width: 1560px) {
+    .el-main {
+        width: 1500px
+    }
+}
+
+</style>

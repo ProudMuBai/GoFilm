@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  nginx:
+    container_name: film_nginx
+    image: nginx
+    ports:
+      - "3600:80"
+    volumes:
+      - /opt/film/data/nginx/html:/usr/share/nginx/html
+      - /opt/film/data/nginx/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - film-network
+    depends_on:
+      - film
+
+  film:
+    container_name: film_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3661
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DBNAME: FilmSite
+      REDIS_HOST: redis
+      REDIS_PORT: 3662
+    ports:
+      - "3601:3601"
+    networks:
+      - film-network
+    depends_on:
+      - mysql
+      - redis
+    command: [
+          './main',
+    ]
+
+  mysql:
+    container_name: film_mysql
+    image: mysql
+    ports:
+    - 3610:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: FilmSite
+    networks:
+      - film-network
+    command: [
+          'mysqld',
+          '--default-authentication-plugin=mysql_native_password',
+          '--innodb-buffer-pool-size=80M',
+          '--character-set-server=utf8mb4',
+          '--collation-server=utf8mb4_unicode_ci',
+          '--default-time-zone=+8:00',
+          '--lower-case-table-names=1'
+        ]
+
+  redis:
+    container_name: film_redis
+    image: redis
+    ports:
+      - 3620:6379
+    volumes:
+      - /opt/film/data/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - film-network
+networks:
+  film-network:
+    driver: bridge
