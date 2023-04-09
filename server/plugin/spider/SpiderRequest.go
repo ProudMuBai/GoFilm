@@ -3,9 +3,11 @@ package spider
 import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/extensions"
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -40,9 +42,7 @@ func CreateClient() *colly.Collector {
 	c.OnRequest(func(request *colly.Request) {
 		// 设置一些请求头信息
 		request.Headers.Set("Content-Type", "application/json;charset=UTF-8")
-		request.Headers.Set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-		//request.Headers.Set("cookie", "ge_ua_key=sxo%2Bz4kkS7clWpEtg2m7HioRfIo%3D")
-		request.Headers.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+		//request.Headers.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
 	})
 	// 请求期间报错的回调
 	c.OnError(func(response *colly.Response, err error) {
@@ -53,10 +53,22 @@ func CreateClient() *colly.Collector {
 
 // ApiGet 请求数据的方法
 func ApiGet(r *RequestInfo) {
+	if r.Header != nil {
+		if t, err := strconv.Atoi(r.Header.Get("timeout")); err != nil && t > 0 {
+			Client.SetRequestTimeout(time.Duration(t) * time.Second)
+		}
+	}
+	// 设置随机请求头
+	extensions.RandomUserAgent(Client)
+	//extensions.Referer(Client)
 	// 请求成功后的响应
 	Client.OnResponse(func(response *colly.Response) {
 		// 将响应结构封装到 RequestInfo.Resp中
-		r.Resp = response.Body
+		if len(response.Body) > 0 {
+			r.Resp = response.Body
+		} else {
+			r.Resp = []byte{}
+		}
 		// 拿到response后输出请求url
 		//log.Println("\n请求成功: ", response.Request.URL)
 	})

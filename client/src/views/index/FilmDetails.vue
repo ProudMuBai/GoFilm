@@ -1,5 +1,5 @@
 <template>
-    <div class="film">
+    <div class="film" v-show="data.loading">
         <!-- hidden-sm-and-up 移动端title   -->
         <div class="hidden-sm-and-up">
             <div class="title_mt  ">
@@ -11,7 +11,7 @@
                     </ul>
                     <p><span>导演:</span> {{ data.detail.descriptor.director }}</p>
                     <p><span>主演:</span>
-                        {{ `${data.detail.descriptor.actor}`.split(",")[0] + " " + `${data.detail.descriptor.actor}`.split(",")[1] + " " + `${data.detail.descriptor.actor}`.split(",")[2] }}
+                        {{ (data.detail.descriptor.actor && data.detail.descriptor.actor.length > 0) ? `${data.detail.descriptor.actor}`.split(",")[0] + " " + `${data.detail.descriptor.actor}`.split(",")[1] : ''}}
                     </p>
                     <p><span>上映:</span> {{ data.detail.descriptor.releaseDate }}</p>
                     <p><span>地区:</span> {{ data.detail.descriptor.area }}</p>
@@ -81,12 +81,11 @@
 
 <script setup lang="ts">
 import {useRouter} from "vue-router";
-import {onMounted, reactive, ref,} from "vue";
+import {onBeforeMount, reactive, ref,} from "vue";
 import {ApiGet} from "../../utils/request";
-import {ElMessage} from 'element-plus'
+import {ElMessage, ElLoading} from 'element-plus'
 import {Promotion, CaretRight} from "@element-plus/icons-vue";
 import RelateList from "../../components/RelateList.vue";
-const show = ref(false)
 
 // 获取路由对象
 const router = useRouter()
@@ -94,15 +93,17 @@ const router = useRouter()
 const data = reactive({
     detail: {descriptor: {}},
     relate: [],
+    loading: false,
 })
 
 
-onMounted(() => {
+onBeforeMount(() => {
     let link = router.currentRoute.value.query.link
     ApiGet('/filmDetail', {id: link}).then((resp: any) => {
         if (resp.status === "ok") {
             data.detail = resp.data.detail
             data.relate = resp.data.relate
+            data.loading = true
         } else {
             ElMessage({
                 type: "error",
@@ -180,7 +181,15 @@ const showContent = (flag: boolean) => {
         font-size: 12px;
         text-align: left;
     }
-
+    .play_content a {
+        color: #ffffff;
+        border-radius: 6px;
+        margin: 6px 8px;
+        background: #888888;
+        flex-basis: calc(25% - 16px);
+        font-size: 12px;
+        padding: 6px 12px !important;
+    }
 }
 </style>
 
@@ -217,14 +226,16 @@ const showContent = (flag: boolean) => {
     z-index: 50;
 }
 
-.play_content a {
-    font-size: 12px;
-    min-width: 65px;
-    padding: 6px 15px;
-    color: #ffffff;
-    border-radius: 6px;
-    margin: 8px 8px;
-    background: #888888;
+@media (min-width: 650px) {
+    .play_content a {
+        font-size: 12px;
+        flex-basis: calc(10% - 24px);
+        padding: 6px 15px;
+        color: #ffffff;
+        border-radius: 6px;
+        margin: 8px 12px;
+        background: #888888;
+    }
 }
 
 .plya_tabs {

@@ -13,7 +13,7 @@ func RegularUpdateMovie() {
 	_, err := c.AddFunc(config.CornMovieUpdate, func() {
 		// 执行更新最近x小时影片的Spider
 		log.Println("执行一次影片更新任务...")
-		GetRecentMovie()
+		UpdateMovieDetail()
 	})
 
 	// 开启定时任务每月最后一天凌晨两点, 执行一次清库重取数据

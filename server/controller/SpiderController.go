@@ -36,7 +36,7 @@ func FixFilmDetail(c *gin.Context) {
 		return
 	}
 	// 如果指令正确,则执行详情数据获取
-	spider.AllMovieInfo()
+	spider.MainSiteSpider()
 	log.Println("FilmDetail 重制完成!!!")
 	// 先截断表中的数据
 	model.TunCateSearchTable()

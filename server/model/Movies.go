@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"log"
+	"hash/fnv"
 	"server/config"
 	"server/plugin/db"
 	"strconv"
@@ -116,19 +116,19 @@ func SaveDetails(list []MovieDetail) (err error) {
 		// 序列化影片详情信息
 		data, _ := json.Marshal(detail)
 		// 1. 原使用Zset存储, 但是不便于单个检索 db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Cid%d", config.MovieDetailKey, detail.Cid), redis.Z{Score: float64(detail.Id), Member: member}).Err()
-		// 改为普通 k v 存储, k-> id关键字, v json序列化的结果, //只保留十天, 没周更新一次
+		// 改为普通 k v 存储, k-> id关键字, v json序列化的结果
 		err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.CategoryTreeExpired).Err()
 		// 2. 同步保存简略信息到redis中
 		SaveMovieBasicInfo(detail)
-		// 3. 保存Search检索信息到redis
-		if err == nil {
-			// 转换 detail信息
-			searchInfo := ConvertSearchInfo(detail)
-			// 放弃redis进行检索, 多条件处理不方便
-			//err = AddSearchInfo(searchInfo)
-			// 只存储用于检索对应影片的关键字信息
-			SearchKeyword(searchInfo)
-		}
+		// 3. 保存Search检索信息到redis, 暂时搁置
+		//if err == nil {
+		//	// 转换 detail信息
+		//	searchInfo := ConvertSearchInfo(detail)
+		//	// 放弃redis进行检索, 多条件处理不方便
+		//	//err = AddSearchInfo(searchInfo)
+		//	// 只存储用于检索对应影片的关键字信息
+		//	SearchKeyword(searchInfo)
+		//}
 
 	}
 	// 保存一份search信息到mysql, 批量存储
@@ -156,6 +156,24 @@ func SaveMovieBasicInfo(detail MovieDetail) {
 	}
 	data, _ := json.Marshal(basicInfo)
 	_ = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieBasicInfoKey, detail.Cid, detail.Id), data, config.CategoryTreeExpired).Err()
+}
+
+// SaveSitePlayList 仅保存播放url列表信息到当前站点
+func SaveSitePlayList(siteName string, list []MovieDetail) (err error) {
+	// 如果list 为空则直接返回
+	if len(list) <= 0 {
+		return nil
+	}
+	res := make(map[string]string)
+	for _, d := range list {
+		if len(d.PlayList) > 0 {
+			data, _ := json.Marshal(d.PlayList[0])
+			res[HashKey(d.Name)] = string(data)
+		}
+	}
+	// 保存形式 key: MultipleSource:siteName Hash[hash(movieName)]list
+	err = db.Rdb.HMSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteName), res).Err()
+	return
 }
 
 // AddSearchInfo 将影片关键字信息整合后存入search 集合中
@@ -284,12 +302,12 @@ func ConvertSearchInfo(detail MovieDetail) SearchInfo {
 	if err != nil {
 		year = 0
 	}
-
 	return SearchInfo{
 		Mid:      detail.Id,
 		Cid:      detail.Cid,
 		Pid:      detail.Pid,
 		Name:     detail.Name,
+		SubTitle: detail.SubTitle,
 		CName:    detail.CName,
 		ClassTag: detail.ClassTag,
 		Area:     detail.Area,
@@ -324,9 +342,12 @@ func GetDetailByKey(key string) MovieDetail {
 	return detail
 }
 
-// SearchMovie 搜索关键字影片
-func SearchMovie() {
-	data, err := db.Rdb.ZScan(db.Cxt, "MovieList:cid30", 0, `*天使*`, config.SearchCount).Val()
-	log.Println(err)
-	fmt.Println(data)
+// HashKey 将字符串转化为hash值
+func HashKey(str string) string {
+	h := fnv.New32a()
+	_, err := h.Write([]byte(str))
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprint(h.Sum32())
 }

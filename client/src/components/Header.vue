@@ -5,7 +5,7 @@
             <!--        <img class="logo" src="/src/assets/logo.png">-->
             <a href="/" style="font-weight: 600;font-style: italic;font-size: 24px;margin-right: 5px">Boat</a>
             <div class="search_group">
-                <input v-model="keyword" placeholder="搜索 动漫,剧集,电影 " class="search"/>
+                <input v-model="keyword" @keydown="(e)=>{e.keyCode == 13 && searchFilm()}" placeholder="搜索 动漫,剧集,电影 " class="search"/>
                 <el-button @click="searchFilm" :icon="Search"/>
             </div>
         </div>

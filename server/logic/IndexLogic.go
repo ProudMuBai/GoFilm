@@ -3,9 +3,12 @@ package logic
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"regexp"
 	"server/config"
 	"server/model"
 	"server/plugin/db"
+	"server/plugin/spider"
+	"strings"
 )
 
 /*
@@ -54,6 +57,8 @@ func (i *IndexLogic) GetFilmDetail(id int) model.MovieDetail {
 	db.Mdb.Where("mid", id).First(&search)
 	// 获取redis中的完整影视信息 MovieDetail:Cid11:Id24676
 	movieDetail := model.GetDetailByKey(fmt.Sprintf(config.MovieDetailKey, search.Cid, search.Mid))
+	//查找其他站点是否存在影片对应的播放源
+	multipleSource(&movieDetail)
 	return movieDetail
 }
 
@@ -134,4 +139,37 @@ func (i *IndexLogic) RelateMovie(detail model.MovieDetail, page *model.Page) []m
 		Language: detail.Language,
 	}
 	return model.GetRelateMovieBasicInfo(search, page)
+}
+
+// 将多个站点的对应影视播放源追加到主站点播放列表中
+func multipleSource(detail *model.MovieDetail) {
+	// 整合多播放源, 处理部分站点中影片名称的空格
+	names := map[string]int{model.HashKey(detail.Name): 0}
+	// 不同站点影片别名匹配
+	re := regexp.MustCompile(`第一季$`)
+	alias := strings.TrimSpace(re.ReplaceAllString(detail.Name, ""))
+	names[model.HashKey(alias)] = 0
+	// 将多个影片别名进行切分,放入names中
+	if len(detail.SubTitle) > 0 && strings.Contains(detail.SubTitle, ",") {
+		for _, v := range strings.Split(detail.SubTitle, ",") {
+			names[model.HashKey(v)] = 0
+		}
+	}
+	if len(detail.SubTitle) > 0 && strings.Contains(detail.SubTitle, "/") {
+		for _, v := range strings.Split(detail.SubTitle, "/") {
+			names[model.HashKey(v)] = 0
+		}
+	}
+	// 遍历站点列表
+	for _, s := range spider.SiteList {
+		for k, _ := range names {
+			pl := model.GetMultiplePlay(s.Name, k)
+			if len(pl) > 0 {
+				// 如果当前站点已经匹配到数据则直接退出当前循环
+				detail.PlayList = append(detail.PlayList, pl)
+				break
+			}
+		}
+	}
+
 }

@@ -41,11 +41,11 @@ defineProps({
         display: flex;
         flex-direction: row;
         flex-flow: wrap;
-        justify-content: space-between;
+        justify-content: start;
     }
     .container .item {
-        width: calc(14% - 18px);
-        margin-bottom: 18px;
+        width: calc(14% - 20px);
+        margin: 2px 10px 16px 10px;
     }
     .cus_content_link {
         border-radius: 5px;
@@ -102,11 +102,11 @@ defineProps({
         display: flex;
         flex-direction: row;
         flex-flow: wrap;
-        justify-content: space-between;
+        justify-content: start;
     }
     .container .item {
-        width: calc(33% - 5px);
-        margin-bottom: 18px;
+        width: calc(33% - 8px);
+        margin: 2px 4px 16px 4px;
     }
     .cus_content_link {
         border-radius: 5px;

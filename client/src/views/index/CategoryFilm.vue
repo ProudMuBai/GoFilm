@@ -5,6 +5,7 @@
       <div class="c_header">
         <a :class="`nav ${d.list.length >0 && d.list[0].cid == c.id?'active':''}`" href="javascript:;" @click="changeCategory(c.id)"
            v-for="c in d.category.children">{{ c.name }}</a>
+<!--        <a :class="`nav `" href="javascript:;" @click="changeCategory">{{ d.category.name }}</a>-->
       </div>
     </div>
 
@@ -69,10 +70,10 @@ const changeCurrent = (currentVal: number) => {
 }
 
 // 点击分类事件
-const changeCategory = (cid: any) => {
+const changeCategory = (cid?: any) => {
   let params = new URLSearchParams(location.search)
   // location.href = `/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=${params.get('current')?params.get('current'):1}`
-  location.href = `/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=1`
+  location.href = cid?`/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=1`:`/categoryFilm?pid=${params.get('pid')}`
 }
 
 
@@ -105,7 +106,7 @@ onMounted(() => {
     /*顶部内容区域*/
     .header {
         width: 100%;
-        margin-bottom: 150px;
+        margin-bottom: 100px;
         background: none!important;
     }
     .header p {
@@ -177,14 +178,13 @@ onMounted(() => {
         width: 100%;
         display: flex;
         flex-flow: wrap;
-        justify-content: space-between;
+        justify-content: start;
     }
 
     .c_content .item {
-        flex-basis: calc(33% - 5px);
+        flex-basis: calc(33% - 6px);
         max-width: 33%;
-        margin-bottom: 20px;
-        /*width: 100px;*/
+        margin: 0 3px 20px 3px;
         box-sizing: border-box;
         overflow: hidden;
     }
@@ -305,13 +305,12 @@ onMounted(() => {
         width: 100%;
         display: flex;
         flex-flow: wrap;
-        justify-content: space-between;
+        justify-content: start;
     }
 
     .c_content .item {
         flex-basis: calc(14% - 16px);
-        max-width: 14%;
-        margin-bottom: 20px;
+        margin: 0 8px 20px 8px;
         /*width: 100px;*/
         box-sizing: border-box;
         overflow: hidden;

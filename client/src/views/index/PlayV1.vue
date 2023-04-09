@@ -1,9 +1,20 @@
 <template>
-    <div class="player_area" v-show="data.loading">
-            <div class="player_p"   >
-                <videoPlay  class="player"   v-bind="data.options" poster='/src/assets/image/play.png'
-                 />
-            </div>
+
+    <div class="player_area">
+        <!--    视频播放区域-->
+        <div class="player_p">
+            <iframe ref="iframe" class="player" :src="data.current.link"
+                    :name="data.detail.name"
+                    marginheight="0"
+                    marginwidth="0"
+                    framespacing="0"
+                    vspale="0"
+                    allow="fullscreen"
+                    frameborder="0" scolling="no"
+                    sandbox="allow-scripts allow-same-origin allow-downloads">
+            </iframe>
+
+        </div>
         <div class="current_play_info">
             <div class="play_info_left">
                 <h3 class="current_play_title">{{ `${data.detail.name}&emsp;${data.current.episode}` }}</h3>
@@ -23,14 +34,13 @@
         <!-- 播放选集   -->
         <div class="play_list">
             <h2 class="hidden-md-and-down">播放列表:(右侧切换播放源)</h2>
-            <el-tabs type="card" v-model="data.currentTabName" class="plya_tabs" >
+            <el-tabs type="card" v-model="data.currentTabName" class="plya_tabs" @tab-change="changeSource">
                 <el-tab-pane v-for="(p,i) in data.detail.playList"
                              :name="`tab-${i}`"
-                             :label="`播放列表${i+1}`">
+                             :label="`播放地址${i+1}`">
                     <div class="play_content">
-                        <a v-for="(item,index) in p" href="javascript:void(false)" @click="playChange({sourceIndex: i, episodeIndex: index, target: this})"
-                           :class="item.link == data.current.link?'play_active':''">{{ item.episode }}</a>
-
+                        <a v-for="(item,index) in p" href="javascript:void(false)" @click="playChange(item)"
+                           :class="data.current.link.search(item.link) !== -1?'play_active':''">{{ item.episode }}</a>
                     </div>
                 </el-tab-pane>
             </el-tabs>
@@ -44,97 +54,120 @@
 
 <script lang="ts" setup>
 
-import {onBeforeMount, onMounted, reactive, ref, withDirectives} from "vue";
+import {onMounted, reactive, ref, withDirectives} from "vue";
 import {useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import RelateList from "../../components/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
-// 引入视频播放器组件
-import 'vue3-video-play/dist/style.css'
-import {videoPlay } from 'vue3-video-play'
-import {ElMessage} from "element-plus";
-
 
 // 播放页所需数据
 const data = reactive({
-    loading: false,
     detail: {descriptor: {}, playList: [[{episode: '', link: ''}]]},
-    current: {index: 0, episode: '', link: ''},
+    current: {episode: '', link: ''},
     currentTabName: '',
     currentPlayFrom: 0,
     currentEpisode: 0,
-    relate: [{}],
-// vue3-video-play 播放属性设置
-    options: {
-        width: '100%', //播放器高度
-        height: '100%', //播放器高度
-        color: "rgba(155,73,231,0.72)", //主题色
-        title: "", //视频名称
-        src: "", //视频源
-        type: 'm3u8', //视频类型
-        muted: false, //静音
-        webFullScreen: false,
-        speedRate: ["0.75", "1.0", "1.25", "1.5", "2.0"], //播放倍速
-        autoPlay: false, //自动播放
-        loop: false, //循环播放
-        mirror: false, //镜像画面
-        ligthOff: false,  //关灯模式
-        volume: 0.3, //默认音量大小
-        control: true, //是否显示控制器
-    }
+    relate: [],
 
 })
 
 // 获取路由信息
 const router = useRouter()
-onBeforeMount(() => {
+onMounted(() => {
     let query = router.currentRoute.value.query
     ApiGet(`/filmPlayInfo`, {id: query.id, playFrom: query.source, episode: query.episode}).then((resp: any) => {
         if (resp.status === 'ok') {
             data.detail = resp.data.detail
-            data.current = {index: resp.data.currentEpisode, ...resp.data.current}
+            resp.data.current.link = converLink(resp.data.current.link)
+            data.current = resp.data.current
             data.currentPlayFrom = resp.data.currentPlayFrom
             data.currentEpisode = resp.data.currentEpisode
             data.relate = resp.data.relate
             // 设置当前选中的播放源
             data.currentTabName = `tab-${query.source}`
-            // 设置当前的视频播放url
-            data.options.src = data.current.link
-            data.loading = true
-        } else {
-            ElMessage.error("影片信息加载失败,请尝试刷新页面!!!")
         }
     })
 })
 
-// 点击播集数播放对应影片
-const playChange = (play: { sourceIndex: number, episodeIndex: number, target:any }) => {
-    let currPlay = data.detail.playList[play.sourceIndex][play.episodeIndex]
-    data.current = {index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link}
-    data.options.src = currPlay.link
-    data.options.title = `${data.detail.name}  ${currPlay.episode} `
+
+// ===============================视频播放处理=======================================
+// 视频解析接口地址, 默认使用第一个
+const resolver = [
+    // m3u8使用此解析
+    'https://jx.jsonplayer.com/player/?url=',
+    //   'https://jx.m3u8.tv/jiexi/?url=',
+
+
+    //   'https://jx.jsonplayer.com/player/?url=',
+    //   'https://vip.bljiex.com/?url=',
+    // 'https://jx.bozrc.com:4433/player/?url=',
+    // html视频使用此解析
+    'http://www.82190555.com/index/qqvod.php?url=',
+    // 'https://jx.bozrc.com:4433/player/?url=',
+    // 'https://vip.bljiex.com/?url=',
+
+    // Google上随便找的
+    'https://vip.bljiex.com/?url=',
+    'https://jx.kingtail.xyz/?url=',
+    'http://www.82190555.com/index/qqvod.php?url=',
+    'https://www.nxflv.com/?url=',
+    'http://www.wmxz.wang/video.php?url=',
+    'https://www.feisuplayer.com/m3u8/?url=',
+    // tampermonkey 脚本使用的解析
+    'https://jx.bozrc.com:4433/player/?url=',
+    'https://z1.m1907.top/?jx=',
+    'https://jx.aidouer.net/?url=',
+    'https://www.gai4.com/?url=',
+    'https://okjx.cc/?url=',
+    'https://jx.rdhk.net/?v=',
+    'https://jx.blbo.cc:4433/?url=',
+    'https://jsap.attakids.com/?url=',
+    'https://jx.dj6u.com/?url=',
+]
+
+// 添加视频解析前缀
+const converLink = (link: string): string => {
+    // 视频统一使用第三方解析
+    if (link.search("m3u8") != -1) {
+        return `${resolver[0] + link}`
+    }
+    // return `${resolver[1]+link}`
+    return `${link}`
 }
 
+// 点击播放对应影片
+const playChange = (info: { link: string, episode: string }) => {
+    // 判断是否是m3u8播放器, 如果是则添加前缀
+    data.current.link = converLink(info.link)
+    data.current.episode = info.episode
+}
+// 点击播放源标签事件
+const changeSource = (tabName: any) => {
+    data.currentTabName = tabName
+    data.detail.playList.find((item, index) => {
+        if (tabName.split("-")[1] - index == 0) {
+            item.find(i => {
+                if (i.episode == data.current.episode) {
+                    data.current.link = converLink(i.link)
+                }
+            })
+        }
+    })
+}
 
+// 测试滑动音量调节
+const iframe = ref()
+// document.querySelector('#brightnessSlider').addEventListener('change', function() {
+//     // 获取滑块的值
+//     var brightness = this.value;
+//
+//     // 设置亮度为滑块的值
+//     iframe.style.filter = 'brightness(' + brightness + '%)';
+// })
 
 </script>
 
 <style scoped>
-/*vue3-video-play 相关设置*/
-/*//播放器控件区域大小*/
-:deep(#refPlayerWrap) {
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 6px;
-    position: absolute;
-}
-/*将鼠标右键触发元素的层级降低,回避触发右键视频菜单信息*/
-:deep(.d-player-contextmenu){
-    z-index: -100!important;
-}
-
-
-
 /*当前播放的影片信息展示*/
 .current_play_info {
     width: 100%;
@@ -153,6 +186,9 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target:an
 .player_area {
     width: 100%;
     min-height: 100%;
+    /*height: 1400px;*/
+    /*background: red;*/
+
 }
 
 
@@ -177,30 +213,33 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target:an
         margin: 0 8px;
         font-size: 12px;
     }
-    .play_content a {
-        font-size: 12px;
-        flex-basis: calc(10% - 24px);
-        padding: 6px 10px;
-        color: #ffffff;
-        border-radius: 6px;
-        margin: 8px 12px;
-        background: #888888;
-    }
 
 }
 
 
 .player_p {
     width: 100%;
-    /*height: 700px;*/
+    min-height: 200px;
     margin: 0;
     padding-bottom: 56.25% !important;
+    /*padding-bottom: 42.25% !important;*/
     position: relative;
-    background: red;
+    background-image: url("/src/assets/image/play.png");
+    background-size: cover;
     border-radius: 6px;
-    display: flex;
 }
 
+iframe {
+    border-radius: 6px;
+    left: 0;
+    width: 100%; /* 设置iframe元素的宽度为父容器的100% */
+    height: 100%; /* 设置iframe元素的高度为0，以便自适应高度 */
+    /*padding-bottom: 56.25%; !* 使用padding-bottom属性计算iframe元素的高度，这里假设视频的宽高比为16:9 *!*/
+    /*border: none; !* 去除iframe元素的边框 *!*/
+    /*transform: scale(1);*/
+    position: absolute;
+
+}
 
 /*右侧播放源选择区域*/
 /*影片播放列表信息展示*/
@@ -216,7 +255,7 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target:an
 .play_content {
     display: flex;
     flex-flow: row wrap;
-    padding: 10px 10px 10px 10px;
+    padding: 10px 10px 10px 18px;
 
 }
 
@@ -227,7 +266,15 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target:an
     z-index: 50;
 }
 
-
+.play_content a {
+    font-size: 12px;
+    min-width: 65px;
+    padding: 6px 15px;
+    color: #ffffff;
+    border-radius: 6px;
+    margin: 8px 8px;
+    background: #888888;
+}
 
 /*集数选中效果*/
 .play_active {
@@ -297,17 +344,6 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target:an
         border-radius: 6px;
         margin-right: 3px;
     }
-
-
-    .play_content a {
-        color: #ffffff;
-        border-radius: 6px;
-        margin: 6px 8px;
-        background: #888888;
-        flex-basis: calc(25% - 16px);
-        font-size: 12px;
-        padding: 6px 12px !important;
-    }
     .tags span {
         padding: 6px 10px;
         background-color: #404042;
@@ -315,12 +351,6 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target:an
         border-radius: 5px;
         margin: 0 3px;
         font-size: 12px;
-    }
-    :deep(.el-tabs__item){
-        width: 70px;
-        height: 35px;
-        margin: 17px 5px 0 0!important;
-        font-size: 13px;
     }
 
 }

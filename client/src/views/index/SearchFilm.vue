@@ -1,7 +1,7 @@
 <template>
     <div  class="container">
         <div class="search_group">
-                <input v-model="data.search" placeholder="搜索 动漫,剧集,电影 " class="search"/>
+                <input v-model="data.search" @keydown="e=>{e.keyCode==13 && searchMovie()}" placeholder="搜索 动漫,剧集,电影 " class="search"/>
                 <el-button @click="searchMovie" :icon="Search"  style="" />
         </div>
         <div v-if="data.list.length > 0 " class="search_res">
@@ -116,14 +116,13 @@ const changeCurrent = (currentVal: number) => {
     }
     .film_item {
         flex-basis: calc(100% - 20px);
-        margin: 0 10px;
+        margin: 0 10px 25px 10px;
         display: flex;
         background: #2e2e2e;
         padding: 10px;
         min-height: 180px;
         max-height: 200px;
         border-radius: 16px;
-        margin-bottom: 25px;
     }
     .film_item a {
         flex: 2;

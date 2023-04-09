@@ -7,17 +7,22 @@ import "time"
 */
 const (
 
+	// MAXGoroutine max goroutine, 执行spider中对协程的数量限制
+	MAXGoroutine = 10
+
 	// CategoryTreeKey 分类树 key
 	CategoryTreeKey     = "CategoryTree"
 	CategoryTreeExpired = time.Hour * 24 * 90
 	// MovieListInfoKey movies分类列表 key
 	MovieListInfoKey = "MovieList:Cid%d"
-	// MAXGoroutine max goroutine, 执行spider中对协程的数量限制
-	MAXGoroutine = 6
+
 	// MovieDetailKey movie detail影视详情信息 可以
 	MovieDetailKey = "MovieDetail:Cid%d:Id%d"
 	// MovieBasicInfoKey 影片基本信息, 简略版本
 	MovieBasicInfoKey = "MovieBasicInfoKey:Cid%d:Id%d"
+
+	// MultipleSiteDetail 多站点影片信息存储key
+	MultipleSiteDetail = "MultipleSource:%s"
 
 	// SearchCount Search scan 识别范围
 	SearchCount = 3000
@@ -42,16 +47,16 @@ const (
 )
 
 const (
-	/*
-		mysql服务配置信息
-	*/
-	MysqlDsn = "root:root@(192.168.20.10:3307)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
-	/*
-		docker compose 环境下的链接信息
-		mysql:3306 为 docker compose 中 mysql服务对应的网络名称和端口
-		UserName:Password 设置mysql账户的用户名和密码
-	*/
-	//MysqlDsn = "UserName:Password@(mysql:3306)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
+
+	// SearchTableName 存放检索信息的数据表名
+	SearchTableName = "search"
+
+	//mysql服务配置信息 root:root 设置mysql账户的用户名和密码
+
+	//MysqlDsn = "root:root@(192.168.20.10:3307)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
+
+	// MysqlDsn docker compose 环境下的链接信息 mysql:3306 为 docker compose 中 mysql服务对应的网络名称和端口
+	MysqlDsn = "root:root@(mysql:3306)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
 
 	/*
 		redis 配置信息
@@ -59,12 +64,12 @@ const (
 		RedisPassword redis访问密码
 		RedisDBNo 使用第几号库
 	*/
-	RedisAddr     = `192.168.20.10:6379`
+	//RedisAddr     = `192.168.20.10:6379`
+	//RedisPassword = `root`
+	//RedisDBNo     = 1
+
+	// RedisAddr docker compose 环境下运行使用如下配置信息
+	RedisAddr     = `redis:6379`
 	RedisPassword = `root`
 	RedisDBNo     = 0
-
-	// docker compose 环境下运行如下配置信息
-	//RedisAddr = `redis:6379`
-	//RedisPassword = `Password`
-	//RedisDBNo = 0
 )

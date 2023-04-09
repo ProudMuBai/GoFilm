@@ -9,8 +9,8 @@ import (
 )
 
 func init() {
-	// 执行初始化前等待30s , 让mysql服务完成初始化指令
-	time.Sleep(time.Second * 30)
+	// 执行初始化前等待20s , 让mysql服务完成初始化指令
+	time.Sleep(time.Second * 20)
 	//初始化redis客户端
 	err := db.InitRedisConn()
 	if err != nil {
