@@ -27,7 +27,7 @@ type MovieInfo struct {
 type MovieListInfo struct {
 	Code      int64       `json:"code"`
 	Msg       string      `json:"msg"`
-	Page      string      `json:"page"`
+	Page      any         `json:"page"`
 	PageCount int64       `json:"pagecount"`
 	Limit     string      `json:"limit"`
 	Total     int64       `json:"total"`
@@ -73,7 +73,7 @@ type MovieDetailInfo struct {
 type DetailListInfo struct {
 	Code      int64             `json:"code"`
 	Msg       string            `json:"msg"`
-	Page      int64             `json:"page"`
+	Page      any               `json:"page"`
 	PageCount int64             `json:"pagecount"`
 	Limit     string            `json:"limit"`
 	Total     int64             `json:"total"`

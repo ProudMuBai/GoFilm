@@ -20,6 +20,7 @@ type SearchInfo struct {
 	Cid         int64   `json:"cid"`                            //分类ID
 	Pid         int64   `json:"pid"`                            //上级分类ID
 	Name        string  `json:"name"`                           // 片名
+	SubTitle    string  `json:"subTitle"`                       // 影片子标题
 	CName       string  `json:"CName"`                          // 分类名称
 	ClassTag    string  `json:"classTag"`                       //类型标签
 	Area        string  `json:"area"`                           // 地区
@@ -44,8 +45,7 @@ type Page struct {
 }
 
 func (s *SearchInfo) TableName() string {
-	return "search_lz"
-	//return "search_fs"
+	return config.SearchTableName
 }
 
 // ================================= Spider 数据处理(redis) =================================
@@ -288,4 +288,12 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	}
 
 	return basicList
+}
+
+// GetMultiplePlay 通过影片名hash值匹配播放源
+func GetMultiplePlay(siteName, key string) []MovieUrlInfo {
+	data := db.Rdb.HGet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteName), key).Val()
+	var playList []MovieUrlInfo
+	_ = json.Unmarshal([]byte(data), &playList)
+	return playList
 }
