@@ -27,6 +27,7 @@ import (
  3. api数据格式不变, 获取影片详情时通过subTitle 去redis匹配其他站点的对应播放源并整合到主站详情信息的playUrl中
  4. 影片搜索时不再使用name进行匹配, 改为使用 subTitle 进行匹配
 */
+
 const (
 	MainSite = "https://www.feisuzyapi.com/api.php/provide/vod/"
 )
@@ -40,10 +41,11 @@ type Site struct {
 var SiteList = []Site{
 	//{"tk", "https://api.tiankongapi.com/api.php/provide/vod"},
 	//{"yh", "https://m3u8.apiyhzy.com/api.php/provide/vod/"},
-	{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
+	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
+
 	{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
 	{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
-	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
+	{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
 }
 
 // StartSpider 执行多源spider
@@ -249,7 +251,7 @@ func UpdateMainDetail() {
 func UpdatePlayDetail() {
 	for _, s := range SiteList {
 		// 获取单个站点的分页数
-		r := RequestInfo{Uri: MainSite, Params: url.Values{}}
+		r := RequestInfo{Uri: s.Name, Params: url.Values{}}
 		r.Params.Set("h", config.UpdateInterval)
 		pageCount, err := GetPageCount(r)
 		if err != nil {

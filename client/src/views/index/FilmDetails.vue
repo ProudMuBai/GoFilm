@@ -64,7 +64,7 @@
         </div>
         <div class="play_list">
             <h2 class="hidden-md-and-down">播放列表:(右侧切换播放源)</h2>
-            <el-tabs type="card" class="plya_tabs" tab-transition="fade" tab-animation="300" lazy>
+            <el-tabs type="card" class="play_tabs">
                 <el-tab-pane  v-for="(p,i) in data.detail.playList" :label="`播放地址${i+1}`" >
                     <div class="play_content">
                         <a v-for="(item,index) in p" href="javascript:;"
@@ -136,7 +136,7 @@ const showContent = (flag: boolean) => {
 </script>
 
 <!--移动端适配-->
-<style>
+<style scoped>
 @media (max-width: 650px) {
     .title_mt {
         padding: 0 3px;
@@ -190,6 +190,13 @@ const showContent = (flag: boolean) => {
         font-size: 12px;
         padding: 6px 12px !important;
     }
+
+    :deep(.el-tabs__item) {
+        width: 70px;
+        height: 35px!important;
+        margin: 17px 5px 0 0 !important;
+        font-size: 13px;
+    }
 }
 </style>
 
@@ -236,9 +243,16 @@ const showContent = (flag: boolean) => {
         margin: 8px 12px;
         background: #888888;
     }
+
 }
 
-.plya_tabs {
+
+.play_active {
+    color: orange !important;
+    background: #424242 !important;
+}
+
+.play_content .play_tabs {
     background: #2e2e2e;
 }
 
@@ -252,7 +266,7 @@ const showContent = (flag: boolean) => {
     margin-bottom: 0;
     border-bottom: none !important;
     background: rgb(34, 34, 34);
-    height: 65px !important;
+    height: 50px !important;
 }
 
 :deep(.el-tabs__nav) {
@@ -269,8 +283,8 @@ const showContent = (flag: boolean) => {
 }
 
 :deep(.el-tabs__item) {
-    height: 65px;
-    line-height: 65px;
+    height: 50px;
+    line-height: 50px;
     margin-left: 2px;
     border-radius: 8px 8px 0 0;
     border: none !important;
@@ -278,8 +292,6 @@ const showContent = (flag: boolean) => {
     background: #2e2e2e;
 }
 
-:deep(.el-tab-pane) {
-}
 
 /*顶部影片信息显示区域*/
 

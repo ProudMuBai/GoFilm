@@ -89,6 +89,11 @@ func RemoveAll() {
 	db.Mdb.Exec(fmt.Sprintf(`drop table if exists %s`, s.TableName()))
 }
 
+// DelMtPlay 清空附加播放源信息
+func DelMtPlay(keys []string) {
+	db.Rdb.Del(db.Cxt, keys...)
+}
+
 // ================================= Spider 数据处理(mysql) =================================
 
 // CreateSearchTable 创建存储检索信息的数据表
@@ -211,12 +216,12 @@ func SearchFilmKeyword(keyword string, page *Page) []SearchInfo {
 	var searchList []SearchInfo
 	// 1. 先统计搜索满足条件的数据量
 	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Count(&count)
+	db.Mdb.Model(&SearchInfo{}).Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Count(&count)
 	page.Total = int(count)
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 2. 获取满足条件的数据
 	db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).
-		Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Order("year DESC, time DESC").Find(&searchList)
+		Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Order("year DESC, time DESC").Find(&searchList)
 	return searchList
 }
 
@@ -259,7 +264,7 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	re := regexp.MustCompile("第.{1,3}季")
 	if re.MatchString(search.Name) {
 		search.Name = re.ReplaceAllString(search.Name, "")
-		sql = fmt.Sprintf(`select * from %s where name LIKE "%%%s%%" union`, search.TableName(), search.Name)
+		sql = fmt.Sprintf(`select * from %s where name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%" union`, search.TableName(), search.Name)
 	}
 	// 执行后续匹配内容
 	//sql = fmt.Sprintf(`%s select * from %s where cid=%d AND area="%s" AND language="%s" AND`, sql, search.TableName(), search.Cid, search.Area, search.Language)

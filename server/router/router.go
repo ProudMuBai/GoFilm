@@ -27,6 +27,7 @@ func SetupRouter() *gin.Engine {
 		spiderRoute.GET("/SpiderRe", controller.SpiderRe)
 		// 获取影片详情, 用于网路不稳定导致的影片数据缺失
 		spiderRoute.GET(`/FixFilmDetail`, controller.FixFilmDetail)
+		spiderRoute.GET(`/RefreshSitePlay`, controller.RefreshSitePlay)
 	}
 
 	return r
