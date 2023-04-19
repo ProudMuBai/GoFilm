@@ -11,6 +11,7 @@ import (
 	"server/config"
 	"server/plugin/db"
 	"strings"
+	"time"
 )
 
 // SearchInfo 存储用于检索的信息
@@ -28,8 +29,8 @@ type SearchInfo struct {
 	Year        int64   `json:"year"`                           // 年份
 	Initial     string  `json:"initial"`                        // 首字母
 	Score       float64 `json:"score"`                          //评分
-	Time        int64   `json:"time"`                           // 更新时间
-	Rank        int64   `json:"rank"`                           // 热度排行id
+	UpdateStamp int64   `json:"updateStamp"`                    // 更新时间
+	Hits        int64   `json:"hits"`                           // 热度排行
 	State       string  `json:"state"`                          //状态 正片|预告
 	Remarks     string  `json:"remarks"`                        // 完结 | 更新至x集
 	ReleaseDate int64   `json:"releaseDate"`                    //上映时间 时间戳
@@ -144,7 +145,7 @@ func BatchSaveOrUpdate(list []SearchInfo) {
 		// 如果存在对应数据则进行更新, 否则进行删除
 		if count > 0 {
 			// 记录已经存在则执行更新部分内容
-			err := tx.Model(&SearchInfo{}).Where("mid", info.Mid).Updates(SearchInfo{Time: info.Time, Rank: info.Rank, State: info.State,
+			err := tx.Model(&SearchInfo{}).Where("mid", info.Mid).Updates(SearchInfo{UpdateStamp: info.UpdateStamp, Hits: info.Hits, State: info.State,
 				Remarks: info.Remarks, Score: info.Score, ReleaseDate: info.ReleaseDate}).Error
 			if err != nil {
 				tx.Rollback()
@@ -198,7 +199,7 @@ func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid", pid).Order("year DESC, time DESC").Find(&s).Error; err != nil {
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid", pid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -211,6 +212,24 @@ func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
 	return list
 }
 
+// GetHotMovieByPid  获取指定类别的热门影片
+func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
+	// 返回分页参数
+	var count int64
+	db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
+	page.Total = int(count)
+	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	// 进行具体的信息查询
+	var s []SearchInfo
+	// 当前时间偏移一个月
+	t := time.Now().AddDate(0, -1, 0).Unix()
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid=? AND update_stamp > ?", pid, t).Order(" year DESC, hits DESC").Find(&s).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	return s
+}
+
 // SearchFilmKeyword 通过关键字搜索库存中满足条件的影片名
 func SearchFilmKeyword(keyword string, page *Page) []SearchInfo {
 	var searchList []SearchInfo
@@ -221,7 +240,7 @@ func SearchFilmKeyword(keyword string, page *Page) []SearchInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 2. 获取满足条件的数据
 	db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).
-		Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Order("year DESC, time DESC").Find(&searchList)
+		Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Order("year DESC, update_stamp DESC").Find(&searchList)
 	return searchList
 }
 
@@ -234,7 +253,7 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("year DESC, time DESC").Find(&s).Error; err != nil {
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -301,4 +320,26 @@ func GetMultiplePlay(siteName, key string) []MovieUrlInfo {
 	var playList []MovieUrlInfo
 	_ = json.Unmarshal([]byte(data), &playList)
 	return playList
+}
+
+// DataCache  API请求 数据缓存
+func DataCache(key string, data map[string]interface{}) {
+	val, _ := json.Marshal(data)
+	db.Rdb.Set(db.Cxt, key, val, config.CategoryTreeExpired)
+}
+
+// GetCacheData 获取API接口的缓存数据
+func GetCacheData(key string) map[string]interface{} {
+	data := make(map[string]interface{})
+	val, err := db.Rdb.Get(db.Cxt, key).Result()
+	if err != nil || len(val) <= 0 {
+		return nil
+	}
+	_ = json.Unmarshal([]byte(val), &data)
+	return data
+}
+
+// RemoveCache 删除数据缓存
+func RemoveCache(key string) {
+	db.Rdb.Del(db.Cxt, key)
 }

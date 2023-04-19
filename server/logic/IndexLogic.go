@@ -22,11 +22,17 @@ type IndexLogic struct {
 var IL *IndexLogic
 
 // IndexPage 首页数据处理
-func (i *IndexLogic) IndexPage() gin.H {
-	Info := gin.H{}
-	// 首页分类数据处理
-
-	// 1. 导航分类数据处理, 只提供 电影 电视剧 综艺 动漫 四大顶级分类和其子分类
+func (i *IndexLogic) IndexPage() map[string]interface{} {
+	//声明返回值
+	//Info := make(map[string]interface{})
+	// 首页请求时长较高, 采用redis进行缓存, 在定时任务更新影片时清除对应缓存
+	// 判断是否存在缓存数据, 存在则直接将数据返回
+	Info := model.GetCacheData(config.IndexCacheKey)
+	if Info != nil {
+		return Info
+	}
+	Info = make(map[string]interface{})
+	// 1. 首页分类数据处理 导航分类数据处理, 只提供 电影 电视剧 综艺 动漫 四大顶级分类和其子分类
 	tree := model.CategoryTree{Category: &model.Category{Id: 0, Name: "分类信息"}}
 	sysTree := model.GetCategoryTree()
 	//  由于采集源数据格式不一,因此采用名称匹配
@@ -38,15 +44,18 @@ func (i *IndexLogic) IndexPage() gin.H {
 	}
 	Info["category"] = tree
 	// 2. 提供用于首页展示的顶级分类影片信息, 每分类 14条数据
-	var list []gin.H
+	var list []map[string]interface{}
 	for _, c := range tree.Children {
 		page := model.Page{PageSize: 14, Current: 1}
 		movies := model.GetMovieListByPid(c.Id, &page)
-		item := gin.H{"nav": c, "movies": movies}
+		// 获取当前分类的本月热门影片
+		HotMovies := model.GetHotMovieByPid(c.Id, &page)
+		item := map[string]interface{}{"nav": c, "movies": movies, "hot": HotMovies}
 		list = append(list, item)
 	}
 	Info["content"] = list
-
+	// 不存在首页数据缓存时将查询数据缓存到redis中
+	model.DataCache(config.IndexCacheKey, Info)
 	return Info
 }
 
@@ -141,23 +150,33 @@ func (i *IndexLogic) RelateMovie(detail model.MovieDetail, page *model.Page) []m
 	return model.GetRelateMovieBasicInfo(search, page)
 }
 
-// 将多个站点的对应影视播放源追加到主站点播放列表中
+/*
+		将多个站点的对应影视播放源追加到主站点播放列表中
+	 1. 将主站点影片的name 和 subtitle 进行处理添加到用于匹配对应播放源的map中
+	 2. 仅对主站点影片name进行映射关系处理并将结果添加到map中
+	    例如: xxx第一季  xxx
+*/
 func multipleSource(detail *model.MovieDetail) {
-	// 整合多播放源, 处理部分站点中影片名称的空格
-	names := map[string]int{model.HashKey(detail.Name): 0}
-	// 不同站点影片别名匹配
-	re := regexp.MustCompile(`第一季$`)
-	alias := strings.TrimSpace(re.ReplaceAllString(detail.Name, ""))
-	names[model.HashKey(alias)] = 0
-	// 将多个影片别名进行切分,放入names中
+	// 整合多播放源, 初始化存储key map
+	names := make(map[string]int)
+	// 1. 判断detail的dbId是否存在, 存在则添加到names中作为匹配条件
+	if detail.DbId > 0 {
+		names[model.GenerateHashKey(detail.DbId)] = 0
+	}
+	// 2. 对name进行去除特殊格式处理
+	names[model.GenerateHashKey(detail.Name)] = 0
+	// 3. 对包含第一季的name进行处理
+	names[model.GenerateHashKey(regexp.MustCompile(`第一季$`).ReplaceAllString(detail.Name, ""))] = 0
+
+	// 4. 将subtitle进行切分,放入names中
 	if len(detail.SubTitle) > 0 && strings.Contains(detail.SubTitle, ",") {
 		for _, v := range strings.Split(detail.SubTitle, ",") {
-			names[model.HashKey(v)] = 0
+			names[model.GenerateHashKey(v)] = 0
 		}
 	}
 	if len(detail.SubTitle) > 0 && strings.Contains(detail.SubTitle, "/") {
 		for _, v := range strings.Split(detail.SubTitle, "/") {
-			names[model.HashKey(v)] = 0
+			names[model.GenerateHashKey(v)] = 0
 		}
 	}
 	// 遍历站点列表

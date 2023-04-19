@@ -3,7 +3,7 @@
         <!-- 左侧logo以及搜索 -->
         <div class="nav_left">
             <!--        <img class="logo" src="/src/assets/logo.png">-->
-            <a href="/" style="font-weight: 600;font-style: italic;font-size: 24px;margin-right: 5px">Boat</a>
+            <a href="/" class="site" >GoFilm</a>
             <div class="search_group">
                 <input v-model="keyword" @keydown="(e)=>{e.keyCode == 13 && searchFilm()}" placeholder="搜索 动漫,剧集,电影 " class="search"/>
                 <el-button @click="searchFilm" :icon="Search"/>
@@ -129,6 +129,17 @@ onMounted(() => {
 
     .nav_left {
         display: flex;
+    }
+    /*site标志样式*/
+    .site{
+        font-weight: 600;
+        font-style: italic;
+        font-size: 24px;
+        margin-right: 5px;
+        background: linear-gradient(118deg, #e91a90, #c965b3, #988cd7, #00acfd);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
     }
 
     /*搜索栏*/

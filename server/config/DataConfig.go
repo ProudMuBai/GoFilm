@@ -46,10 +46,15 @@ const (
 	SpiderCipher = "Life in a different world from zero"
 )
 
+/*API相关redis key*/
+const (
+	IndexCacheKey = "IndexCache"
+)
+
 const (
 
 	// SearchTableName 存放检索信息的数据表名
-	SearchTableName = "search_mt"
+	SearchTableName = "search"
 
 	//mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 
@@ -66,7 +71,7 @@ const (
 	*/
 	RedisAddr     = `192.168.20.10:6379`
 	RedisPassword = `root`
-	RedisDBNo     = 1
+	RedisDBNo     = 0
 
 	// RedisAddr docker compose 环境下运行使用如下配置信息
 	//RedisAddr     = `redis:6379`

@@ -49,8 +49,12 @@ import Footer from "../components/Footer.vue";
 @media (max-width: 650px) {
     .el-main {
         /*margin: 0 auto;*/
-        padding: 60px 0;
+        padding: 55px 0!important;
         /*padding-top: 100px!important;*/
+    }
+    :deep(.el-header) {
+        height: 40px!important;
+        min-height: 40px!important;
     }
 }
 

@@ -1,10 +1,10 @@
 <template>
     <div  class="container">
         <div class="search_group">
-                <input v-model="data.search" @keydown="e=>{e.keyCode==13 && searchMovie()}" placeholder="搜索 动漫,剧集,电影 " class="search"/>
+                <input v-model="data.search" @keydown="e=>{e.keyCode==13 && searchMovie()}" placeholder="输入关键字搜索 动漫,剧集,电影 " class="search"/>
                 <el-button @click="searchMovie" :icon="Search"  style="" />
         </div>
-        <div v-if="data.list.length > 0 " class="search_res">
+        <div v-if="data.list && data.list.length > 0 " class="search_res">
             <div class="title">
                 <h2>{{ data.oldSearch }}</h2>
                 <p>共找到{{ data.page.total }}部与"{{ data.oldSearch }}"相关的影视作品</p>
@@ -41,7 +41,7 @@
             </div>
         </div>
     </div>
-    <el-empty v-if="data.list.length == 0 " description="输入影片名称进行搜索"/>
+    <el-empty v-if="data.oldSearch != '' && (!data.list || data.list.length == 0) " description="未查询到对应影片"/>
 </template>
 
 <script lang="ts" setup>

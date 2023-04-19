@@ -5,12 +5,11 @@ import (
 	"server/plugin/db"
 	"server/plugin/spider"
 	"server/router"
-	"time"
 )
 
 func init() {
 	// 执行初始化前等待20s , 让mysql服务完成初始化指令
-	time.Sleep(time.Second * 20)
+	//time.Sleep(time.Second * 20)
 	//初始化redis客户端
 	err := db.InitRedisConn()
 	if err != nil {
@@ -24,6 +23,7 @@ func init() {
 }
 func main() {
 	start()
+	//spider.MtSiteSpider()
 }
 
 func start() {

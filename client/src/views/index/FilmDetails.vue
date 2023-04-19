@@ -7,16 +7,14 @@
                 <div class="title_mt_right">
                     <h3>{{ data.detail.name }}</h3>
                     <ul class="tags">
-                        <li style="margin: 2px 0">{{ `${data.detail.descriptor.classTag}`.replaceAll(",", " | ") }}</li>
+                        <li style="margin: 2px 0">{{ data.detail.descriptor.classTag?`${data.detail.descriptor.classTag}`.replaceAll(",", " | "):'未知' }}</li>
                     </ul>
-                    <p><span>导演:</span> {{ data.detail.descriptor.director }}</p>
-                    <p><span>主演:</span>
-                        {{ (data.detail.descriptor.actor && data.detail.descriptor.actor.length > 0) ? `${data.detail.descriptor.actor}`.split(",")[0] + " " + `${data.detail.descriptor.actor}`.split(",")[1] : ''}}
-                    </p>
+                    <p><span>导演:</span> {{data.detail.descriptor.director }}</p>
+                    <p><span>主演:</span> {{handleLongText(data.detail.descriptor.actor)}}</p>
                     <p><span>上映:</span> {{ data.detail.descriptor.releaseDate }}</p>
                     <p><span>地区:</span> {{ data.detail.descriptor.area }}</p>
-                    <p v-if="data.detail.descriptor.remark"><span>连载:</span>{{ data.detail.descriptor.remark }}</p>
-                    <p><span>评分:</span><b id="score">{{ data.detail.descriptor.dbScore }}</b></p>
+                    <p v-if="data.detail.descriptor.remarks"><span>连载:</span>{{ data.detail.descriptor.remarks }}</p>
+                    <!--<p><span>评分:</span><b id="score">{{ data.detail.descriptor.dbScore }}</b></p>-->
                 </div>
             </div>
             <div class="mt_content">
@@ -34,23 +32,23 @@
                     </el-icon>
                     {{ data.detail.descriptor.cName }}
                 </li>
-                <li>{{ `${data.detail.descriptor.classTag}`.replaceAll(",", "&emsp;") }}</li>
+                <li v-if="data.detail.descriptor.classTag">{{ `${data.detail.descriptor.classTag}`.replaceAll(",", "&emsp;") }}</li>
                 <li>{{ data.detail.descriptor.year }}</li>
                 <li>{{ data.detail.descriptor.area }}</li>
             </ul>
             <p><span>导演:</span> {{ data.detail.descriptor.director }}</p>
             <p><span>主演:</span> {{ data.detail.descriptor.actor }}</p>
             <p><span>上映:</span> {{ data.detail.descriptor.releaseDate }}</p>
-            <p v-if="data.detail.descriptor.remark"><span>连载:</span>{{ data.detail.descriptor.remark }}</p>
+            <p v-if="data.detail.descriptor.remarks"><span>连载:</span>{{ data.detail.descriptor.remarks }}</p>
             <p><span>评分:</span><b id="score">{{ data.detail.descriptor.dbScore }}</b></p>
             <div class="cus_wap">
                 <p style="min-width: 40px"><span>剧情:</span></p>
                 <p ref="textContent" class="text_content">
-                    <el-button v-if="`${data.detail.descriptor.content}`.length > 120" class="multi_text"
+                    <el-button v-if="`${data.detail.descriptor.content}`.length > 140" class="multi_text"
                                style="color:#a574b7;"
                                @click="showContent(multiBtn.state)" link>{{ multiBtn.text }}
                     </el-button>
-                    <span class="cus_info" v-html="`${data.detail.descriptor.content}`.replaceAll('　　', '')"></span>
+                    <span class="cus_info" v-html="data.detail.descriptor.content"></span>
                 </p>
             </div>
             <p>
@@ -62,10 +60,11 @@
                 </el-button>
             </p>
         </div>
+        <!--播放列表-->
         <div class="play_list">
             <h2 class="hidden-md-and-down">播放列表:(右侧切换播放源)</h2>
             <el-tabs type="card" class="play_tabs">
-                <el-tab-pane  v-for="(p,i) in data.detail.playList" :label="`播放地址${i+1}`" >
+                <el-tab-pane v-for="(p,i) in data.detail.playList" :label="`播放地址${i+1}`">
                     <div class="play_content">
                         <a v-for="(item,index) in p" href="javascript:;"
                            @click="play({source: i, episode: index})">{{ item.episode }}</a>
@@ -73,8 +72,9 @@
                 </el-tab-pane>
             </el-tabs>
         </div>
+        <!--相关系列影片-->
         <div class="correlation">
-            <RelateList :relate-list="data.relate" />
+            <RelateList :relate-list="data.relate"/>
         </div>
     </div>
 </template>
@@ -91,18 +91,69 @@ import RelateList from "../../components/RelateList.vue";
 const router = useRouter()
 
 const data = reactive({
-    detail: {descriptor: {}},
+    detail: {
+        id: '',
+        cid: '',
+        pid: '',
+        name: '',
+        picture: '',
+        playFrom: [],
+        DownFrom: '',
+        playList: [[]],
+        downloadList: '',
+        descriptor: {
+            subTitle: '',
+            cName: '',
+            enName: '',
+            initial: '',
+            classTag: '',
+            actor: '',
+            director: '',
+            writer: '',
+            blurb: '',
+            remarks: '',
+            releaseDate: '',
+            area: '',
+            language: '',
+            year: '',
+            state: '',
+            updateTime: '',
+            addTime: '',
+            dbId: '',
+            dbScore: '',
+            hits: '',
+            content: '',
+        }
+    },
     relate: [],
     loading: false,
 })
 
+// 对部分信息过长进行处理
+const handleLongText = (t:string):string=>{
+    let res = ''
+    t.split(',').forEach((s,i)=>{
+        console.log(s)
+        if (i <3) {
+            res += `${s} `
+        }
+    })
+    return res.trimEnd()
+}
 
 onBeforeMount(() => {
     let link = router.currentRoute.value.query.link
     ApiGet('/filmDetail', {id: link}).then((resp: any) => {
         if (resp.status === "ok") {
             data.detail = resp.data.detail
+            // 去除影视简介中的无用内容和特殊标签格式等
+            data.detail.name = data.detail.name.replace(/(～.*～)/g, '')
+            data.detail.descriptor.content = data.detail.descriptor.content.replace(/(&.*;)|( )|(　　)|(\n)|(<[^>]+>)/g, '')
             data.relate = resp.data.relate
+            // 处理过长数据
+            data.detail.descriptor.actor = handleLongText(data.detail.descriptor.actor)
+            console.log(handleLongText(data.detail.descriptor.actor))
+            data.detail.descriptor.director = handleLongText(data.detail.descriptor.director)
             data.loading = true
         } else {
             ElMessage({
@@ -148,7 +199,7 @@ const showContent = (flag: boolean) => {
 
     .picture_mt {
         width: 100%;
-        height: 175px;
+        height: 180px;
         margin-right: 12px;
         border-radius: 8px;
         background-size: cover;
@@ -156,17 +207,19 @@ const showContent = (flag: boolean) => {
     }
 
     .title_mt_right {
-        flex: 1.8;
+        flex: 1.5;
         text-align: left;
     }
 
     .title_mt_right h3 {
+        font-size: 14px;
         margin: 0 0 5px 0;
     }
 
     .title_mt_right p {
         font-size: 12px;
         margin: 3px 2px;
+        white-space: nowrap;
     }
 
     .mt_content {
@@ -178,22 +231,27 @@ const showContent = (flag: boolean) => {
     }
 
     .mt_content p {
+        max-width: 96%;
+        margin: 0 auto;
         font-size: 12px;
         text-align: left;
+        word-wrap: break-word;
     }
+
     .play_content a {
+        white-space: nowrap;
         color: #ffffff;
         border-radius: 6px;
         margin: 6px 8px;
         background: #888888;
-        flex-basis: calc(25% - 16px);
+        min-width: calc(25% - 16px);
         font-size: 12px;
         padding: 6px 12px !important;
     }
 
     :deep(.el-tabs__item) {
         width: 70px;
-        height: 35px!important;
+        height: 35px !important;
         margin: 17px 5px 0 0 !important;
         font-size: 13px;
     }
@@ -235,8 +293,9 @@ const showContent = (flag: boolean) => {
 
 @media (min-width: 650px) {
     .play_content a {
+        white-space: nowrap;
         font-size: 12px;
-        flex-basis: calc(10% - 24px);
+        min-width: calc(10% - 24px);
         padding: 6px 15px;
         color: #ffffff;
         border-radius: 6px;
@@ -371,13 +430,14 @@ const showContent = (flag: boolean) => {
 
 .title .text_content {
     max-width: 70%;
+    margin: 20px 3px;
     line-height: 22.5px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     vertical-align: top;
-    margin-top: 5px;
+    /*margin-top: 5px;*/
 
 }
 

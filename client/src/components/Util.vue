@@ -60,7 +60,7 @@ const changeStyle = (type:string)=>{
       case 'light':
           control.darkTheme = false
           localStorage.setItem("theme", 'light')
-          document.getElementsByClassName('main')[0].style.background = `radial-gradient(circle, #C147E9, #810CA8, #2D033B)`
+          document.getElementsByClassName('main')[0].style.background = `linear-gradient(45deg, #356697, rgb(105, 68, 140), rgb(151, 109, 133), rgb(92 104 149))`
           break
       case  'dark':
           control.darkTheme = true
@@ -81,6 +81,7 @@ const changeStyle = (type:string)=>{
     right: 10px;
     bottom: 15%;
     width: 35px;
+    z-index: 20;
 }
 .util a {
     display: block;

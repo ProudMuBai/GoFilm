@@ -1,22 +1,26 @@
 <template>
     <div class="player_area" v-show="data.loading">
         <div class="player_p">
-            <video-player  @mounted="handleBtn" :src="data.options.src" poster="https://s2.loli.net/2023/04/10/H23F6qDXlnwmPG9.png" controls :loop="false"
+            <!--preload-->
+
+            <video-player @mounted="handleBtn" :src="data.options.src" :poster="posterImg" controls
+                          :loop="false"
                           @keydown="handlePlay"
+                          :bufferedPercent="30"
                           :volume="data.options.volume"
                           crossorigin="anonymous" playsinline class="video-player"
-                          :playback-rates="[0.5, 1.0, 1.5, 2.0]" />
+                          :playback-rates="[0.5, 1.0, 1.5, 2.0]"/>
         </div>
         <div class="current_play_info">
             <div class="play_info_left">
-                <h3 class="current_play_title">{{ `${data.detail.name}&emsp;${data.current.episode}` }}</h3>
+                <h3 class="current_play_title"><a :href="`/filmDetail?link=${data.detail.id}`">{{data.detail.name}}</a>{{data.current.episode}}</h3>
                 <div class="tags">
                     <b>
                         <el-icon>
                             <Promotion/>
                         </el-icon>
                         {{ data.detail.descriptor.cName }}</b>
-                    <span>{{ data.detail.descriptor.classTag }}</span>
+                    <span>{{ data.detail.descriptor.classTag?data.detail.descriptor.classTag:'未知' }}</span>
                     <span>{{ data.detail.descriptor.year }}</span>
                     <span>{{ data.detail.descriptor.area }}</span>
                 </div>
@@ -40,7 +44,7 @@
             </el-tabs>
         </div>
         <div class="correlation">
-            <RelateList :relate-list="data.relate"/>
+            <RelateList :relateList="data.relate"/>
         </div>
     </div>
 
@@ -54,25 +58,27 @@ import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
 import RelateList from "../../components/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
+import posterImg from '../../assets/image/play.png'
 // 引入视频播放器组件
 import {VideoPlayer} from '@videojs-player/vue'
 import 'video.js/dist/video-js.css'
-const handlePlay = (e:any)=>{
+
+const handlePlay = (e: any) => {
     e.preventDefault()
     switch (e.keyCode) {
         case 32:
             console.log(e.target.paused)
-            if(e.target.paused) {
+            if (e.target.paused) {
                 e.target.play()
             } else {
                 e.target.pause()
             }
             break
         case 37:
-            e.target.currentTime = e.target.currentTime-5 < 0 ? 0 : e.target.currentTime-5
+            e.target.currentTime = e.target.currentTime - 5 < 0 ? 0 : e.target.currentTime - 5
             break
         case 39:
-            e.target.currentTime = e.target.currentTime+5 > e.target.duration ? e.target.duration : e.target.currentTime+5
+            e.target.currentTime = e.target.currentTime + 5 > e.target.duration ? e.target.duration : e.target.currentTime + 5
             break
         case 38:
             data.options.volume = data.options.volume + 0.05 > 1 ? 1 : data.options.volume + 0.05
@@ -84,7 +90,7 @@ const handlePlay = (e:any)=>{
 
 }
 // 主动触发快捷键
-const tiggerKeyMap = (keyCode:number)=>{
+const tiggerKeyMap = (keyCode: number) => {
     let player = document.getElementsByTagName("video")[0]
     player.focus()
     const event = document.createEvent('HTMLEvents');
@@ -92,10 +98,10 @@ const tiggerKeyMap = (keyCode:number)=>{
     event.keyCode = keyCode; // 设置键码
     player.dispatchEvent(event)
 }
-const handleBtn = (e:any)=> {
+const handleBtn = (e: any) => {
     let btns = document.getElementsByClassName('vjs-button')
     for (let el of btns) {
-        el.addEventListener('keydown', function (t:any){
+        el.addEventListener('keydown', function (t: any) {
             t.preventDefault()
             tiggerKeyMap(t.keyCode)
         })
@@ -107,12 +113,45 @@ const handleBtn = (e:any)=> {
 // 播放页所需数据
 const data = reactive({
     loading: false,
-    detail: {descriptor: {}, playList: [[{episode: '', link: ''}]]},
+    detail: {
+        id: '',
+        cid: '',
+        pid: '',
+        name: '',
+        picture: '',
+        playFrom: [],
+        DownFrom: '',
+        playList: [[]],
+        downloadList: '',
+        descriptor: {
+            subTitle: '',
+            cName: '',
+            enName: '',
+            initial: '',
+            classTag: '',
+            actor: '',
+            director: '',
+            writer: '',
+            blurb: '',
+            remarks: '',
+            releaseDate: '',
+            area: '',
+            language: '',
+            year: '',
+            state: '',
+            updateTime: '',
+            addTime: '',
+            dbId: '',
+            dbScore: '',
+            hits: '',
+            content: '',
+        }
+    },
     current: {index: 0, episode: '', link: ''},
     currentTabName: '',
     currentPlayFrom: 0,
     currentEpisode: 0,
-    relate: [{}],
+    relate: [],
 // @videojs-player 播放属性设置
     options: {
         title: "", //视频名称
@@ -167,33 +206,48 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target: a
 
 }
 
-:deep(.vjs-big-play-button){
+:deep(.vjs-big-play-button) {
     line-height: 2em;
     height: 2em;
     width: 2em;
     border-radius: 50%;
     border: none;
-    background: rgba(0,0,0,0.65);
+    background: rgba(0, 0, 0, 0.65);
 }
-:deep(.vjs-control-bar){
-    background: rgba(0,0,0,0.32);
+
+:deep(.vjs-control-bar) {
+    background: rgba(0, 0, 0, 0.32);
 }
+
 /*取消video被选中的白边*/
 :deep(video:focus) {
-    border: none!important;
+    border: none !important;
     outline: none;
 }
-:deep(.data-vjs-player:focus){
-    border: none!important;
+
+:deep(.data-vjs-player:focus) {
+    border: none !important;
     outline: none;
 }
-:deep(.vjs-tech){
+
+:deep(.vjs-tech) {
     border-radius: 6px;
 }
 
 :deep(img) {
     border-radius: 6px;
 }
+/*进度条配色*/
+:deep(.video-js .vjs-load-progress div) {
+    background: rgba(255,255,255,0.55)!important;
+}
+:deep(.video-js .vjs-play-progress){
+    background: #44c8cf;
+}
+:deep(.video-js .vjs-slider){
+background-color: hsla(0,0%,100%,.2);
+}
+
 
 /*当前播放的影片信息展示*/
 .current_play_info {
@@ -203,9 +257,17 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target: a
 }
 
 .current_play_title {
-    font-weight: 500;
+    font-weight: 600;
     color: rgb(201, 196, 196);
-    margin: 0 0 5px 0;
+    margin: 0 0 12px 0;
+}
+.current_play_title a {
+    color: rgb(201, 196, 196);
+    font-weight: 600;
+    margin-right: 16px;
+}
+.current_play_title a:hover {
+    color: orange;
 }
 
 
@@ -239,8 +301,9 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target: a
     }
 
     .play_content a {
+        white-space: nowrap;
         font-size: 12px;
-        flex-basis: calc(10% - 24px);
+        min-width: calc(10% - 24px);
         padding: 6px 10px;
         color: #ffffff;
         border-radius: 6px;
@@ -360,11 +423,12 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target: a
 
 
     .play_content a {
+        white-space: nowrap;
         color: #ffffff;
         border-radius: 6px;
         margin: 6px 8px;
         background: #888888;
-        flex-basis: calc(25% - 16px);
+        min-width: calc(25% - 16px);
         font-size: 12px;
         padding: 6px 12px !important;
     }

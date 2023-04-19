@@ -1,0 +1,184 @@
+<template>
+    <div class="c_content" >
+        <div class="item" v-for="item in list" :style="{width: `calc(${ list.length <= 12 ? 16 : 14}% - 16px)`}">
+            <a :href="`/filmDetail?link=${item.id}`" class="default_image" >
+                <div class="tag_group">
+                    <span class="cus_tag ">{{ item.year?item.year.slice(0,4):'未知' }}</span>
+                    <span class="cus_tag ">{{ item.cName }}</span>
+                    <span class="cus_tag ">{{ item.area.split(',')[0] }}</span>
+                </div>
+                <span class="cus_remark hidden-md-and-up">{{ item.remarks }}</span>
+                <img  :src="item.picture" :alt="item.name.split('[')[0]" @error="handleImg"  >
+            </a>
+            <a :href="`/filmDetail?link=${item.id}`" class="content_text_tag">{{ item.name.split("[")[0] }}</a>
+            <span class="cus_remark hidden-md-and-down">{{ item.remarks }}</span>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import {defineProps} from 'vue'
+defineProps({
+    list: Array
+})
+
+// 图片加载失败事件
+const handleImg =(e:Event)=>{
+    e.target.style.display = "none"
+}
+</script>
+
+<style scoped>
+.default_image {
+    background: url("/src/assets/image/404.png");
+    background-size: cover;
+}
+/*wrap*/
+@media (max-width: 650px) {
+    /*展示区域*/
+    .c_content {
+        width: 100%;
+        display: flex;
+        flex-flow: wrap;
+        justify-content: start;
+    }
+
+    .c_content .item {
+        flex-basis: calc(33% - 6px);
+        max-width: 33%;
+        margin: 0 3px 20px 3px;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .item a {
+        padding-top: 125%;
+        position: relative;
+        border-radius: 5px;
+        display: flex;
+        width: 100%;
+        background-size:cover ;
+    }
+    img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-radius: 5px;
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+    }
+
+    .tag_group {
+        display: none;
+    }
+
+    .content_text_tag {
+        font-size: 11px !important;
+        color: rgb(221, 221, 221);
+        width: 96%!important;
+        max-height: 40px;
+        line-height: 20px;
+        padding: 2px 0 2px 0 !important;
+        text-align: left;
+        display: -webkit-box!important;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .cus_remark {
+        z-index: 10;
+        position: absolute;
+        bottom: 0;
+        display: block;
+        width: 100%;
+        font-size: 12px;
+        color: #c2c2c2;
+        text-align: center;
+        background: rgba(0,0,0,0.55);
+        border-radius:  0 0 5px 5px;
+    }
+}
+
+/*pc*/
+@media (min-width: 650px) {
+    .c_content {
+        width: 100%;
+        display: flex;
+        flex-flow: wrap;
+        justify-content: start;
+    }
+
+    .c_content .item {
+        margin: 0 8px 20px 8px;
+        box-sizing: border-box;
+    }
+
+    .item a {
+        border-radius: 5px;
+        padding-top: 125%;
+        background-size: cover;
+        width: 100%;
+        display: flex;
+        position: relative;
+        margin-bottom: 5px;
+    }
+
+    img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-radius: 5px;
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+    }
+
+    .tag_group {
+        position: absolute;
+        bottom: 3px;
+        display: flex;
+        width: 100%;
+        flex-wrap: wrap ;
+        overflow: hidden;
+        justify-content: start;
+        height: 18px;
+        z-index: 10;
+        line-height: 18px;
+        padding-left: 10px;
+    }
+
+    .cus_tag {
+        flex-shrink: 0; /* 不缩小元素 */
+        white-space: nowrap;
+        color: rgb(255, 255, 255);
+        padding: 0 3px;
+        margin-right: 8px;
+        background: rgba(0, 0, 0, 0.55);
+        font-size: 12px;
+        border-radius: 5px;
+    }
+
+    .content_text_tag {
+        display: block;
+        font-size: 14px !important;
+        color: rgb(221, 221, 221);
+        width: 96%!important;
+        padding: 2px 10px 2px 2px !important;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cus_remark {
+        display: block;
+        width: 100%;
+        padding-left: 3px;
+        font-size: 12px;
+        color: #999999;
+        text-align: left;
+    }
+}
+</style>

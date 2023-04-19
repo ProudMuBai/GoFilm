@@ -61,6 +61,7 @@ func ProcessMovieDetail(detail model.MovieDetailInfo) model.MovieDetail {
 			AddTime:     detail.AddTime,
 			DbId:        detail.DbId,
 			DbScore:     detail.DbScore,
+			Hits:        detail.Hits,
 			Content:     detail.Content,
 		},
 	}

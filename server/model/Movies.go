@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"hash/fnv"
+	"regexp"
 	"server/config"
 	"server/plugin/db"
 	"strconv"
@@ -45,6 +46,7 @@ type MovieDescriptor struct {
 	AddTime     int64  `json:"addTime"`     //资源添加时间戳
 	DbId        int64  `json:"dbId"`        //豆瓣id
 	DbScore     string `json:"dbScore"`     // 豆瓣评分
+	Hits        int64  `json:"hits"`        //影片热度
 	Content     string `json:"content"`     //内容简介
 }
 
@@ -168,11 +170,22 @@ func SaveSitePlayList(siteName string, list []MovieDetail) (err error) {
 	for _, d := range list {
 		if len(d.PlayList) > 0 {
 			data, _ := json.Marshal(d.PlayList[0])
-			res[HashKey(d.Name)] = string(data)
+			// 不保存电影解说类
+			if strings.Contains(d.CName, "解说") {
+				continue
+			}
+			// 如果DbId不为0, 则以dbID作为key进行hash额外存储一次
+			if d.DbId > 0 {
+				res[GenerateHashKey(d.DbId)] = string(data)
+			}
+			res[GenerateHashKey(d.Name)] = string(data)
 		}
 	}
-	// 保存形式 key: MultipleSource:siteName Hash[hash(movieName)]list
-	err = db.Rdb.HMSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteName), res).Err()
+	// 如果结果不为空,则将数据保存到redis中
+	if len(res) > 0 {
+		// 保存形式 key: MultipleSource:siteName Hash[hash(movieName)]list
+		err = db.Rdb.HMSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteName), res).Err()
+	}
 	return
 }
 
@@ -181,9 +194,9 @@ func AddSearchInfo(searchInfo SearchInfo) (err error) {
 	// 片名 Name 分类 CName 类别标签 classTag 地区 Area 语言 Language 年份 Year 首字母 Initial, 排序
 	data, _ := json.Marshal(searchInfo)
 	// 时间排序 score -->时间戳 DbId 排序 --> 热度, 评分排序 DbScore
-	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchTimeListKey, searchInfo.Pid), redis.Z{Score: float64(searchInfo.Time), Member: data}).Err()
+	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchTimeListKey, searchInfo.Pid), redis.Z{Score: float64(searchInfo.UpdateStamp), Member: data}).Err()
 	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchScoreListKey, searchInfo.Pid), redis.Z{Score: searchInfo.Score, Member: data}).Err()
-	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchHeatListKey, searchInfo.Pid), redis.Z{Score: float64(searchInfo.Rank), Member: data}).Err()
+	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchHeatListKey, searchInfo.Pid), redis.Z{Score: float64(searchInfo.Hits), Member: data}).Err()
 	// 添加搜索关键字信息
 	SearchKeyword(searchInfo)
 	return
@@ -298,27 +311,28 @@ func BatchSaveSearchInfo(list []MovieDetail) {
 func ConvertSearchInfo(detail MovieDetail) SearchInfo {
 	score, _ := strconv.ParseFloat(detail.DbScore, 64)
 	stamp, _ := time.ParseInLocation(time.DateTime, detail.UpdateTime, time.Local)
-	year, err := strconv.ParseInt(detail.Year, 10, 64)
+	// detail中的年份信息并不准确, 因此采用 ReleaseDate中的年份
+	year, err := strconv.ParseInt(regexp.MustCompile(`[1-9][0-9]{3}`).FindString(detail.ReleaseDate), 10, 64)
 	if err != nil {
 		year = 0
 	}
 	return SearchInfo{
-		Mid:      detail.Id,
-		Cid:      detail.Cid,
-		Pid:      detail.Pid,
-		Name:     detail.Name,
-		SubTitle: detail.SubTitle,
-		CName:    detail.CName,
-		ClassTag: detail.ClassTag,
-		Area:     detail.Area,
-		Language: detail.Language,
-		Year:     year,
-		Initial:  detail.Initial,
-		Score:    score,
-		Rank:     detail.DbId,
-		Time:     stamp.Unix(),
-		State:    detail.State,
-		Remarks:  detail.Remarks,
+		Mid:         detail.Id,
+		Cid:         detail.Cid,
+		Pid:         detail.Pid,
+		Name:        detail.Name,
+		SubTitle:    detail.SubTitle,
+		CName:       detail.CName,
+		ClassTag:    detail.ClassTag,
+		Area:        detail.Area,
+		Language:    detail.Language,
+		Year:        year,
+		Initial:     detail.Initial,
+		Score:       score,
+		Hits:        detail.Hits,
+		UpdateStamp: stamp.Unix(),
+		State:       detail.State,
+		Remarks:     detail.Remarks,
 		// releaseDate 部分影片缺失该参数, 所以使用添加时间作为上映时间排序
 		ReleaseDate: detail.AddTime,
 	}
@@ -342,10 +356,28 @@ func GetDetailByKey(key string) MovieDetail {
 	return detail
 }
 
-// HashKey 将字符串转化为hash值
-func HashKey(str string) string {
+/*
+	对附属播放源入库时的name|dbID进行处理,保证唯一性
+1. 去除name中的所有空格
+2. 去除name中含有的别名～.*～
+3. 去除name首尾的标点符号
+4. 将处理完成后的name转化为hash值作为存储时的key
+*/
+// GenerateHashKey 存储播放源信息时对影片名称进行处理, 提高各站点间同一影片的匹配度
+func GenerateHashKey[K string | ~int | int64](key K) string {
+	mName := fmt.Sprint(key)
+	//1. 去除name中的所有空格
+	mName = regexp.MustCompile(`\s`).ReplaceAllString(mName, "")
+	//2. 去除name中含有的别名～.*～
+	mName = regexp.MustCompile(`～.*～$`).ReplaceAllString(mName, "")
+	//3. 去除name首尾的标点符号
+	mName = regexp.MustCompile(`^[[:punct:]]+|[[:punct:]]+$`).ReplaceAllString(mName, "")
+	// 部分站点包含 动画版, 特殊别名 等字符, 需进行删除
+	//mName = regexp.MustCompile(`动画版`).ReplaceAllString(mName, "")
+	mName = regexp.MustCompile(`季.*`).ReplaceAllString(mName, "季")
+	//4. 将处理完成后的name转化为hash值作为存储时的key
 	h := fnv.New32a()
-	_, err := h.Write([]byte(str))
+	_, err := h.Write([]byte(mName))
 	if err != nil {
 		return ""
 	}

@@ -41,6 +41,7 @@ type Site struct {
 var SiteList = []Site{
 	//{"tk", "https://api.tiankongapi.com/api.php/provide/vod"},
 	//{"yh", "https://m3u8.apiyhzy.com/api.php/provide/vod/"},
+	//{"zk", "https://api.1080zyku.com/inc/apijson.php"}, 数据格式不规范,不采用
 	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
 
 	{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
@@ -251,7 +252,7 @@ func UpdateMainDetail() {
 func UpdatePlayDetail() {
 	for _, s := range SiteList {
 		// 获取单个站点的分页数
-		r := RequestInfo{Uri: s.Name, Params: url.Values{}}
+		r := RequestInfo{Uri: s.Uri, Params: url.Values{}}
 		r.Params.Set("h", config.UpdateInterval)
 		pageCount, err := GetPageCount(r)
 		if err != nil {

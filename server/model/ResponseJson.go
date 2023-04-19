@@ -61,6 +61,7 @@ type MovieDetailInfo struct {
 	AddTime       int64  `json:"vod_time_add"`     //资源添加时间戳
 	DbId          int64  `json:"vod_douban_id"`    //豆瓣id
 	DbScore       string `json:"vod_douban_score"` // 豆瓣评分
+	Hits          int64  `json:"vod_hits"`         // 总热度
 	Content       string `json:"vod_content"`      //内容简介
 	PlayFrom      string `json:"vod_play_from"`    // 播放来源
 	PlaySeparator string `json:"vod_play_note"`    // 播放信息分隔符

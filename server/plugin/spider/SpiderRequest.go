@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,6 +23,9 @@ type RequestInfo struct {
 	Header http.Header `json:"header"` // 请求头数据
 	Resp   []byte      `json:"resp"`   // 响应结果数据
 }
+
+// RefererUrl 记录上次请求的url
+var RefererUrl string
 
 // CreateClient 初始化请求客户端
 func CreateClient() *colly.Collector {
@@ -43,6 +47,11 @@ func CreateClient() *colly.Collector {
 		// 设置一些请求头信息
 		request.Headers.Set("Content-Type", "application/json;charset=UTF-8")
 		//request.Headers.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+		// 请求完成后设置请求头Referer
+		if len(RefererUrl) <= 0 || !strings.Contains(RefererUrl, request.URL.Host) {
+			RefererUrl = ""
+		}
+		request.Headers.Set("Referer", RefererUrl)
 	})
 	// 请求期间报错的回调
 	c.OnError(func(response *colly.Response, err error) {
@@ -69,6 +78,8 @@ func ApiGet(r *RequestInfo) {
 		} else {
 			r.Resp = []byte{}
 		}
+		// 将请求url保存到RefererUrl 用于 Header Refer属性
+		RefererUrl = response.Request.URL.String()
 		// 拿到response后输出请求url
 		//log.Println("\n请求成功: ", response.Request.URL)
 	})
