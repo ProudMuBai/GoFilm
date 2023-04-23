@@ -7,10 +7,13 @@
                 <div class="title_mt_right">
                     <h3>{{ data.detail.name }}</h3>
                     <ul class="tags">
-                        <li style="margin: 2px 0">{{ data.detail.descriptor.classTag?`${data.detail.descriptor.classTag}`.replaceAll(",", " | "):'未知' }}</li>
+                        <li style="margin: 2px 0">{{
+                            data.detail.descriptor.classTag ? `${data.detail.descriptor.classTag}`.replaceAll(",", " | ") : '未知'
+                            }}
+                        </li>
                     </ul>
-                    <p><span>导演:</span> {{data.detail.descriptor.director }}</p>
-                    <p><span>主演:</span> {{handleLongText(data.detail.descriptor.actor)}}</p>
+                    <p><span>导演:</span> {{ data.detail.descriptor.director }}</p>
+                    <p><span>主演:</span> {{ handleLongText(data.detail.descriptor.actor) }}</p>
                     <p><span>上映:</span> {{ data.detail.descriptor.releaseDate }}</p>
                     <p><span>地区:</span> {{ data.detail.descriptor.area }}</p>
                     <p v-if="data.detail.descriptor.remarks"><span>连载:</span>{{ data.detail.descriptor.remarks }}</p>
@@ -27,12 +30,16 @@
             <h2>{{ data.detail.name }}</h2>
             <ul class="tags">
                 <li class="t_c">
-                    <el-icon>
-                        <Promotion/>
-                    </el-icon>
-                    {{ data.detail.descriptor.cName }}
+                    <a :href="`/categoryFilm?pid=${data.detail.pid}`">
+                        <el-icon>
+                            <Promotion/>
+                        </el-icon>
+                        {{ data.detail.descriptor.cName }}
+                    </a>
                 </li>
-                <li v-if="data.detail.descriptor.classTag">{{ `${data.detail.descriptor.classTag}`.replaceAll(",", "&emsp;") }}</li>
+                <li v-if="data.detail.descriptor.classTag">
+                    {{ `${data.detail.descriptor.classTag}`.replaceAll(",", "&emsp;") }}
+                </li>
                 <li>{{ data.detail.descriptor.year }}</li>
                 <li>{{ data.detail.descriptor.area }}</li>
             </ul>
@@ -130,11 +137,11 @@ const data = reactive({
 })
 
 // 对部分信息过长进行处理
-const handleLongText = (t:string):string=>{
+const handleLongText = (t: string): string => {
     let res = ''
-    t.split(',').forEach((s,i)=>{
+    t.split(',').forEach((s, i) => {
         console.log(s)
-        if (i <3) {
+        if (i < 3) {
             res += `${s} `
         }
     })
@@ -398,8 +405,11 @@ const showContent = (flag: boolean) => {
 
 .tags > .t_c {
     background: rgba(155, 73, 231, 0.72);
-    color: #c4c2c2;
     margin-left: 0;
+}
+
+.t_c a {
+    color: #c4c2c2;
 }
 
 .title p {

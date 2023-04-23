@@ -280,29 +280,40 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	// sql 拼接查询条件
 	sql := ""
 	// 优先进行名称相似匹配
-	re := regexp.MustCompile("第.{1,3}季")
-	if re.MatchString(search.Name) {
-		search.Name = re.ReplaceAllString(search.Name, "")
-		sql = fmt.Sprintf(`select * from %s where name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%" union`, search.TableName(), search.Name)
-	}
-	// 执行后续匹配内容
+	//search.Name = regexp.MustCompile("第.{1,3}季").ReplaceAllString(search.Name, "")
+	search.Name = regexp.MustCompile(`[第.{1,3}季\s~!@#$%^&*()+={}\[\]|\\:;"'<,>·.?/\-_].*`).ReplaceAllString(search.Name, "")
+	regexp.MustCompile(`[\s~!@#$%^&*()+={}\[\]|\\:;"'<,>.?/\-_]+`)
+	sql = fmt.Sprintf(`select * from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d union`, search.TableName(), search.Name, search.Cid)
+	// 执行后续匹配内容, 匹配结果过少,减少过滤条件
 	//sql = fmt.Sprintf(`%s select * from %s where cid=%d AND area="%s" AND language="%s" AND`, sql, search.TableName(), search.Cid, search.Area, search.Language)
 
-	// 地区限制取消, 过滤掉的影片太多
-	sql = fmt.Sprintf(`%s select * from %s where cid=%d AND language="%s" AND`, sql, search.TableName(), search.Cid, search.Language)
+	// 根据当前影片的分类查找相似影片
+	sql = fmt.Sprintf(`%s (select * from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
+	// 根据剧情标签查找相似影片, classTag 使用的分隔符为 , | /
+	// 首先去除 classTag 中包含的所有空格
+	search.ClassTag = strings.ReplaceAll(search.ClassTag, " ", "")
+	// 如果 classTag 中包含分割符则进行拆分匹配
 	if strings.Contains(search.ClassTag, ",") {
 		s := "("
 		for _, t := range strings.Split(search.ClassTag, ",") {
-			s = fmt.Sprintf(`%s class_tag = "%s" OR`, s, t)
+			s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, t)
+		}
+		sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
+	} else if strings.Contains(search.ClassTag, "/") {
+		s := "("
+		for _, t := range strings.Split(search.ClassTag, "/") {
+			s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, t)
 		}
 		sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
 	} else {
-		sql = fmt.Sprintf(`%s class_tag = "%s"`, sql, search.ClassTag)
+		sql = fmt.Sprintf(`%s class_tag like "%%%s%%"`, sql, search.ClassTag)
 	}
+	// 除名称外的相似影片使用随机排序
+	sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
 	// 条件拼接完成后加上limit参数
 	sql = fmt.Sprintf("(%s)  limit %d,%d", sql, page.Current, page.PageSize)
 	// 执行sql
-	list := []SearchInfo{}
+	var list []SearchInfo
 	db.Mdb.Raw(sql).Scan(&list)
 	// 根据list 获取对应的BasicInfo
 	var basicList []MovieBasicInfo

@@ -1,7 +1,7 @@
 <template>
     <div class="c_content" >
         <div class="item" v-for="item in list" :style="{width: `calc(${ list.length <= 12 ? 16 : 14}% - 16px)`}">
-            <a :href="`/filmDetail?link=${item.id}`" class="default_image" >
+            <a :href="`/filmDetail?link=${item.id}`" class="default_image link_content" >
                 <div class="tag_group">
                     <span class="cus_tag ">{{ item.year?item.year.slice(0,4):'未知' }}</span>
                     <span class="cus_tag ">{{ item.cName }}</span>
@@ -51,7 +51,7 @@ const handleImg =(e:Event)=>{
         overflow: hidden;
     }
 
-    .item a {
+    .item .link_content {
         padding-top: 125%;
         position: relative;
         border-radius: 5px;
@@ -115,7 +115,7 @@ const handleImg =(e:Event)=>{
         box-sizing: border-box;
     }
 
-    .item a {
+    .item .link_content {
         border-radius: 5px;
         padding-top: 125%;
         background-size: cover;
@@ -167,9 +167,10 @@ const handleImg =(e:Event)=>{
         width: 96%!important;
         padding: 2px 10px 2px 2px !important;
         text-align: left;
+        text-overflow: ellipsis;
+
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
     }
 
     .cus_remark {

@@ -1,7 +1,7 @@
 <template>
   <div class="container">
       <el-empty style="height: 100%; line-height: 100%; font-size: 20px" :image-size="400"
-                image="/src/assets/image/404.png">
+                :image="notFoundImg">
           <template #description>
               <p style="font-size: 32px;width: 100%;color: #a574b7;margin-bottom: 20px">你好像走错地方了哦!!!</p>
               <button @click="handleError('home')" >主页</button>
@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import {useRouter} from "vue-router";
+import notFoundImg from '../../assets/image/404.png'
 
 const router = useRouter()
 const handleError = (t:string) =>{

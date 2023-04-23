@@ -3,10 +3,11 @@
         <div class="header">
             <p>{{ d.category.name }}</p>
             <div class="c_header">
-                <a :class="`nav ${d.list.length >0 && d.list[0].cid == c.id?'active':''}`" href="javascript:;"
-                   @click="changeCategory(c.id)"
+                <!--默认全部-->
+                <a :class="`nav ${d.cid == -1?'active':''}`" :href="`/categoryFilm?pid=${d.category.id}`">全部{{d.category.name}}</a>
+                <!--子分类-->
+                <a :class="`nav ${d.cid == c.id?'active':''}`" :href="`/categoryFilm?pid=${c.pid}&cid=${c.id}&current=1`"
                    v-for="c in d.category.children">{{ c.name }}</a>
-                <!--        <a :class="`nav `" href="javascript:;" @click="changeCategory">{{ d.category.name }}</a>-->
             </div>
         </div>
 
@@ -46,6 +47,7 @@ const d = reactive({
     page: {
         current: 0,
     },
+    cid: -1
 
 })
 // 获取路由参数查询对应数据
@@ -63,11 +65,10 @@ const changeCurrent = (currentVal: number) => {
 }
 
 // 点击分类事件
-const changeCategory = (cid?: any) => {
-    let params = new URLSearchParams(location.search)
-    // location.href = `/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=${params.get('current')?params.get('current'):1}`
-    location.href = cid ? `/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=1` : `/categoryFilm?pid=${params.get('pid')}`
-}
+// const changeCategory = (cid?: any) => {
+//     let params = new URLSearchParams(location.search)
+//     location.href = cid ? `/categoryFilm?pid=${params.get('pid')}&cid=${cid}&current=1` : `/categoryFilm?pid=${params.get('pid')}`
+// }
 
 
 const getFilmData = (param: any) => {
@@ -76,6 +77,8 @@ const getFilmData = (param: any) => {
             d.category = resp.data.category
             d.list = resp.data.list
             d.page = resp.page
+            // 设置当前请求的分类id
+            d.cid = param.cid? param.cid:-1
         } else {
             ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1000})
         }

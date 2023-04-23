@@ -18,7 +18,11 @@ func SpiderRe(c *gin.Context) {
 		})
 		return
 	}
-	logic.SL.ReZero()
+	go logic.SL.ReZero()
+	c.JSON(http.StatusOK, gin.H{
+		"status":  StatusOk,
+		"message": "ReZero 任务执行已成功开启",
+	})
 }
 
 // FixFilmDetail 修复因网络异常造成的影片详情数据丢失
@@ -33,7 +37,11 @@ func FixFilmDetail(c *gin.Context) {
 		return
 	}
 	// 如果指令正确,则执行详情数据获取
-	logic.SL.FixDetail()
+	go logic.SL.FixDetail()
+	c.JSON(http.StatusOK, gin.H{
+		"status":  StatusOk,
+		"message": "FixDetail 任务执行已成功开启",
+	})
 }
 
 // RefreshSitePlay 清空附属站点影片数据并重新获取
@@ -49,6 +57,9 @@ func RefreshSitePlay(c *gin.Context) {
 	}
 
 	// 执行多站点播放数据重置
-	logic.SL.SpiderMtPlayRe()
-
+	go logic.SL.SpiderMtPlayRe()
+	c.JSON(http.StatusOK, gin.H{
+		"status":  StatusOk,
+		"message": "SpiderMtPlayRe 任务执行已成功开启",
+	})
 }
