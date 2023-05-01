@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"log"
+	"math"
 	"reflect"
 	"regexp"
 	"server/config"
@@ -276,18 +277,22 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 		4. area 地区
 		5. 语言 Language
 	*/
-
 	// sql 拼接查询条件
 	sql := ""
+
 	// 优先进行名称相似匹配
 	//search.Name = regexp.MustCompile("第.{1,3}季").ReplaceAllString(search.Name, "")
-	search.Name = regexp.MustCompile(`[第.{1,3}季\s~!@#$%^&*()+={}\[\]|\\:;"'<,>·.?/\-_].*`).ReplaceAllString(search.Name, "")
-	regexp.MustCompile(`[\s~!@#$%^&*()+={}\[\]|\\:;"'<,>.?/\-_]+`)
-	sql = fmt.Sprintf(`select * from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d union`, search.TableName(), search.Name, search.Cid)
+	name := regexp.MustCompile(`(第.{1,3}季.*)|([0-9]{1,3})|(剧场版)|(\s\S*$)|(之.*)|([\p{P}\p{S}].*)`).ReplaceAllString(search.Name, "")
+	// 如果处理后的影片名称依旧没有改变 且具有一定长度 则截取部分内容作为搜索条件
+	if len(name) == len(search.Name) && len(name) > 10 {
+		// 中文字符需截取3的倍数,否则可能乱码
+		name = name[:int(math.Ceil(float64(len(name)/5))*3)]
+	}
+	sql = fmt.Sprintf(`select * from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d union`, search.TableName(), name, search.Cid)
 	// 执行后续匹配内容, 匹配结果过少,减少过滤条件
 	//sql = fmt.Sprintf(`%s select * from %s where cid=%d AND area="%s" AND language="%s" AND`, sql, search.TableName(), search.Cid, search.Area, search.Language)
 
-	// 根据当前影片的分类查找相似影片
+	// 添加其他相似匹配规则
 	sql = fmt.Sprintf(`%s (select * from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
 	// 根据剧情标签查找相似影片, classTag 使用的分隔符为 , | /
 	// 首先去除 classTag 中包含的所有空格

@@ -3,6 +3,7 @@ package db
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"server/config"
 )
@@ -24,7 +25,7 @@ func InitMysql() (err error) {
 			SingularTable: true, //是否使用 结构体名称作为表名 (关闭自动变复数)
 			//NameReplacer:  strings.NewReplacer("spider_", ""), // 替表名和字段中的 Me 为 空
 		},
-		//Logger: logger.Default.LogMode(logger.Info), //设置日志级别为Info
+		Logger: logger.Default.LogMode(logger.Info), //设置日志级别为Info
 	})
 	return
 }
