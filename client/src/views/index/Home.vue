@@ -1,6 +1,5 @@
 <template>
     <div class="container">
-
         <div class="content_item" v-for="item in data.info.content">
             <template v-if="item.nav.name !='综艺' & item.nav.name !='综艺片'">
                 <el-row class="row-bg  cus_nav" justify="space-between">

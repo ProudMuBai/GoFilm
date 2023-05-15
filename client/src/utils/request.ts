@@ -1,25 +1,18 @@
 import axios from "axios";
-import {ElMessage, ElLoading } from "element-plus";
+import {ElMessage } from "element-plus";
 
-// 创建loading加载动画对象
-const startLoading = ()=>{
-    return  ElLoading.service({
-        lock: true,
-        text: `加载中...`,
-        background: `rgba(0,0,0,0.5)`,
-        // target: document.querySelector(`.content`)
-    })
-}
+// 自定义loading加载动画
+import {load} from "../components/Loading";
+
 
 const http = (options: any) => {
     // 开启loading动画
-    let loading:any = startLoading()
+    load.start('')
     return new Promise((resolve, reject) => {
         // create an axios instance
         const service = axios.create({
             // baseURL: import.meta.env.VITE_URL_BASE, // api 的 base_url 注意 vue3
-            baseURL: `/api`, // api 的 base_url 注意 vue3
-            //   baseURL: 'https://www.baidu.com/api',  // 固定api
+            baseURL: `/api`, // api 的 base_url 注意 vue3 // 固定api
             timeout: 80000, // request timeout
         });
 
@@ -45,7 +38,7 @@ const http = (options: any) => {
         // response interceptor
         service.interceptors.response.use(
             (response) => {
-                loading.close()
+                load.close()
                 return response.data;
             },
             (error) => {
