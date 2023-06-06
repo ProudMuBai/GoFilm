@@ -133,12 +133,6 @@ func BatchSave(list []SearchInfo) {
 // BatchSaveOrUpdate 判断数据库中是否存在对应mid的数据, 如果存在则更新, 否则插入
 func BatchSaveOrUpdate(list []SearchInfo) {
 	tx := db.Mdb.Begin()
-	// 失败则回滚事务
-	//defer func() {
-	//	if r := recover(); r != nil {
-	//		tx.Rollback()
-	//	}
-	//}()
 	for _, info := range list {
 		var count int64
 		// 通过当前影片id 对应的记录数
@@ -213,6 +207,28 @@ func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
 	return list
 }
 
+// GetMovieListByCid 通过Cid查找对应的影片分页数据, 不适合GetMovieListByPid 糅合
+func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
+	// 返回分页参数
+	var count int64
+	db.Mdb.Model(&SearchInfo{}).Where("cid", cid).Count(&count)
+	page.Total = int(count)
+	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	// 进行具体的信息查询
+	var s []SearchInfo
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	// 通过影片ID去redis中获取id对应数据信息
+	var list []MovieBasicInfo
+	for _, v := range s {
+		// 通过key搜索指定的影片信息 , MovieDetail:Cid6:Id15441
+		list = append(list, GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, v.Cid, v.Mid)))
+	}
+	return list
+}
+
 // GetHotMovieByPid  获取指定类别的热门影片
 func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
 	// 返回分页参数
@@ -243,28 +259,6 @@ func SearchFilmKeyword(keyword string, page *Page) []SearchInfo {
 	db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).
 		Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Order("year DESC, update_stamp DESC").Find(&searchList)
 	return searchList
-}
-
-// GetMovieListByCid 通过Cid查找对应的影片分页数据, 不适合GetMovieListByPid 糅合
-func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
-	// 返回分页参数
-	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("cid", cid).Count(&count)
-	page.Total = int(count)
-	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
-	// 进行具体的信息查询
-	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
-		log.Println(err)
-		return nil
-	}
-	// 通过影片ID去redis中获取id对应数据信息
-	var list []MovieBasicInfo
-	for _, v := range s {
-		// 通过key搜索指定的影片信息 , MovieDetail:Cid6:Id15441
-		list = append(list, GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, v.Cid, v.Mid)))
-	}
-	return list
 }
 
 // GetRelateMovieBasicInfo GetRelateMovie 根据SearchInfo获取相关影片

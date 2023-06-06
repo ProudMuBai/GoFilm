@@ -30,6 +30,10 @@ var RefererUrl string
 // CreateClient 初始化请求客户端
 func CreateClient() *colly.Collector {
 	c := colly.NewCollector()
+
+	// 设置请求使用clash的socks5代理
+	//setProxy(c)
+
 	// 设置代理信息
 	//if proxy, err := proxy.RoundRobinProxySwitcher("127.0.0.1:7890"); err != nil {
 	//	c.SetProxyFunc(proxy)
@@ -46,6 +50,7 @@ func CreateClient() *colly.Collector {
 	c.OnRequest(func(request *colly.Request) {
 		// 设置一些请求头信息
 		request.Headers.Set("Content-Type", "application/json;charset=UTF-8")
+		request.Headers.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
 		//request.Headers.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
 		// 请求完成后设置请求头Referer
 		if len(RefererUrl) <= 0 || !strings.Contains(RefererUrl, request.URL.Host) {
@@ -88,4 +93,10 @@ func ApiGet(r *RequestInfo) {
 	if err != nil {
 		log.Println("获取数据失败: ", err)
 	}
+}
+
+// 本地代理测试
+func setProxy(c *colly.Collector) {
+	proxyUrl, _ := url.Parse("socks5://127.0.0.1:7890")
+	c.WithTransport(&http.Transport{Proxy: http.ProxyURL(proxyUrl)})
 }

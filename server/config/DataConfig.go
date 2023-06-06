@@ -47,6 +47,7 @@ const (
 )
 
 /*API相关redis key*/
+
 const (
 	IndexCacheKey = "IndexCache"
 )

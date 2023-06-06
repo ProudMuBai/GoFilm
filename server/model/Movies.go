@@ -89,28 +89,6 @@ type MovieDetail struct {
 	MovieDescriptor `json:"descriptor"` //影片描述信息
 }
 
-// SaveMoves  保存影片分页请求list
-func SaveMoves(list []Movie) (err error) {
-	// 整合数据
-	for _, m := range list {
-		//score, _ := time.ParseInLocation(time.DateTime, m.Time, time.Local)
-		movie, _ := json.Marshal(m)
-		// 以Cid为目录为集合进行存储, 便于后续搜索, 以影片id为分值进行存储 例 MovieList:Cid%d
-		err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.MovieListInfoKey, m.Cid), redis.Z{Score: float64(m.Id), Member: movie}).Err()
-	}
-	return err
-}
-
-// AllMovieInfoKey 获取redis中所有的影视列表信息key MovieList:Cid
-func AllMovieInfoKey() []string {
-	return db.Rdb.Keys(db.Cxt, fmt.Sprint("MovieList:Cid*")).Val()
-}
-
-// GetMovieListByKey 获取指定分类的影片列表数据
-func GetMovieListByKey(key string) []string {
-	return db.Rdb.ZRange(db.Cxt, key, 0, -1).Val()
-}
-
 // SaveDetails 保存影片详情信息到redis中 格式: MovieDetail:Cid?:Id?
 func SaveDetails(list []MovieDetail) (err error) {
 	// 遍历list中的信息
@@ -382,4 +360,30 @@ func GenerateHashKey[K string | ~int | int64](key K) string {
 		return ""
 	}
 	return fmt.Sprint(h.Sum32())
+}
+
+// 处理分类方法0
+
+// ============================采集方案.v1 遗留==================================================
+
+// SaveMoves  保存影片分页请求list
+func SaveMoves(list []Movie) (err error) {
+	// 整合数据
+	for _, m := range list {
+		//score, _ := time.ParseInLocation(time.DateTime, m.Time, time.Local)
+		movie, _ := json.Marshal(m)
+		// 以Cid为目录为集合进行存储, 便于后续搜索, 以影片id为分值进行存储 例 MovieList:Cid%d
+		err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.MovieListInfoKey, m.Cid), redis.Z{Score: float64(m.Id), Member: movie}).Err()
+	}
+	return err
+}
+
+// AllMovieInfoKey 获取redis中所有的影视列表信息key MovieList:Cid
+func AllMovieInfoKey() []string {
+	return db.Rdb.Keys(db.Cxt, fmt.Sprint("MovieList:Cid*")).Val()
+}
+
+// GetMovieListByKey 获取指定分类的影片列表数据
+func GetMovieListByKey(key string) []string {
+	return db.Rdb.ZRange(db.Cxt, key, 0, -1).Val()
 }

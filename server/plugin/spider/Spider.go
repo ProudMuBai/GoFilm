@@ -29,7 +29,7 @@ import (
 */
 
 const (
-	MainSite = "https://www.feisuzyapi.com/api.php/provide/vod/"
+	MainSite = "https://cj.lziapi.com/api.php/provide/vod/"
 )
 
 type Site struct {
@@ -43,10 +43,13 @@ var SiteList = []Site{
 	//{"yh", "https://m3u8.apiyhzy.com/api.php/provide/vod/"},
 	//{"zk", "https://api.1080zyku.com/inc/apijson.php"}, 数据格式不规范,不采用
 	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
+	//{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
 
-	{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
-	{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
-	{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
+	//{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
+	//{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
+	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
+	//{"bf", "https://bfzyapi.com/api.php/provide/vod/"},
+	{"test", "https://bfzyapi.com/api.php/provide/vod/"},
 }
 
 // StartSpider 执行多源spider
