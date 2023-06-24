@@ -23,6 +23,7 @@ func init() {
 }
 func main() {
 	start()
+	//spider.MtSiteSpider()
 }
 
 func start() {

@@ -150,6 +150,12 @@ func (i *IndexLogic) RelateMovie(detail model.MovieDetail, page *model.Page) []m
 	return model.GetRelateMovieBasicInfo(search, page)
 }
 
+// SearchTags 整合对应分类的搜索tag
+func (i *IndexLogic) SearchTags(pid int64) map[string]interface{} {
+	// 通过pid 获取对应分类的 tags
+	return model.GetSearchTag(pid)
+}
+
 /*
 		将多个站点的对应影视播放源追加到主站点播放列表中
 	 1. 将主站点影片的name 和 subtitle 进行处理添加到用于匹配对应播放源的map中

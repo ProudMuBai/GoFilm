@@ -96,6 +96,122 @@ func DelMtPlay(keys []string) {
 	db.Rdb.Del(db.Cxt, keys...)
 }
 
+/*
+SearchKeyword 设置search关键字集合(影片分类检索类型数据)
+	类型, 剧情 , 地区, 语言, 年份, 首字母, 排序
+	1. 在影片详情缓存到redis时将影片的相关数据进行记录, 存在相同类型则分值加一
+	2. 通过分值对类型进行排序类型展示到页面
+*/
+
+func SaveSearchTag(search SearchInfo) {
+	// 声明用于存储采集的影片的分类检索信息
+	//searchMap := make(map[string][]map[string]int)
+
+	// Redis中的记录形式 Search:SearchKeys:Pid1:Title Hash
+	// Redis中的记录形式 Search:SearchKeys:Pid1:xxx Hash
+
+	// 获取redis中的searchMap
+	key := fmt.Sprintf(config.SearchTitle, search.Pid)
+	searchMap := db.Rdb.HGetAll(db.Cxt, key).Val()
+	// 是否存储对应分类的map, 如果不存在则缓存一份
+	if len(searchMap) == 0 {
+		searchMap["Category"] = "类型"
+		searchMap["Plot"] = "剧情"
+		searchMap["Area"] = "地区"
+		searchMap["Language"] = "语言"
+		searchMap["Year"] = "年份"
+		searchMap["Initial"] = "首字母"
+		searchMap["Sort"] = "排序"
+		db.Rdb.HMSet(db.Cxt, key, searchMap)
+	}
+	// 对searchMap中的各个类型进行处理
+	for k, _ := range searchMap {
+		tagKey := fmt.Sprintf(config.SearchTag, search.Pid, k)
+		tagCount := db.Rdb.ZCard(db.Cxt, tagKey).Val()
+		switch k {
+		case "Category":
+			// 获取 Category 数据, 如果不存在则缓存一份
+			if tagCount == 0 {
+				var tags []redis.Z
+				for _, t := range GetChildrenTree(search.Pid) {
+					tags = append(tags, redis.Z{Score: float64(-t.Id), Member: t.Name})
+				}
+				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
+			}
+		case "Year":
+			// 获取 Year 数据, 如果不存在则缓存一份
+			if tagCount == 0 {
+				var tags []redis.Z
+				currentYear := time.Now().Year()
+				for i := 0; i < 12; i++ {
+					tags = append(tags, redis.Z{Score: float64(currentYear - i), Member: currentYear - i})
+				}
+				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
+			}
+		case "Initial":
+			// 如果不存在 首字母 Tag 数据, 则缓存一份
+			if tagCount == 0 {
+				var tags []redis.Z
+				for i := 65; i <= 90; i++ {
+					tags = append(tags, redis.Z{Score: float64(90 - i), Member: fmt.Sprintf("%c", i)})
+				}
+				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
+			}
+		case "Sort":
+			if tagCount == 0 {
+				tags := []redis.Z{
+					{2, "time"},
+					{1, "hits"},
+					{0, "score"},
+				}
+				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
+			}
+		case "Plot":
+			HandleSearchTags(search.ClassTag, tagKey)
+		case "Area":
+			HandleSearchTags(search.Area, tagKey)
+		case "Language":
+			HandleSearchTags(search.Language, tagKey)
+		default:
+			break
+		}
+	}
+
+}
+
+func HandleSearchTags(preTags string, k string) {
+	// 先处理字符串中的空白符 然后对处理前的tag字符串进行分割
+	preTags = regexp.MustCompile(`[\s\n\r]+`).ReplaceAllString(preTags, "")
+	f := func(sep string) {
+		for _, t := range strings.Split(preTags, sep) {
+			// 获取 tag对应的score
+			score := db.Rdb.ZScore(db.Cxt, k, t).Val()
+			// 在原score的基础上+1 重新存入redis中
+
+			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: score + 1, Member: t})
+		}
+	}
+	switch {
+	case strings.Contains(preTags, "/"):
+		f("/")
+	case strings.Contains(preTags, ","):
+		f(",")
+	case strings.Contains(preTags, "，"):
+		f("，")
+	case strings.Contains(preTags, "、"):
+		f("、")
+	default:
+		// 获取 tag对应的score
+		if len(preTags) == 0 || preTags == "其它" {
+			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: 0, Member: preTags})
+		} else {
+			score := db.Rdb.ZScore(db.Cxt, k, preTags).Val()
+			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: score + 1, Member: preTags})
+		}
+	}
+
+}
+
 // ================================= Spider 数据处理(mysql) =================================
 
 // CreateSearchTable 创建存储检索信息的数据表
@@ -331,6 +447,39 @@ func GetMultiplePlay(siteName, key string) []MovieUrlInfo {
 	_ = json.Unmarshal([]byte(data), &playList)
 	return playList
 }
+
+// GetSearchTag 通过影片分类 Pid 返回对应分类的tag信息
+func GetSearchTag(pid int64) map[string]interface{} {
+	res := make(map[string]interface{})
+	titles := db.Rdb.HGetAll(db.Cxt, fmt.Sprintf(config.SearchTitle, pid)).Val()
+	for k, v := range titles {
+		// 通过 k 获取对应的 tag , 并以score进行排序
+		tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 10).Val()
+		res[v] = tags
+
+		// 过滤分类tag
+		switch k {
+		case "Category", "Year", "Initial", "Sort":
+			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, -1).Val()
+			res[v] = tags
+		case "Plot":
+			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 10).Val()
+			res[v] = tags
+		case "Area":
+			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 11).Val()
+			res[v] = tags
+		case "Language":
+			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 6).Val()
+			res[v] = tags
+		default:
+			break
+		}
+
+	}
+	return res
+}
+
+// ================================= 接口数据缓存 =================================
 
 // DataCache  API请求 数据缓存
 func DataCache(key string, data map[string]interface{}) {

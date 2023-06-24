@@ -107,29 +107,29 @@ server
 
 > search 表 (用于记录影片的相关检索信息, 主要用于影片的 搜索, 分类, 排序 等)
 
-| 字段名称     | 类型     | 字段释义         |
-| ------------ | -------- | ---------------- |
-| id           | bigint   | 自增主键         |
-| created_at   | datetime | 记录创建时间     |
-| updated_at   | datetime | 记录更新时间     |
-| deleted_at   | datetime | 逻辑删除字段     |
-| mid          | bigint   | 影片ID           |
-| cid          | bigint   | 二级分类ID       |
-| pid          | bigint   | 一级分类ID       |
-| name         | varchar  | 影片名称         |
-| sub_title    | varchar  | 子标题(影片别名) |
-| c_name       | varchar  | 分类名称         |
-| class_tag    | varchar  | 剧情标签         |
-| area         | varchar  | 地区             |
-| language     | varchar  | 语言             |
-| year         | bigint   | 上映年份         |
-| initial      | varchar  | 首字母           |
-| score        | double   | 豆瓣评分         |
-| update_stamp | bigint   | 影片更新时间戳   |
-| hits         | bigint   | 热度(播放次数)   |
-| state        | varchar  | 状态(正片)       |
-| remarks      | varchar  | 更新状态(完结    |
-| release_data | bigint   | 上映时间戳       |
+| 字段名称     | 类型     | 字段释义               |
+| ------------ | -------- | ---------------------- |
+| id           | bigint   | 自增主键               |
+| created_at   | datetime | 记录创建时间           |
+| updated_at   | datetime | 记录更新时间           |
+| deleted_at   | datetime | 逻辑删除字段           |
+| mid          | bigint   | 影片ID                 |
+| cid          | bigint   | 二级分类ID             |
+| pid          | bigint   | 一级分类ID             |
+| name         | varchar  | 影片名称               |
+| sub_title    | varchar  | 子标题(影片别名)       |
+| c_name       | varchar  | 分类名称               |
+| class_tag    | varchar  | 剧情标签               |
+| area         | varchar  | 地区                   |
+| language     | varchar  | 语言                   |
+| year         | bigint   | 上映年份               |
+| initial      | varchar  | 首字母                 |
+| score        | double   | 豆瓣评分               |
+| update_stamp | bigint   | 影片更新时间戳         |
+| hits         | bigint   | 热度(播放次数)         |
+| state        | varchar  | 状态(正片)             |
+| remarks      | varchar  | 更新状态(完结 \| xx集) |
+| release_data | bigint   | 上映时间戳             |
 
 
 

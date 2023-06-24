@@ -140,8 +140,9 @@ func FilmCategory(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": StatusOk,
 			"data": gin.H{
-				"list":     logic.IL.GetFilmCategory(pid, "pid", &page),
-				"category": category,
+				"list":       logic.IL.GetFilmCategory(pid, "pid", &page),
+				"category":   category,
+				"searchTags": logic.IL.SearchTags(pid),
 			},
 			"page": page,
 		})
@@ -152,8 +153,9 @@ func FilmCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": StatusOk,
 		"data": gin.H{
-			"list":     logic.IL.GetFilmCategory(cid, "cid", &page),
-			"category": category,
+			"list":       logic.IL.GetFilmCategory(cid, "cid", &page),
+			"category":   category,
+			"searchTags": logic.IL.SearchTags(pid),
 		},
 		"page": page,
 	})

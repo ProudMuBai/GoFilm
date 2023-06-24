@@ -10,6 +10,18 @@ const (
 	// MAXGoroutine max goroutine, 执行spider中对协程的数量限制
 	MAXGoroutine = 10
 
+	// CornMovieUpdate 影片更新定时任务间隔
+	CornMovieUpdate = "0 0/20 * * * ?"
+	// UpdateInterval 获取最近几小时更新的影片 (h 小时) 默认3小时
+	UpdateInterval = "3"
+	// CornUpdateAll 每月28执行一次清库更新
+	CornUpdateAll = "0 0 2 28 * ?"
+
+	// SpiderCipher 设置Spider触发指令
+	SpiderCipher = "Life in a different world from zero"
+
+	// -------------------------redis key-----------------------------------
+
 	// CategoryTreeKey 分类树 key
 	CategoryTreeKey     = "CategoryTree"
 	CategoryTreeExpired = time.Hour * 24 * 90
@@ -35,15 +47,8 @@ const (
 	// SearchInfoTemp redis暂存检索数据信息
 	SearchInfoTemp = "Search:SearchInfoTemp"
 
-	// CornMovieUpdate 影片更新定时任务间隔
-	CornMovieUpdate = "0 0/20 * * * ?"
-	// UpdateInterval 获取最近几小时更新的影片 (h 小时) 默认3小时
-	UpdateInterval = "3"
-	// CornUpdateAll 每月28执行一次清库更新
-	CornUpdateAll = "0 0 2 28 * ?"
-
-	// SpiderCipher 设置Spider触发指令
-	SpiderCipher = "Life in a different world from zero"
+	SearchTitle = "Search:Pid%d:Title"
+	SearchTag   = "Search:Pid%d:%s"
 )
 
 /*API相关redis key*/

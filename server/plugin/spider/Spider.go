@@ -30,6 +30,7 @@ import (
 
 const (
 	MainSite = "https://cj.lziapi.com/api.php/provide/vod/"
+	//MainSite = "https://cj.lzcaiji.com/api.php/provide/vod/"
 )
 
 type Site struct {
@@ -39,17 +40,16 @@ type Site struct {
 
 // SiteList 播放源采集站
 var SiteList = []Site{
-	//{"tk", "https://api.tiankongapi.com/api.php/provide/vod"},
-	//{"yh", "https://m3u8.apiyhzy.com/api.php/provide/vod/"},
-	//{"zk", "https://api.1080zyku.com/inc/apijson.php"}, 数据格式不规范,不采用
-	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
+	// 备用采集站
 	//{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
+	//{"bf", "https://bfzyapi.com/api.php/provide/vod/"},
+	//{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
+	//{"ff", "https://svip.ffzyapi8.com/api.php/provide/vod/"},
 
 	//{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
-	//{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
-	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
-	//{"bf", "https://bfzyapi.com/api.php/provide/vod/"},
-	{"test", "https://bfzyapi.com/api.php/provide/vod/"},
+	{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
+	{"bf", "http://by.bfzyapi.com/api.php/provide/vod/"},
+	{"kk", "https://kuaikan-api.com/api.php/provide/vod/from/kuaikan"},
 }
 
 // StartSpider 执行多源spider
@@ -290,7 +290,7 @@ func StartSpiderRe() {
 func GetPageCount(r RequestInfo) (count int, err error) {
 	// 发送请求获取pageCount
 	r.Params.Set("ac", "detail")
-	r.Params.Set("pg", "1")
+	r.Params.Set("pg", "2")
 	ApiGet(&r)
 	//  判断请求结果是否为空, 如果为空直接输出错误并终止
 	if len(r.Resp) <= 0 {

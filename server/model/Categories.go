@@ -41,3 +41,15 @@ func ExistsCategoryTree() bool {
 	}
 	return exists == 1
 }
+
+// GetChildrenTree 根据影片Id获取对应分类的子分类信息
+func GetChildrenTree(id int64) []*CategoryTree {
+	tree := GetCategoryTree()
+	for _, t := range tree.Children {
+		if t.Id == id {
+			return t.Children
+		}
+	}
+	return nil
+
+}

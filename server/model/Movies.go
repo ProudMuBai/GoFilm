@@ -89,6 +89,8 @@ type MovieDetail struct {
 	MovieDescriptor `json:"descriptor"` //影片描述信息
 }
 
+// ===================================Redis数据交互========================================================
+
 // SaveDetails 保存影片详情信息到redis中 格式: MovieDetail:Cid?:Id?
 func SaveDetails(list []MovieDetail) (err error) {
 	// 遍历list中的信息
@@ -100,15 +102,13 @@ func SaveDetails(list []MovieDetail) (err error) {
 		err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.CategoryTreeExpired).Err()
 		// 2. 同步保存简略信息到redis中
 		SaveMovieBasicInfo(detail)
-		// 3. 保存Search检索信息到redis, 暂时搁置
-		//if err == nil {
-		//	// 转换 detail信息
-		//	searchInfo := ConvertSearchInfo(detail)
-		//	// 放弃redis进行检索, 多条件处理不方便
-		//	//err = AddSearchInfo(searchInfo)
-		//	// 只存储用于检索对应影片的关键字信息
-		//	SearchKeyword(searchInfo)
-		//}
+		// 3. 保存 Search tag redis中
+		if err == nil {
+			// 转换 detail信息
+			searchInfo := ConvertSearchInfo(detail)
+			// 只存储用于检索对应影片的关键字信息
+			SaveSearchTag(searchInfo)
+		}
 
 	}
 	// 保存一份search信息到mysql, 批量存储
@@ -153,7 +153,7 @@ func SaveSitePlayList(siteName string, list []MovieDetail) (err error) {
 				continue
 			}
 			// 如果DbId不为0, 则以dbID作为key进行hash额外存储一次
-			if d.DbId > 0 {
+			if d.DbId != 0 {
 				res[GenerateHashKey(d.DbId)] = string(data)
 			}
 			res[GenerateHashKey(d.Name)] = string(data)
@@ -165,108 +165,6 @@ func SaveSitePlayList(siteName string, list []MovieDetail) (err error) {
 		err = db.Rdb.HMSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteName), res).Err()
 	}
 	return
-}
-
-// AddSearchInfo 将影片关键字信息整合后存入search 集合中
-func AddSearchInfo(searchInfo SearchInfo) (err error) {
-	// 片名 Name 分类 CName 类别标签 classTag 地区 Area 语言 Language 年份 Year 首字母 Initial, 排序
-	data, _ := json.Marshal(searchInfo)
-	// 时间排序 score -->时间戳 DbId 排序 --> 热度, 评分排序 DbScore
-	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchTimeListKey, searchInfo.Pid), redis.Z{Score: float64(searchInfo.UpdateStamp), Member: data}).Err()
-	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchScoreListKey, searchInfo.Pid), redis.Z{Score: searchInfo.Score, Member: data}).Err()
-	err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Pid%d", config.SearchHeatListKey, searchInfo.Pid), redis.Z{Score: float64(searchInfo.Hits), Member: data}).Err()
-	// 添加搜索关键字信息
-	SearchKeyword(searchInfo)
-	return
-}
-
-// SearchKeyword 设置search关键字集合
-func SearchKeyword(search SearchInfo) {
-	// 首先获取redis中的search 关键字信息
-	key := fmt.Sprintf("%s:Pid%d", config.SearchKeys, search.Pid)
-	keyword := db.Rdb.HGetAll(db.Cxt, key).Val()
-	if keyword["Year"] == "" {
-		currentYear := time.Now().Year()
-		year := ""
-		for i := 0; i < 12; i++ {
-			// 提供当前年份前推十二年的搜索
-			year = fmt.Sprintf("%s,%d", year, currentYear-i)
-		}
-		initial := ""
-		for i := 65; i <= 90; i++ {
-			initial = fmt.Sprintf("%s,%c", initial, i)
-		}
-		keyword = map[string]string{
-			//"Name":     "",
-			"Category": "",
-			"Tag":      "",
-			"Area":     "",
-			"Language": "",
-			"Year":     strings.Trim(year, ","),
-			"Initial":  strings.Trim(initial, ","),
-			"Sort":     "Time,Db,Score", // 默认,一般不修改
-		}
-	}
-	// 分类标签处理
-	if !strings.Contains(keyword["Category"], search.CName) {
-		keyword["Category"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Category"], search.CName), ",")
-	}
-	// 影视内容分类处理
-	if strings.Contains(search.ClassTag, "/") {
-		for _, t := range strings.Split(search.ClassTag, "/") {
-			if !strings.Contains(keyword["Tag"], t) {
-				keyword["Tag"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Tag"], t), ",")
-			}
-		}
-	} else if strings.Contains(search.ClassTag, ",") {
-		for _, t := range strings.Split(search.ClassTag, ",") {
-			if !strings.Contains(keyword["Tag"], t) {
-				keyword["Tag"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Tag"], t), ",")
-			}
-		}
-	} else {
-		if !strings.Contains(keyword["Tag"], search.ClassTag) {
-			keyword["Tag"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Tag"], search.ClassTag), ",")
-		}
-	}
-	// 如果地区中包含 / 分隔符 则先进行切分处理
-	if strings.Contains(search.Area, "/") {
-		for _, s := range strings.Split(search.Area, "/") {
-			if !strings.Contains(keyword["Area"], strings.TrimSpace(s)) {
-				keyword["Area"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Area"], s), ",")
-			}
-		}
-	} else if strings.Contains(search.Area, ",") {
-		for _, s := range strings.Split(search.Area, ",") {
-			if !strings.Contains(keyword["Area"], strings.TrimSpace(s)) {
-				keyword["Area"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Area"], s), ",")
-			}
-		}
-	} else {
-		if !strings.Contains(keyword["Area"], search.Area) {
-			keyword["Area"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Area"], search.Area), ",")
-		}
-	}
-	// 语言处理
-	if strings.Contains(search.Language, "/") {
-		for _, l := range strings.Split(search.Language, "/") {
-			if !strings.Contains(keyword["Language"], l) {
-				keyword["Language"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Language"], l), ",")
-			}
-		}
-
-	} else if strings.Contains(search.Language, ",") {
-		for _, l := range strings.Split(search.Language, ",") {
-			if !strings.Contains(keyword["Language"], l) {
-				keyword["Language"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Language"], l), ",")
-			}
-		}
-	} else {
-		if !strings.Contains(keyword["Language"], search.Language) {
-			keyword["Language"] = strings.Trim(fmt.Sprintf("%s,%s", keyword["Language"], search.Language), ",")
-		}
-	}
-	_ = db.Rdb.HMSet(db.Cxt, key, keyword).Err()
 }
 
 // BatchSaveSearchInfo 批量保存Search信息
@@ -361,8 +259,6 @@ func GenerateHashKey[K string | ~int | int64](key K) string {
 	}
 	return fmt.Sprint(h.Sum32())
 }
-
-// 处理分类方法0
 
 // ============================采集方案.v1 遗留==================================================
 
