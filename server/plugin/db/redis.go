@@ -20,7 +20,7 @@ func InitRedisConn() error {
 		Addr:        config.RedisAddr,
 		Password:    config.RedisPassword,
 		DB:          config.RedisDBNo,
-		PoolSize:    10,               // 默认连接数
+		PoolSize:    10,               // 最大连接数
 		DialTimeout: time.Second * 10, // 超时时间
 	})
 	// 测试连接是否正常
@@ -31,7 +31,7 @@ func InitRedisConn() error {
 	return nil
 }
 
-// 关闭redis连接
+// CloseRedis 关闭redis连接
 func CloseRedis() error {
 	return Rdb.Close()
 }

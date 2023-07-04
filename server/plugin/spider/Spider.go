@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"server/config"
 	"server/model"
-	"server/plugin/common"
+	"server/plugin/common/dp"
 	"time"
 )
 
@@ -65,9 +65,9 @@ func StartSpider() {
 	model.CreateSearchTable()
 	SearchInfoToMdb()
 	log.Println("SearchInfoToMdb 影片检索信息保存完毕")
-	// 获取其他站点数据
-	go MtSiteSpider()
-	log.Println("Spider End , 数据保存执行完成")
+	// 获取其他站点数据13
+	//go MtSiteSpider()
+	//log.Println("Spider End , 数据保存执行完成")
 	//time.Sleep(time.Second * 10)
 }
 
@@ -89,7 +89,7 @@ func CategoryList() {
 	// 获取分类列表信息
 	classList := movieListInfo.Class
 	// 组装分类数据信息树形结构
-	categoryTree := common.CategoryTree(classList)
+	categoryTree := dp.CategoryTree(classList)
 	// 序列化tree
 	data, _ := json.Marshal(categoryTree)
 	// 保存 tree 到redis
@@ -331,6 +331,6 @@ func GetMovieDetail(pageNumber int, r RequestInfo) (list []model.MovieDetail, er
 		return
 	}
 	// 处理details信息
-	list = common.ProcessMovieDetailList(details.List)
+	list = dp.ProcessMovieDetailList(details.List)
 	return
 }

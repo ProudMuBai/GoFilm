@@ -198,3 +198,15 @@ func multipleSource(detail *model.MovieDetail) {
 	}
 
 }
+
+// GetFilmsByTags 通过searchTag 返回满足条件的分页影片信息
+func (i *IndexLogic) GetFilmsByTags(st model.SearchTagsVO, page *model.Page) []model.MovieBasicInfo {
+	// 获取满足条件的影片id 列表
+	sl := model.GetSearchInfosByTags(st, page)
+	// 通过key 获取对应影片的基本信息
+	var list []model.MovieBasicInfo
+	for _, s := range sl {
+		list = append(list, model.GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, s.Cid, s.Mid)))
+	}
+	return list
+}

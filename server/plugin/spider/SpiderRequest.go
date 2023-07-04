@@ -19,7 +19,7 @@ var (
 // RequestInfo 请求参数结构体
 type RequestInfo struct {
 	Uri    string      `json:"uri"`    // 请求url地址
-	Params url.Values  `json:"params"` // 请求参数
+	Params url.Values  `json:"param"`  // 请求参数
 	Header http.Header `json:"header"` // 请求头数据
 	Resp   []byte      `json:"resp"`   // 响应结果数据
 }

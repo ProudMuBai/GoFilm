@@ -12,10 +12,10 @@
         <!--右侧顶级分类导航 -->
         <div class="nav_right">
             <el-link :underline="false" href="/">首页</el-link>
-            <el-link :underline="false" :href="`/categoryFilm?pid=${nav.film.id}`">电影</el-link>
-            <el-link :underline="false" :href="`/categoryFilm?pid=${nav.tv.id}`">剧集</el-link>
-            <el-link :underline="false" :href="`/categoryFilm?pid=${nav.cartoon.id}`">动漫</el-link>
-            <el-link :underline="false" :href="`/categoryFilm?pid=${nav.variety.id}`">综艺</el-link>
+            <el-link :underline="false" :href="`/categoryFilm?Pid=${nav.film.id}`">电影</el-link>
+            <el-link :underline="false" :href="`/categoryFilm?Pid=${nav.tv.id}`">剧集</el-link>
+            <el-link :underline="false" :href="`/categoryFilm?Pid=${nav.cartoon.id}`">动漫</el-link>
+            <el-link :underline="false" :href="`/categoryFilm?Pid=${nav.variety.id}`">综艺</el-link>
             <!--        <span style="color:#777; font-weight: bold">|</span>-->
             <el-link href="/search" class="hidden-md-and-up" :underline="false">
                 <el-icon style="font-size: 18px">

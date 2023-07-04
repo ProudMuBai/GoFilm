@@ -140,9 +140,9 @@ func FilmCategory(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": StatusOk,
 			"data": gin.H{
-				"list":       logic.IL.GetFilmCategory(pid, "pid", &page),
-				"category":   category,
-				"searchTags": logic.IL.SearchTags(pid),
+				"list":     logic.IL.GetFilmCategory(pid, "pid", &page),
+				"category": category,
+				"search":   logic.IL.SearchTags(pid),
 			},
 			"page": page,
 		})
@@ -153,9 +153,57 @@ func FilmCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": StatusOk,
 		"data": gin.H{
-			"list":       logic.IL.GetFilmCategory(cid, "cid", &page),
-			"category":   category,
-			"searchTags": logic.IL.SearchTags(pid),
+			"list":     logic.IL.GetFilmCategory(cid, "cid", &page),
+			"category": category,
+			"search":   logic.IL.SearchTags(pid),
+		},
+		"page": page,
+	})
+
+	// 获取请求参数
+}
+
+func FilmTagSearch(c *gin.Context) {
+	params := model.SearchTagsVO{}
+	pidStr := c.DefaultQuery("Pid", "")
+	cidStr := c.DefaultQuery("Category", "")
+	yStr := c.DefaultQuery("Year", "")
+	if pidStr == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  StatusFailed,
+			"message": "缺少分类信息",
+		})
+		return
+	}
+	params.Pid, _ = strconv.ParseInt(pidStr, 10, 64)
+	params.Cid, _ = strconv.ParseInt(cidStr, 10, 64)
+	params.Plot = c.DefaultQuery("Plot", "")
+	params.Area = c.DefaultQuery("Area", "")
+	params.Language = c.DefaultQuery("Language", "")
+	params.Year, _ = strconv.ParseInt(yStr, 10, 64)
+	params.Sort = c.DefaultQuery("Sort", "update_stamp")
+
+	// 设置分页信息
+	currentStr := c.DefaultQuery("current", "1")
+	current, _ := strconv.Atoi(currentStr)
+	page := model.Page{PageSize: 49, Current: current}
+	logic.IL.GetFilmsByTags(params, &page)
+	// 返回对应信息
+	c.JSON(http.StatusOK, gin.H{
+		"status": StatusOk,
+		"data": gin.H{
+			"title":  logic.IL.GetPidCategory(params.Pid).Category,
+			"list":   logic.IL.GetFilmsByTags(params, &page),
+			"search": logic.IL.SearchTags(params.Pid),
+			"params": map[string]string{
+				"Pid":      pidStr,
+				"Category": cidStr,
+				"Plot":     params.Plot,
+				"Area":     params.Area,
+				"Language": params.Language,
+				"Year":     yStr,
+				"Sort":     params.Sort,
+			},
 		},
 		"page": page,
 	})

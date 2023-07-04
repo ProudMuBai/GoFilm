@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"regexp"
 	"server/config"
+	"server/plugin/common/param"
 	"server/plugin/db"
 	"strings"
 	"time"
@@ -44,6 +45,12 @@ type Page struct {
 	PageCount int `json:"pageCount"` // 总页数
 	Total     int `json:"total"`     // 总记录数
 	//List      []interface{} `json:"list"`      // 数据
+}
+
+// Tag 影片分类标签结构体
+type Tag struct {
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
 }
 
 func (s *SearchInfo) TableName() string {
@@ -115,6 +122,7 @@ func SaveSearchTag(search SearchInfo) {
 	searchMap := db.Rdb.HGetAll(db.Cxt, key).Val()
 	// 是否存储对应分类的map, 如果不存在则缓存一份
 	if len(searchMap) == 0 {
+		searchMap = make(map[string]string)
 		searchMap["Category"] = "类型"
 		searchMap["Plot"] = "剧情"
 		searchMap["Area"] = "地区"
@@ -132,37 +140,34 @@ func SaveSearchTag(search SearchInfo) {
 		case "Category":
 			// 获取 Category 数据, 如果不存在则缓存一份
 			if tagCount == 0 {
-				var tags []redis.Z
 				for _, t := range GetChildrenTree(search.Pid) {
-					tags = append(tags, redis.Z{Score: float64(-t.Id), Member: t.Name})
+					db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k),
+						redis.Z{Score: float64(-t.Id), Member: fmt.Sprintf("%v:%v", t.Name, t.Id)})
 				}
-				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
 			}
 		case "Year":
 			// 获取 Year 数据, 如果不存在则缓存一份
 			if tagCount == 0 {
-				var tags []redis.Z
 				currentYear := time.Now().Year()
 				for i := 0; i < 12; i++ {
-					tags = append(tags, redis.Z{Score: float64(currentYear - i), Member: currentYear - i})
+					db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k),
+						redis.Z{Score: float64(currentYear - i), Member: fmt.Sprintf("%v:%v", currentYear-i, currentYear-i)})
 				}
-				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
 			}
 		case "Initial":
 			// 如果不存在 首字母 Tag 数据, 则缓存一份
 			if tagCount == 0 {
-				var tags []redis.Z
 				for i := 65; i <= 90; i++ {
-					tags = append(tags, redis.Z{Score: float64(90 - i), Member: fmt.Sprintf("%c", i)})
+					db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k),
+						redis.Z{Score: float64(90 - i), Member: fmt.Sprintf("%c:%c", i, i)})
 				}
-				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
 			}
 		case "Sort":
 			if tagCount == 0 {
 				tags := []redis.Z{
-					{2, "time"},
-					{1, "hits"},
-					{0, "score"},
+					{2, "时间排序:update_stamp"},
+					{1, "人气排序:hits"},
+					{0, "评分排序:score"},
 				}
 				db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.SearchTag, search.Pid, k), tags...)
 			}
@@ -185,10 +190,9 @@ func HandleSearchTags(preTags string, k string) {
 	f := func(sep string) {
 		for _, t := range strings.Split(preTags, sep) {
 			// 获取 tag对应的score
-			score := db.Rdb.ZScore(db.Cxt, k, t).Val()
+			score := db.Rdb.ZScore(db.Cxt, k, fmt.Sprintf("%v:%v", t, t)).Val()
 			// 在原score的基础上+1 重新存入redis中
-
-			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: score + 1, Member: t})
+			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: score + 1, Member: fmt.Sprintf("%v:%v", t, t)})
 		}
 	}
 	switch {
@@ -203,13 +207,18 @@ func HandleSearchTags(preTags string, k string) {
 	default:
 		// 获取 tag对应的score
 		if len(preTags) == 0 || preTags == "其它" {
-			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: 0, Member: preTags})
+			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: 0, Member: fmt.Sprintf("%v:%v", preTags, preTags)})
 		} else {
-			score := db.Rdb.ZScore(db.Cxt, k, preTags).Val()
-			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: score + 1, Member: preTags})
+			score := db.Rdb.ZScore(db.Cxt, k, fmt.Sprintf("%v:%v", preTags, preTags)).Val()
+			db.Rdb.ZAdd(db.Cxt, k, redis.Z{Score: score + 1, Member: fmt.Sprintf("%v:%v", preTags, preTags)})
 		}
 	}
+}
 
+func BatchHandleSearchTag(infos ...SearchInfo) {
+	for _, info := range infos {
+		SaveSearchTag(info)
+	}
 }
 
 // ================================= Spider 数据处理(mysql) =================================
@@ -241,8 +250,8 @@ func BatchSave(list []SearchInfo) {
 		tx.Rollback()
 		return
 	}
-	// 插入成功后输出一下成功信息
-	//log.Println("BatchSave SearchInfo Successful, Count: ", len(list))
+	// 保存成功后将相应tag数据缓存到redis中
+	BatchHandleSearchTag(list...)
 	tx.Commit()
 }
 
@@ -253,7 +262,7 @@ func BatchSaveOrUpdate(list []SearchInfo) {
 		var count int64
 		// 通过当前影片id 对应的记录数
 		tx.Model(&SearchInfo{}).Where("mid", info.Mid).Count(&count)
-		// 如果存在对应数据则进行更新, 否则进行删除
+		// 如果存在对应数据则进行更新, 否则保存相应数据
 		if count > 0 {
 			// 记录已经存在则执行更新部分内容
 			err := tx.Model(&SearchInfo{}).Where("mid", info.Mid).Updates(SearchInfo{UpdateStamp: info.UpdateStamp, Hits: info.Hits, State: info.State,
@@ -266,6 +275,8 @@ func BatchSaveOrUpdate(list []SearchInfo) {
 			if err := tx.Create(&info).Error; err != nil {
 				tx.Rollback()
 			}
+			// 插入成功后保存一份tag信息到redis中
+			BatchHandleSearchTag(info)
 		}
 	}
 	// 提交事务
@@ -450,33 +461,113 @@ func GetMultiplePlay(siteName, key string) []MovieUrlInfo {
 
 // GetSearchTag 通过影片分类 Pid 返回对应分类的tag信息
 func GetSearchTag(pid int64) map[string]interface{} {
+	// 整合searchTag相关内容
 	res := make(map[string]interface{})
 	titles := db.Rdb.HGetAll(db.Cxt, fmt.Sprintf(config.SearchTitle, pid)).Val()
-	for k, v := range titles {
+	res["titles"] = titles
+	// 处理单一分类的数据格式
+	tagMap := make(map[string]interface{})
+	for k, _ := range titles {
 		// 通过 k 获取对应的 tag , 并以score进行排序
-		tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 10).Val()
-		res[v] = tags
-
 		// 过滤分类tag
 		switch k {
-		case "Category", "Year", "Initial", "Sort":
+		case "Category":
 			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, -1).Val()
-			res[v] = tags
+			tagMap[k] = HandleTagStr(k, tags...)
 		case "Plot":
 			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 10).Val()
-			res[v] = tags
+			tagMap[k] = HandleTagStr(k, tags...)
 		case "Area":
 			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 11).Val()
-			res[v] = tags
+			tagMap[k] = HandleTagStr(k, tags...)
 		case "Language":
 			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, 6).Val()
-			res[v] = tags
+			tagMap[k] = HandleTagStr(k, tags...)
+		case "Year", "Initial", "Sort":
+			tags := db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, k), 0, -1).Val()
+			tagMap[k] = HandleTagStr(k, tags...)
 		default:
 			break
 		}
-
 	}
+	res["tags"] = tagMap
+	// 分类列表展示的顺序
+	res["sortList"] = []string{"Category", "Plot", "Area", "Language", "Year", "Sort"}
 	return res
+}
+
+// HandleTagStr 处理tag数据格式
+func HandleTagStr(title string, tags ...string) []map[string]string {
+	var r []map[string]string
+	if !strings.EqualFold(title, "Sort") {
+		r = append(r, map[string]string{
+			"Name":  "全部",
+			"Value": "",
+		})
+	}
+	for _, t := range tags {
+		if sl := strings.Split(t, ":"); len(sl) > 0 {
+			r = append(r, map[string]string{
+				"Name":  sl[0],
+				"Value": sl[1],
+			})
+		}
+	}
+	if !strings.EqualFold(title, "Sort") && !strings.EqualFold(title, "Year") {
+		r = append(r, map[string]string{
+			"Name":  "其它",
+			"Value": "其它",
+		})
+	}
+	return r
+}
+
+// GetSearchInfosByTags 查询满足searchTag条件的影片分页数据
+func GetSearchInfosByTags(st SearchTagsVO, page *Page) []SearchInfo {
+	// 准备查询语句的条件
+	qw := db.Mdb.Model(&SearchInfo{})
+	// 通过searchTags的非空属性值, 拼接对应的查询条件
+	t := reflect.TypeOf(st)
+	v := reflect.ValueOf(st)
+	for i := 0; i < t.NumField(); i++ {
+		// 如果字段值不为空
+		value := v.Field(i).Interface()
+		if !param.IsEmpty(value) {
+			cName := strings.ToLower(t.Field(i).Name)
+			switch cName {
+			case "pid", "cid", "area", "language", "year":
+				qw = qw.Where(fmt.Sprintf("%s = ?", cName), value)
+			case "plot":
+				qw = qw.Where("class_tag LIKE ?", fmt.Sprintf("%%%v%%", value))
+			case "sort":
+				qw.Order(fmt.Sprintf("%v Desc", value))
+			default:
+				break
+			}
+			//// 处理特殊条件
+			//if strings.EqualFold(cName, "sort") {
+			//	qw.Order(fmt.Sprintf("year Desc, %v Desc", cName))
+			//}
+		}
+	}
+
+	// 返回分页参数
+	GetPage(qw, page)
+	//
+	var sl []SearchInfo
+	if err := qw.Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&sl).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	return sl
+
+}
+
+func GetPage(db *gorm.DB, page *Page) {
+	var count int64
+	db.Count(&count)
+	page.Total = int(count)
+	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 }
 
 // ================================= 接口数据缓存 =================================
