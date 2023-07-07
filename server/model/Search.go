@@ -310,6 +310,14 @@ func TunCateSearchTable() {
 	}
 }
 
+// GetPage 获取分页相关数据
+func GetPage(db *gorm.DB, page *Page) {
+	var count int64
+	db.Count(&count)
+	page.Total = int(count)
+	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+}
+
 // ================================= API 数据接口信息处理 =================================
 
 // GetMovieListByPid  通过Pid 分类ID 获取对应影片的数据信息
@@ -563,11 +571,28 @@ func GetSearchInfosByTags(st SearchTagsVO, page *Page) []SearchInfo {
 
 }
 
-func GetPage(db *gorm.DB, page *Page) {
-	var count int64
-	db.Count(&count)
-	page.Total = int(count)
-	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+// GetMovieListBySort 通过排序类型返回对应的影片基本信息
+func GetMovieListBySort(t int, pid int64, page *Page) []MovieBasicInfo {
+	var sl []SearchInfo
+	qw := db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Limit(page.PageSize).Offset((page.Current) - 10*page.PageSize)
+	// 针对不同排序类型返回对应的分页数据
+	switch t {
+	case 0:
+		// 最新上映 (上映时间)
+		qw.Order("year DESC, release_date DESC")
+	case 1:
+		// 排行榜 (暂定为热度排行)
+		qw.Order("year DESC, hits DESC")
+	case 2:
+		// 最近更新 (更新时间)
+		qw.Order("year DESC, update_stamp DESC")
+	}
+	if err := qw.Find(&sl).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	return GetBasicInfoBySearchInfos(sl...)
+
 }
 
 // ================================= 接口数据缓存 =================================

@@ -188,6 +188,7 @@ func FilmTagSearch(c *gin.Context) {
 	current, _ := strconv.Atoi(currentStr)
 	page := model.Page{PageSize: 49, Current: current}
 	logic.IL.GetFilmsByTags(params, &page)
+	// 获取当前分类Title
 	// 返回对应信息
 	c.JSON(http.StatusOK, gin.H{
 		"status": StatusOk,
@@ -204,6 +205,32 @@ func FilmTagSearch(c *gin.Context) {
 				"Year":     yStr,
 				"Sort":     params.Sort,
 			},
+		},
+		"page": page,
+	})
+}
+
+// FilmClassify  影片分类首页数据展示
+func FilmClassify(c *gin.Context) {
+	pidStr := c.DefaultQuery("Pid", "")
+	if pidStr == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  StatusFailed,
+			"message": "缺少分类信息",
+		})
+		return
+	}
+	// 1. 顶部Title数据
+	pid, _ := strconv.ParseInt(pidStr, 10, 64)
+	title := logic.IL.GetPidCategory(pid)
+	// 2. 设置分页信息
+	page := model.Page{PageSize: 21, Current: 1}
+	// 3. 获取当前分类下的 最新上映, 排行榜, 最近更新 影片信息
+	c.JSON(http.StatusOK, gin.H{
+		"status": StatusOk,
+		"data": gin.H{
+			"title":   title,
+			"content": logic.IL.GetFilmClassify(pid, &page),
 		},
 		"page": page,
 	})

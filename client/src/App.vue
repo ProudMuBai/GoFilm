@@ -1,5 +1,5 @@
 <template>
-    <div class="main">
+    <div class="main" >
         <router-view></router-view>
         <Util/>
     </div>
@@ -26,7 +26,7 @@ html, body, #app {
     min-height: 100vh;
     /*background: #222;*/
     color: rgb(221, 221, 221);
-    background: rgb(34, 34, 34);
+    //background: rgb(34, 34, 34);
 }
 
 
@@ -37,7 +37,6 @@ html, body, #app {
 
 /*全局a标签默认样式去除*/
 a {
-    color: #2d2e2f;
     outline: none;
     text-decoration: none;
     color: #888888;

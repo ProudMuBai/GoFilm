@@ -36,7 +36,6 @@ const control = reactive({
     darkTheme: true,
 })
 
-//
 onMounted(()=>{
 
     changeStyle(localStorage.getItem("theme")+'')
@@ -65,7 +64,7 @@ const changeStyle = (type:string)=>{
       case  'dark':
           control.darkTheme = true
           localStorage.setItem("theme", 'dark')
-          document.getElementsByClassName('main')[0].style.background = `rgb(34,34,34)`
+          document.getElementsByClassName('main')[0].style.background = `#16161a`
           break
       case 'more':
           control.show = !control.show

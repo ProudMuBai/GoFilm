@@ -40,13 +40,13 @@ const handleImg =(e:Event)=>{
         width: 100%;
         display: flex;
         flex-flow: wrap;
-        justify-content: start;
+        justify-content: space-between;
     }
 
     .c_content .item {
         flex-basis: calc(33% - 6px);
         max-width: 33%;
-        margin: 0 3px 20px 3px;
+        margin-bottom: 20px;
         box-sizing: border-box;
         overflow: hidden;
     }
@@ -107,11 +107,11 @@ const handleImg =(e:Event)=>{
         width: 100%;
         display: flex;
         flex-flow: wrap;
-        justify-content: start;
+        justify-content: space-between;
     }
 
     .c_content .item {
-        margin: 0 8px 20px 8px;
+        margin-bottom: 20px;
         box-sizing: border-box;
     }
 

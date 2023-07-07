@@ -232,6 +232,18 @@ func GetDetailByKey(key string) MovieDetail {
 	return detail
 }
 
+// GetBasicInfoBySearchInfos 通过searchInfo 获取影片的基本信息
+func GetBasicInfoBySearchInfos(infos ...SearchInfo) []MovieBasicInfo {
+	var list []MovieBasicInfo
+	for _, s := range infos {
+		data := []byte(db.Rdb.Get(db.Cxt, fmt.Sprintf(config.MovieBasicInfoKey, s.Cid, s.Mid)).Val())
+		basic := MovieBasicInfo{}
+		_ = json.Unmarshal(data, &basic)
+		list = append(list, basic)
+	}
+	return list
+}
+
 /*
 	对附属播放源入库时的name|dbID进行处理,保证唯一性
 1. 去除name中的所有空格

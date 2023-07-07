@@ -1,18 +1,18 @@
 <template>
   <div class="container">
     <div class="header">
-      <div class="h_title">
-        <span class="header_t">{{ d.title.name }}</span>
-      </div>
-      <!--影片分类检索-->
-      <div class="t_container">
-        <div class="t_item" v-for="k in d.search.sortList ">
-          <div class="t_title">{{d.search.titles[k]}}</div>
-          <div class="tag_group">
-            <a href="javascript:void(false)" :class="`tag ${t['Value'] === d.searchParams[k]?'t_active':''}`" v-for="t in d.search.tags[k]" @click="handleTag(k,t['Value'])" >
-              {{t['Name']}}
-            </a>
-          </div>
+      <a :href="`/filmClassify?Pid=${d.title.id}`" >{{ d.title.name }}</a>
+      <span class="line"/>
+      <a :href="`/filmClassifySearch?Pid=${d.title.id}`" class="h_active">{{ `${d.title.name}库` }}</a>
+    </div>
+    <!--影片分类检索-->
+    <div class="t_container">
+      <div class="t_item" v-for="k in d.search.sortList ">
+        <div class="t_title">{{d.search.titles[k]}} <b class="iconfont icon-yousanjiao"/> </div>
+        <div class="tag_group">
+          <a href="javascript:void(false)" :class="`tag ${t['Value'] === d.searchParams[k]?'t_active':''}`" v-for="t in d.search.tags[k]" @click="handleTag(k,t['Value'])" >
+            {{t['Name']}}
+          </a>
         </div>
       </div>
     </div>
@@ -61,7 +61,7 @@ const handleParams = ()=> {
       q += `&${k}=${val}`
     }
   }
-  location.href = '/categoryFilm?'+q.slice(1)+`&current=${d.page.current}`
+  location.href = '/filmClassifySearch?'+q.slice(1)+`&current=${d.page.current}`
 }
 
 // 页面所需数据
@@ -97,9 +97,8 @@ const changeCurrent = (currentVal: number) => {
 
 
 const getFilmData = () => {
-  let url =  `filmClassifyHome`
   let query = router.currentRoute.value.query
-  ApiGet(url, {...query}).then((resp: any) => {
+  ApiGet(`/filmClassifySearch`, {...query}).then((resp: any) => {
     if (resp.status === 'ok') {
       d.title = resp.data.title
       d.list = resp.data.list
@@ -114,38 +113,22 @@ const getFilmData = () => {
 
 onMounted(() => {
   getFilmData()
-  // let query = router.currentRoute.value.query
-  // getFilmData({pid: query.pid, cid: query.cid, current: query.current})
 })
 
 </script>
 
 
 <style scoped>
-.h_title {
-  display: flex;
-  justify-content: start;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #777777;
-  margin-bottom: 10px;
-}
-.h_title_active {
-  color: #212121
-}
-.header_t {
-  color: #a0a0a0;
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.1;
+@import "/src/assets/css/classify.css";
 
-}
 
 
 .t_container {
   display: block;
   font-size: 14px;
-  padding: 20px 0;
-//background-color: rgb(117, 116, 116);
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(255,255,255, 0.12);
 }
 
 .t_item {
@@ -188,7 +171,6 @@ onMounted(() => {
 }
 
 
-
 </style>
 <!--移动端修改-->
 <style scoped>
@@ -197,7 +179,6 @@ onMounted(() => {
     padding: 0 10px;
 
   }
-
   /*顶部内容区域*/
   .header {
     width: 100%;
@@ -205,69 +186,6 @@ onMounted(() => {
     background: none !important;
   }
 
-  .header p {
-    text-align: left;
-    font-weight: 600;
-    font-size: 24px;
-    color: #c9c4c4;
-    margin-top: 0;
-    padding-left: 10px;
-    height: 100%;
-    /*background: rgb(34, 34, 34);*/
-  }
-
-  .c_header {
-    max-width: 100%;
-    display: flex;
-    /*justify-content: start;*/
-    flex-wrap: nowrap;
-    overflow-x: scroll;
-    margin-bottom: 20px;
-  }
-
-  .c_header a {
-    white-space: nowrap;
-    margin-right: 10px;
-    color: #000;
-    font-weight: 400;
-    background: rgba(255, 255, 255, 0.94);
-    padding: 6px 10px;
-    border-radius: 10px;
-  }
-
-  .c_header a:hover {
-    color: orange;
-  }
-
-  .nav:before {
-    width: 36px;
-    height: 4px;
-    background: orange;
-    content: '';
-    position: absolute;
-    left: 35%;
-    bottom: 12px;
-    border-radius: 50px;
-    transform: scaleX(0);
-    transition: transform 0.5s ease-out;
-  }
-
-  .nav:hover:before {
-    width: 36px;
-    height: 4px;
-    background: orange;
-    content: '';
-    position: absolute;
-    left: 35%;
-    bottom: 12px;
-    border-radius: 50px;
-    transform: scaleX(1);
-  }
-
-  .active {
-    background: rgb(249 230 195) !important;
-    color: #e52424 !important;
-  }
 
 }
 </style>
@@ -284,68 +202,9 @@ onMounted(() => {
     width: 100%;
   }
 
-  .header p {
-    text-align: left;
-    font-weight: 800;
-    font-size: 32px;
-    color: #c9c4c4;
-    margin-top: 0;
-    /*border-bottom: 2px solid #ffffff;*/
-    /*padding-bottom: 30px;*/
-  }
 
-  .c_header {
-    width: 100%;
-    display: flex;
-    justify-content: start;
-    margin-bottom: 20px;
-  }
 
-  .c_header a {
-    flex-basis: calc(14% - 16px);
-    white-space: nowrap;
-    margin-right: 20px;
-    color: #000;
-    font-weight: 800;
-    background: rgba(255, 255, 255, 0.94);
-    padding: 1.35% 0;
-    border-radius: 10px;
-    position: relative;
-  }
 
-  .c_header a:hover {
-    color: orange;
-  }
-
-  .nav:before {
-    width: 36px;
-    height: 4px;
-    background: orange;
-    content: '';
-    position: absolute;
-    left: 35%;
-    bottom: 12px;
-    border-radius: 50px;
-    transform: scaleX(0);
-    transition: transform 0.5s ease-out;
-  }
-
-  .nav:hover:before {
-    width: 36px;
-    height: 4px;
-    background: orange;
-    content: '';
-    position: absolute;
-    left: 35%;
-    bottom: 12px;
-    border-radius: 50px;
-    transform: scaleX(1);
-  }
-
-  .active {
-    background: rgb(249 230 195) !important;
-    color: #e52424 !important;
-  }
 }
 </style>
 

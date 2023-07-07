@@ -1,0 +1,102 @@
+<template>
+  <div class="container">
+    <div class="header">
+        <a :href="`/filmClassify?Pid=${d.title.id}`" class="h_active">{{ d.title.name }}</a>
+        <span class="line"/>
+        <a :href="`/filmClassifySearch?Pid=${d.title.id}`" >{{ `${d.title.name}库` }}</a>
+    </div>
+
+    <!--影片列表展示-->
+    <div class="content">
+      <div class="news">
+        <div class="c_nav">
+          <span class="c_nav_text silver">最新上映</span>
+          <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
+        </div>
+        <FilmList :list="d.content.news"/>
+      </div>
+      <div class="news">
+        <div class="c_nav">
+          <span  class="c_nav_text silver">排行榜</span>
+          <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
+        </div>
+        <FilmList :list="d.content.top"/>
+      </div>
+      <div class="news">
+        <div class="c_nav">
+          <span  class="c_nav_text silver">最近更新</span>
+          <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
+        </div>
+        <FilmList :list="d.content.recent"/>
+      </div>
+    </div>
+
+    <!--分页展示区域-->
+  </div>
+</template>
+
+<script setup lang="ts">
+import {ApiGet} from "../../utils/request";
+import {ElMessage} from "element-plus";
+import {onMounted, reactive} from "vue";
+import {useRouter} from "vue-router";
+import FilmList from "../../components/FilmList.vue";
+import {Bottom} from "@element-plus/icons-vue";
+
+const d = reactive({
+  title: {},
+  content: {
+    news: [],
+    top: [],
+    recent: [],
+  }
+
+})
+
+const router = useRouter()
+const getFilmData = () => {
+  let query = router.currentRoute.value.query
+  ApiGet(`/filmClassify`, {Pid: query.Pid}).then((resp: any) => {
+    if (resp.status === 'ok') {
+      d.title = resp.data.title
+      d.content = resp.data.content
+    } else {
+      ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1000})
+    }
+  })
+}
+
+onMounted(() => {
+  getFilmData()
+})
+</script>
+
+<style scoped>
+@import "/src/assets/css/classify.css";
+
+.c_nav {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding: 6px;
+}
+.c_nav_text {
+ font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.c_nav_more{
+  font-size: 14px;
+  background: #25252b;
+  padding: 0 15px;
+  line-height: 32px;
+  border-radius: 8px;
+}
+.content>div {
+  padding-bottom: 20px;
+}
+
+/**/
+
+
+</style>

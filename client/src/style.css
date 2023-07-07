@@ -79,4 +79,21 @@ button:focus-visible {
   }
 }
 
+/*通用样式*/
+.primary{
+  color: #99DBF5;
+}
+.dark {
+  color: rgba(0,0,0,0.68);
+}
+.light {
+  color: rgba(255,255,255,0.68);
+}
+.silver{
+  color: rgba(255,255,255,0.75);
+}
+
+
+
+
 

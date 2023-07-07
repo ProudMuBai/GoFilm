@@ -11,8 +11,8 @@
                     <el-col :span="12">
                         <ul class="nav_ul">
                             <li v-for="c in item.nav.children" class="nav_category hidden-md-and-down"><a
-                                    :href="`/categoryFilm?pid=${c.pid}&cid=${c.id}`">{{ c.name }}</a></li>
-                            <li class="nav_category hidden-md-and-down"><a :href="`/categoryFilm?pid=${item.nav.id}`">更多 ></a></li>
+                                    :href="`/filmClassifySearch?Pid=${c.pid}&Category=${c.id}`">{{ c.name }}</a></li>
+                            <li class="nav_category hidden-md-and-down"><a :href="`/filmClassify?Pid=${item.nav.id}`">更多 ></a></li>
                         </ul>
                     </el-col>
                 </el-row>

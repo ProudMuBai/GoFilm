@@ -204,9 +204,19 @@ func (i *IndexLogic) GetFilmsByTags(st model.SearchTagsVO, page *model.Page) []m
 	// 获取满足条件的影片id 列表
 	sl := model.GetSearchInfosByTags(st, page)
 	// 通过key 获取对应影片的基本信息
-	var list []model.MovieBasicInfo
-	for _, s := range sl {
-		list = append(list, model.GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, s.Cid, s.Mid)))
-	}
-	return list
+	return model.GetBasicInfoBySearchInfos(sl...)
+}
+
+// GetFilmClassify 通过Pid返回当前所属分类下的首页展示数据
+func (i *IndexLogic) GetFilmClassify(pid int64, page *model.Page) map[string]interface{} {
+	res := make(map[string]interface{})
+	// 最新上映 (上映时间)
+	res["news"] = model.GetMovieListBySort(0, pid, page)
+	// 排行榜 (暂定为热度排行)
+	res["top"] = model.GetMovieListBySort(1, pid, page)
+	// 最近更新 (更新时间)
+	res["recent"] = model.GetMovieListBySort(2, pid, page)
+
+	return res
+
 }
