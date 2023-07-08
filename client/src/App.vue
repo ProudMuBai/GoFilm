@@ -19,22 +19,16 @@ html, body, #app {
 }
 
 /*背景色切换*/
-
-
 #app, .main {
     max-width: 100%;
     min-height: 100vh;
-    /*background: #222;*/
     color: rgb(221, 221, 221);
-    //background: rgb(34, 34, 34);
+    background: #16161a;
 }
-
 
 * {
     box-sizing: border-box;
 }
-
-
 /*全局a标签默认样式去除*/
 a {
     outline: none;

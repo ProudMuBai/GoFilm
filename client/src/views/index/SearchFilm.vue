@@ -110,6 +110,7 @@ const changeCurrent = (currentVal: number) => {
 
 <!--移动端-->
 <style scoped>
+@import "/src/assets/css/pagination.css";
 @media (max-width: 650px) {
     .title h2 {
         margin: 8px auto;
@@ -368,91 +369,3 @@ const changeCurrent = (currentVal: number) => {
 
 </style>
 
-
-<!--分页器-->
-<style scoped>
-/*分页插件区域*/
-.pagination_container {
-    width: 100%;
-    margin-top: 30px;
-    /*background: deepskyblue;*/
-    text-align: center;
-    /*display: flex;*/
-}
-
-:deep(.el-pagination) {
-    width: 100% !important;
-    margin: 0 auto !important;
-    justify-content: center;
-}
-
-/*分页器样式修改*/
-:deep(.number) {
-    font-weight: bold;
-    width: 45px;
-    height: 45px;
-    background: #2e2e2e !important;
-    color: #ffffff;
-    border-radius: 50%;
-    /*margin: 0 3px!important;*/
-}
-
-:deep(.number:hover) {
-    color: #67d9e8;
-}
-
-:deep(.btn-prev) {
-    font-weight: bold;
-    width: 45px;
-    height: 45px;
-    background: #2e2e2e !important;
-    color: #ffffff;
-    border-radius: 50%;
-}
-
-:deep(.btn-next) {
-    font-weight: bold;
-    width: 45px;
-    height: 45px;
-    background: #2e2e2e !important;
-    color: #ffffff;
-    border-radius: 50%;
-}
-
-:deep(.more) {
-    font-weight: bold;
-    width: 45px;
-    height: 45px;
-    background: #2e2e2e !important;
-    color: #ffffff;
-    border-radius: 50%;
-}
-
-:deep(.is-active) {
-    background: #67d9e8 !important;
-}
-
-/*移动端缩小*/
-@media (max-width: 650px) {
-    :deep(.number) {
-        width: 35px;
-        height: 35px;
-    }
-
-    :deep(.btn-prev) {
-        width: 35px;
-        height: 35px;
-    }
-
-    :deep(.btn-next) {
-        width: 35px;
-        height: 35px;
-    }
-
-    :deep(.more) {
-        width: 35px;
-        height: 35px;
-    }
-}
-
-</style>

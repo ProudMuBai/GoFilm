@@ -1,9 +1,9 @@
 <template>
   <div class="container">
-    <div class="header">
-        <a :href="`/filmClassify?Pid=${d.title.id}`" class="h_active">{{ d.title.name }}</a>
-        <span class="line"/>
-        <a :href="`/filmClassifySearch?Pid=${d.title.id}`" >{{ `${d.title.name}库` }}</a>
+    <div class="title">
+      <a :href="`/filmClassify?Pid=${d.title.id}`" class="h_active">{{ d.title.name }}</a>
+      <span class="line"/>
+      <a :href="`/filmClassifySearch?Pid=${d.title.id}`">{{ `${d.title.name}库` }}</a>
     </div>
 
     <!--影片列表展示-->
@@ -17,14 +17,14 @@
       </div>
       <div class="news">
         <div class="c_nav">
-          <span  class="c_nav_text silver">排行榜</span>
+          <span class="c_nav_text silver">排行榜</span>
           <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
         </div>
         <FilmList :list="d.content.top"/>
       </div>
       <div class="news">
         <div class="c_nav">
-          <span  class="c_nav_text silver">最近更新</span>
+          <span class="c_nav_text silver">最近更新</span>
           <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
         </div>
         <FilmList :list="d.content.recent"/>
@@ -77,26 +77,58 @@ onMounted(() => {
 .c_nav {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 15px;
+
   padding: 6px;
 }
+
 .c_nav_text {
- font-size: 28px;
   font-weight: 700;
   line-height: 1.1;
 }
-.c_nav_more{
-  font-size: 14px;
+
+.c_nav_more {
+  //font-size: 14px;
   background: #25252b;
-  padding: 0 15px;
-  line-height: 32px;
+
   border-radius: 8px;
 }
-.content>div {
+
+.content > div {
   padding-bottom: 20px;
 }
 
 /**/
+@media (min-width: 650px) {
+  .c_nav{
+    margin-bottom: 15px;
+  }
+  .c_nav_text {
+    font-size: 28px;
+  }
+  .c_nav_more {
+    font-size: 14px;
+    padding: 0 15px;
+    line-height: 32px;
+  }
 
+}
+
+@media (max-width: 650px) {
+  .c_nav{
+    margin-bottom: 10px;
+  }
+  .c_nav_text {
+    font-size: 20px;
+    line-height: 28px;
+  }
+  .c_nav_more {
+    font-size: 12px;
+    padding: 0 10px;
+    line-height: 28px;
+  }
+  .c_nav_more b{
+    font-size: 12px;
+  }
+}
 
 </style>

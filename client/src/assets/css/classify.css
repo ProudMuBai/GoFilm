@@ -1,18 +1,19 @@
-.header {
+.container {
+    padding: 0 10px;
+}
+.title {
     display: flex;
     justify-content: start;
     padding-bottom: 20px;
-    margin-top: 20px;
-    margin-bottom: 35px;
+
     border-bottom: 2px solid rgba(255,255,255, 0.15);
 }
-.header a {
+.title a {
     color: rgba(255,255,255,0.15);
-    font-size: 30px;
     font-weight: 700;
     line-height: 1.1;
 }
-.header a:hover {
+.title a:hover {
     color: rgba(255,255,255,0.65)!important;
 }
 
@@ -27,7 +28,6 @@
     left: 0;
     width: 100%;
     background: orangered;
-    bottom: -60%;
     height: 3px;
     border-radius: 16px 16px 0 0;
 }
@@ -36,8 +36,38 @@
     width: 3px;
     background: rgba(255,255,255,0.15);
     display: inline-block;
-    margin: 5px 15px;
     border-radius: 2px;
+}
+
+
+@media (min-width: 650px) {
+    .title{
+        margin-bottom: 35px;
+        margin-top: 20px;
+    }
+    .title a{
+        font-size: 30px;
+    }
+    .h_active::after{
+        bottom: -60%;
+    }
+    .line{
+        margin: 5px 15px;
+    }
+}
+@media (max-width: 650px) {
+    .title{
+        margin-bottom: 20px;
+    }
+    .title a{
+        font-size: 24px;
+    }
+    .h_active::after{
+        bottom: -76%;
+    }
+    .line{
+        margin: 2px 15px;
+    }
 }
 
 
