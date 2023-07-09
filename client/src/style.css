@@ -94,6 +94,19 @@ button:focus-visible {
 }
 
 
+/*滚动条样式*/
+@media (min-width: 650px) {
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    height: 10px;
+    background: rgba(255,255,255,0.25);
+  }
+}
+
+
 
 
 

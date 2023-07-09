@@ -1,0 +1,115 @@
+/*wrap*/
+@media (max-width: 650px) {
+    .play-link{
+        line-height: 22px;
+        min-width: calc(25% - 10px);
+    }
+    .play-list-item {
+        max-height: 240px;
+    }
+    .play-module-title{
+        display: none;
+    }
+    .play-tab-item{
+        height: 34px;
+        line-height: 34px;
+        font-size: 12px;
+        padding: 0 8px;
+    }
+    .play-list{
+        border-radius: 0 8px 8px 8px;
+    }
+}
+/*pc*/
+@media (min-width: 650px) {
+    .play-link{
+        line-height: 34px;
+        min-width: calc(16.7% - 12px);
+    }
+    .play-list-item {
+        max-height: 380px;
+    }
+
+    .play-module-title{
+        height: 45px;
+        line-height: 45px;
+        font-size: 24px;
+        color: rgba(255,255,255,0.55);
+    }
+    .play-tab-item{
+        height: 45px;
+        line-height: 45px;
+        font-size: 14px;
+        padding: 0 15px;
+    }
+    .play-list{
+        border-radius: 8px 0 8px 8px;
+    }
+
+}
+
+/*播放列表样式*/
+.play-module{
+    width: 100%;
+    border-radius: 10px;
+    margin-top: 50px;
+}
+.module-heading{
+    display: flex;
+    justify-content: space-between;
+}
+.play-module-title{
+    font-weight: 700;
+    margin: 0 0;
+}
+.play-tab-group{
+    display: flex;
+    white-space: nowrap;
+    padding: 5px 5px 0;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px 8px 0 0;
+}
+.play-tab-item{
+    display: inline-block;
+    border-radius: 6px 6px 0 0;
+    font-weight: 700;
+    box-shadow: 0 0 5px 0 rgba(0,0,0,.08), 0 0 1px rgba(0,0,0,.1)
+}
+.play-tab-item:hover{
+    color: orange;
+}
+
+.tab-active{
+    background: #2e2e2e;
+    font-weight: 700;
+    color: orange;
+}
+
+.play-list{
+    background: #2e2e2e;
+    padding: 20px;
+
+}
+.play-list-item{
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+}
+.play-link{
+    padding: 3px;
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 8px;
+    margin: 5px;
+    text-align: center;
+    font-size: 14px;
+    display: inline-block;
+}
+.play-link:hover {
+    color: orange;
+    background: #b36d3824;
+}
+.play-link-active {
+    color: orange;
+    background: #b36d3824;
+}
+

@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container"  v-if="d.content.news.length > 0">
     <div class="title">
       <a :href="`/filmClassify?Pid=${d.title.id}`" class="h_active">{{ d.title.name }}</a>
       <span class="line"/>

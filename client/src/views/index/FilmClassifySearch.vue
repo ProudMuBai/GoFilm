@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" v-if="d.list.length >0">
     <div class="title">
       <a :href="`/filmClassify?Pid=${d.title.id}`" >{{ d.title.name }}</a>
       <span class="line"/>
@@ -44,26 +44,6 @@ import {ElMessage} from "element-plus";
 import {ArrowRightBold, ArrowLeftBold} from '@element-plus/icons-vue'
 import FilmList from "../../components/FilmList.vue";
 
-// 分类tag点击事件
-const handleTag = (k:string,v:string)=>{
-  // 设置被点击的tag属性值
-  d.searchParams[k as keyof typeof d.searchParams] = v
-  // searchTag改变, 重置 current当前页码
-  d.page.current = 1
-  handleParams()
-}
-
-const handleParams = ()=> {
-  let q = ''
-  for (let k in d.searchParams) {
-    let val = d.searchParams[k as keyof typeof d.searchParams]
-    if (val != '') {
-      q += `&${k}=${val}`
-    }
-  }
-  location.href = '/filmClassifySearch?'+q.slice(1)+`&current=${d.page.current}`
-}
-
 // 页面所需数据
 const d = reactive({
   title: {},
@@ -87,6 +67,7 @@ const d = reactive({
   },
 
 })
+
 // 获取路由参数查询对应数据
 const router = useRouter()
 
@@ -95,7 +76,26 @@ const changeCurrent = (currentVal: number) => {
   handleParams()
 }
 
+// 分类tag点击事件
+const handleTag = (k:string,v:string)=>{
+  // 设置被点击的tag属性值
+  d.searchParams[k as keyof typeof d.searchParams] = v
+  // searchTag改变, 重置 current当前页码
+  d.page.current = 1
+  handleParams()
+}
+const handleParams = ()=> {
+  let q = ''
+  for (let k in d.searchParams) {
+    let val = d.searchParams[k as keyof typeof d.searchParams]
+    if (val != '') {
+      q += `&${k}=${val}`
+    }
+  }
+  location.href = '/filmClassifySearch?'+q.slice(1)+`&current=${d.page.current}`
+}
 
+// 请求数据
 const getFilmData = () => {
   let query = router.currentRoute.value.query
   ApiGet(`/filmClassifySearch`, {...query}).then((resp: any) => {
@@ -114,6 +114,8 @@ const getFilmData = () => {
 onMounted(() => {
   getFilmData()
 })
+
+
 
 </script>
 

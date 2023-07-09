@@ -33,7 +33,7 @@ html, body, #app {
 a {
     outline: none;
     text-decoration: none;
-    color: #888888;
+    color: rgba(255,255,255,0.38);
 }
 
 a:hover {
