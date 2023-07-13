@@ -1,6 +1,6 @@
 <template>
   <div class="film" v-show="data.loading">
-    <!-- hidden-sm-and-up 移动端title   -->
+    <!-- 移动端title   -->
     <div class="hidden-sm-and-up">
       <div class="title_mt  ">
         <a class="picture_mt" href="" :style="{backgroundImage: `url('${data.detail.picture}')`}"></a>
@@ -30,7 +30,7 @@
       <h2>{{ data.detail.name }}</h2>
       <ul class="tags">
         <li class="t_c">
-          <a :href="`/categoryFilm?pid=${data.detail.pid}`">
+          <a :href="`/filmClassifySearch?Pid=${data.detail.pid}&Category=${data.detail.cid}`">
             <el-icon>
               <Promotion/>
             </el-icon>
@@ -98,7 +98,7 @@
 import {useRouter} from "vue-router";
 import {onBeforeMount, reactive, ref,} from "vue";
 import {ApiGet} from "../../utils/request";
-import {ElMessage, ElLoading} from 'element-plus'
+import {ElMessage} from 'element-plus'
 import {Promotion, CaretRight} from "@element-plus/icons-vue";
 import RelateList from "../../components/RelateList.vue";
 // 获取路由对象
@@ -147,7 +147,6 @@ const data = reactive({
 const handleLongText = (t: string): string => {
   let res = ''
   t.split(',').forEach((s, i) => {
-    console.log(s)
     if (i < 3) {
       res += `${s} `
     }
@@ -166,7 +165,6 @@ onBeforeMount(() => {
       data.relate = resp.data.relate
       // 处理过长数据
       data.detail.descriptor.actor = handleLongText(data.detail.descriptor.actor)
-      console.log(handleLongText(data.detail.descriptor.actor))
       data.detail.descriptor.director = handleLongText(data.detail.descriptor.director)
       data.loading = true
     } else {

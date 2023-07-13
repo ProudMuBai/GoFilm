@@ -113,56 +113,7 @@ func SearchFilm(c *gin.Context) {
 	})
 }
 
-// FilmCategory 获取指定分类的影片分页数据,
-func FilmCategory(c *gin.Context) {
-	// 1.1 首先获取Cid 二级分类id是否存在
-	cidStr := c.DefaultQuery("cid", "")
-	// 1.2 如果pid也不存在直接返回错误信息
-	pidStr := c.DefaultQuery("pid", "")
-	if pidStr == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "缺少分类信息",
-		})
-		return
-	}
-	// 1.3 获取pid对应的分类信息
-	pid, _ := strconv.ParseInt(pidStr, 10, 64)
-	category := logic.IL.GetPidCategory(pid)
-
-	// 2 设置分页信息
-	currentStr := c.DefaultQuery("current", "1")
-	current, _ := strconv.Atoi(currentStr)
-	page := model.Page{PageSize: 49, Current: current}
-	// 2.1 如果不存在cid则根据Pid进行查询
-	if cidStr == "" {
-		// 2.2 如果存在pid则根据pid进行查找
-		c.JSON(http.StatusOK, gin.H{
-			"status": StatusOk,
-			"data": gin.H{
-				"list":     logic.IL.GetFilmCategory(pid, "pid", &page),
-				"category": category,
-				"search":   logic.IL.SearchTags(pid),
-			},
-			"page": page,
-		})
-		return
-	}
-	// 2.2 如果存在cid 则根据具体的cid去查询数据
-	cid, _ := strconv.ParseInt(cidStr, 10, 64)
-	c.JSON(http.StatusOK, gin.H{
-		"status": StatusOk,
-		"data": gin.H{
-			"list":     logic.IL.GetFilmCategory(cid, "cid", &page),
-			"category": category,
-			"search":   logic.IL.SearchTags(pid),
-		},
-		"page": page,
-	})
-
-	// 获取请求参数
-}
-
+// FilmTagSearch 通过tag获取满足条件的对应影片
 func FilmTagSearch(c *gin.Context) {
 	params := model.SearchTagsVO{}
 	pidStr := c.DefaultQuery("Pid", "")
@@ -234,4 +185,54 @@ func FilmClassify(c *gin.Context) {
 		},
 		"page": page,
 	})
+}
+
+// FilmCategory 获取指定分类的影片分页数据,(已弃用)
+func FilmCategory(c *gin.Context) {
+	// 1.1 首先获取Cid 二级分类id是否存在
+	cidStr := c.DefaultQuery("cid", "")
+	// 1.2 如果pid也不存在直接返回错误信息
+	pidStr := c.DefaultQuery("pid", "")
+	if pidStr == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  StatusFailed,
+			"message": "缺少分类信息",
+		})
+		return
+	}
+	// 1.3 获取pid对应的分类信息
+	pid, _ := strconv.ParseInt(pidStr, 10, 64)
+	category := logic.IL.GetPidCategory(pid)
+
+	// 2 设置分页信息
+	currentStr := c.DefaultQuery("current", "1")
+	current, _ := strconv.Atoi(currentStr)
+	page := model.Page{PageSize: 49, Current: current}
+	// 2.1 如果不存在cid则根据Pid进行查询
+	if cidStr == "" {
+		// 2.2 如果存在pid则根据pid进行查找
+		c.JSON(http.StatusOK, gin.H{
+			"status": StatusOk,
+			"data": gin.H{
+				"list":     logic.IL.GetFilmCategory(pid, "pid", &page),
+				"category": category,
+				"search":   logic.IL.SearchTags(pid),
+			},
+			"page": page,
+		})
+		return
+	}
+	// 2.2 如果存在cid 则根据具体的cid去查询数据
+	cid, _ := strconv.ParseInt(cidStr, 10, 64)
+	c.JSON(http.StatusOK, gin.H{
+		"status": StatusOk,
+		"data": gin.H{
+			"list":     logic.IL.GetFilmCategory(cid, "cid", &page),
+			"category": category,
+			"search":   logic.IL.SearchTags(pid),
+		},
+		"page": page,
+	})
+
+	// 获取请求参数
 }

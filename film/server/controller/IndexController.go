@@ -113,7 +113,81 @@ func SearchFilm(c *gin.Context) {
 	})
 }
 
-// FilmCategory 获取指定分类的影片分页数据,
+// FilmTagSearch 通过tag获取满足条件的对应影片
+func FilmTagSearch(c *gin.Context) {
+	params := model.SearchTagsVO{}
+	pidStr := c.DefaultQuery("Pid", "")
+	cidStr := c.DefaultQuery("Category", "")
+	yStr := c.DefaultQuery("Year", "")
+	if pidStr == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  StatusFailed,
+			"message": "缺少分类信息",
+		})
+		return
+	}
+	params.Pid, _ = strconv.ParseInt(pidStr, 10, 64)
+	params.Cid, _ = strconv.ParseInt(cidStr, 10, 64)
+	params.Plot = c.DefaultQuery("Plot", "")
+	params.Area = c.DefaultQuery("Area", "")
+	params.Language = c.DefaultQuery("Language", "")
+	params.Year, _ = strconv.ParseInt(yStr, 10, 64)
+	params.Sort = c.DefaultQuery("Sort", "update_stamp")
+
+	// 设置分页信息
+	currentStr := c.DefaultQuery("current", "1")
+	current, _ := strconv.Atoi(currentStr)
+	page := model.Page{PageSize: 49, Current: current}
+	logic.IL.GetFilmsByTags(params, &page)
+	// 获取当前分类Title
+	// 返回对应信息
+	c.JSON(http.StatusOK, gin.H{
+		"status": StatusOk,
+		"data": gin.H{
+			"title":  logic.IL.GetPidCategory(params.Pid).Category,
+			"list":   logic.IL.GetFilmsByTags(params, &page),
+			"search": logic.IL.SearchTags(params.Pid),
+			"params": map[string]string{
+				"Pid":      pidStr,
+				"Category": cidStr,
+				"Plot":     params.Plot,
+				"Area":     params.Area,
+				"Language": params.Language,
+				"Year":     yStr,
+				"Sort":     params.Sort,
+			},
+		},
+		"page": page,
+	})
+}
+
+// FilmClassify  影片分类首页数据展示
+func FilmClassify(c *gin.Context) {
+	pidStr := c.DefaultQuery("Pid", "")
+	if pidStr == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  StatusFailed,
+			"message": "缺少分类信息",
+		})
+		return
+	}
+	// 1. 顶部Title数据
+	pid, _ := strconv.ParseInt(pidStr, 10, 64)
+	title := logic.IL.GetPidCategory(pid)
+	// 2. 设置分页信息
+	page := model.Page{PageSize: 21, Current: 1}
+	// 3. 获取当前分类下的 最新上映, 排行榜, 最近更新 影片信息
+	c.JSON(http.StatusOK, gin.H{
+		"status": StatusOk,
+		"data": gin.H{
+			"title":   title,
+			"content": logic.IL.GetFilmClassify(pid, &page),
+		},
+		"page": page,
+	})
+}
+
+// FilmCategory 获取指定分类的影片分页数据,(已弃用)
 func FilmCategory(c *gin.Context) {
 	// 1.1 首先获取Cid 二级分类id是否存在
 	cidStr := c.DefaultQuery("cid", "")
@@ -142,6 +216,7 @@ func FilmCategory(c *gin.Context) {
 			"data": gin.H{
 				"list":     logic.IL.GetFilmCategory(pid, "pid", &page),
 				"category": category,
+				"search":   logic.IL.SearchTags(pid),
 			},
 			"page": page,
 		})
@@ -154,7 +229,10 @@ func FilmCategory(c *gin.Context) {
 		"data": gin.H{
 			"list":     logic.IL.GetFilmCategory(cid, "cid", &page),
 			"category": category,
+			"search":   logic.IL.SearchTags(pid),
 		},
 		"page": page,
 	})
+
+	// 获取请求参数
 }

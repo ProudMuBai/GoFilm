@@ -209,8 +209,8 @@ func ConvertSearchInfo(detail MovieDetail) SearchInfo {
 		UpdateStamp: stamp.Unix(),
 		State:       detail.State,
 		Remarks:     detail.Remarks,
-		// releaseDate 部分影片缺失该参数, 所以使用添加时间作为上映时间排序
-		ReleaseDate: detail.AddTime,
+		// ReleaseDate 部分影片缺失该参数, 所以使用添加时间作为上映时间排序
+		ReleaseStamp: detail.AddTime,
 	}
 }
 

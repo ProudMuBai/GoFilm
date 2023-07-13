@@ -5,10 +5,11 @@ services:
     container_name: film_nginx
     image: nginx
     ports:
-      - "3600:80"
+      - "80:80"
     volumes:
       - /opt/film/data/nginx/html:/usr/share/nginx/html
       - /opt/film/data/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /opt/film/data/nginx/logs:/var/log/nginx
     networks:
       - film-network
     depends_on:

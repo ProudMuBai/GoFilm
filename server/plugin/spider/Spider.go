@@ -29,8 +29,7 @@ import (
 */
 
 const (
-	MainSite = "https://cj.lziapi.com/api.php/provide/vod/"
-	//MainSite = "https://cj.lzcaiji.com/api.php/provide/vod/"
+	MainSite = "https://cj.lzcaiji.com/api.php/provide/vod/"
 )
 
 type Site struct {
@@ -41,15 +40,16 @@ type Site struct {
 // SiteList 播放源采集站
 var SiteList = []Site{
 	// 备用采集站
+	//{"lz_bk", "https://cj.lzcaiji.com/api.php/provide/vod/"},
+	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
 	//{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
 	//{"bf", "https://bfzyapi.com/api.php/provide/vod/"},
-	//{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
 	//{"ff", "https://svip.ffzyapi8.com/api.php/provide/vod/"},
 
 	//{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
-	{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
-	{"bf", "http://by.bfzyapi.com/api.php/provide/vod/"},
 	{"kk", "https://kuaikan-api.com/api.php/provide/vod/from/kuaikan"},
+	{"bf", "http://by.bfzyapi.com/api.php/provide/vod/"},
+	{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
 }
 
 // StartSpider 执行多源spider
@@ -60,15 +60,16 @@ func StartSpider() {
 	// 爬取主站点数据
 	MainSiteSpider()
 	log.Println("MainSiteSpider 主站点影片信息保存完毕")
-	// 查找并创建search数据库
+	// 查找并创建search数据库, 保存search信息, 添加索引
 	time.Sleep(time.Second * 10)
 	model.CreateSearchTable()
 	SearchInfoToMdb()
+	model.AddSearchIndex()
 	log.Println("SearchInfoToMdb 影片检索信息保存完毕")
-	// 获取其他站点数据13
-	//go MtSiteSpider()
-	//log.Println("Spider End , 数据保存执行完成")
-	//time.Sleep(time.Second * 10)
+	//获取其他站点数据13
+	go MtSiteSpider()
+	log.Println("Spider End , 数据保存执行完成")
+	time.Sleep(time.Second * 10)
 }
 
 // CategoryList 获取分类数据

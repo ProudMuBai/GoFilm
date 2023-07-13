@@ -1,7 +1,7 @@
 <template>
   <div class="relate_container">
     <p class="title">相关推荐</p>
-    <FilmList :list="relateList"/>
+    <FilmList :col="7" :list="relateList"/>
   </div>
 </template>
 

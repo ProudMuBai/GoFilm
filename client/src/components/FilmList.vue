@@ -1,32 +1,63 @@
 <template>
-  <div class="c_content">
-    <div class="item" v-for="item in list" :style="{width: `calc(${ list.length <= 12 ? 16 : 14}% - 16px)`}">
-      <a :href="`/filmDetail?link=${item.id}`" class="default_image link_content">
-        <div class="tag_group">
-          <span class="cus_tag ">{{ item.year ? item.year.slice(0, 4) : '未知' }}</span>
-          <span class="cus_tag ">{{ item.cName }}</span>
-          <span class="cus_tag ">{{ item.area.split(',')[0] }}</span>
+  <div class="c_content" v-if="true">
+    <div class="item" v-for="item in d.list" :style="{width: `calc(${d.width-1}%)`}">
+        <div v-if="item.id != -99">
+          <a :href="`/filmDetail?link=${item.id}`" class="default_image link_content">
+            <div class="tag_group">
+              <span class="cus_tag ">{{ item.year ? item.year.slice(0, 4) : '未知' }}</span>
+              <span class="cus_tag ">{{ item.cName }}</span>
+              <span class="cus_tag ">{{ item.area.split(',')[0] }}</span>
+            </div>
+            <span class="cus_remark hidden-md-and-up">{{ item.remarks }}</span>
+            <img :src="item.picture" :alt="item.name?.split('[')[0]" @error="handleImg">
+          </a>
+          <a :href="`/filmDetail?link=${item.id}`" class="content_text_tag">{{ item.name.split("[")[0] }}</a>
+          <span class="cus_remark hidden-md-and-down">{{ item.remarks }}</span>
         </div>
-        <span class="cus_remark hidden-md-and-up">{{ item.remarks }}</span>
-        <img :src="item.picture" :alt="item.name.split('[')[0]" @error="handleImg">
-      </a>
-      <a :href="`/filmDetail?link=${item.id}`" class="content_text_tag">{{ item.name.split("[")[0] }}</a>
-      <span class="cus_remark hidden-md-and-down">{{ item.remarks }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {defineProps} from 'vue'
+import {defineProps, onMounted, reactive, watch, watchEffect} from 'vue'
 
-defineProps({
-  list: Array
+const props = defineProps({
+  list: Array,
+  col: Number,
+})
+const d = reactive({
+  col: 0,
+  list: Array,
+  width: 0,
 })
 
 // 图片加载失败事件
 const handleImg = (e: Event) => {
   e.target.style.display = "none"
 }
+
+// 监听父组件传递的参数的变化
+watchEffect(()=>{
+  // 首先获取当前设备类型
+  const userAgent = navigator.userAgent.toLowerCase();
+  let isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent)
+  // 如果是PC, 为防止flex布局最后一行元素不足出现错位, 使用空元素补齐list
+  let c = isMobile ? 3 : props.col? props.col: 0
+  let l:any= props.list
+  let len = l.length
+  d.width = isMobile ? 31 : Math.floor(100 / c)
+  if (len % c !=0) {
+    for (let i = 0; i < c - len %c ; i++) {
+      let temp:any = {...l[0] as any}
+      temp.id = -99
+      l.push(temp)
+    }
+  }
+  d.list = l
+})
+
+
+
 </script>
 
 <style scoped>
@@ -42,12 +73,12 @@ const handleImg = (e: Event) => {
     width: 100%;
     display: flex;
     flex-flow: wrap;
-    justify-content: start;
+    justify-content: space-between;
   }
 
   .c_content .item {
-    flex-basis: calc(33% - 7px);
-    max-width: 33%;
+  /*  flex-basis: calc(33% - 7px);
+    max-width: 33%;*/
     margin: 0 4px 20px 4px;
     box-sizing: border-box;
     overflow: hidden;
@@ -110,11 +141,11 @@ const handleImg = (e: Event) => {
     width: 100%;
     display: flex;
     flex-flow: wrap;
-    justify-content: start;
+    justify-content: space-between;
   }
 
   .c_content .item {
-    margin: 0 10px 20px 10px;
+    margin-bottom: 20px;
     box-sizing: border-box;
   }
 

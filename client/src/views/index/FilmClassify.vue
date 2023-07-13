@@ -11,23 +11,23 @@
       <div class="news">
         <div class="c_nav">
           <span class="c_nav_text silver">最新上映</span>
-          <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
+          <a :href="`/filmClassifySearch?Pid=${d.title.id}&Sort=release_stamp`" class="c_nav_more ">更多<b class="iconfont icon-more"/></a>
         </div>
-        <FilmList :list="d.content.news"/>
+        <FilmList :col="7" :list="d.content.news"/>
       </div>
       <div class="news">
         <div class="c_nav">
           <span class="c_nav_text silver">排行榜</span>
-          <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
+          <a :href="`/filmClassifySearch?Pid=${d.title.id}&Sort=hits`" class="c_nav_more ">更多<b class="iconfont icon-more"/></a>
         </div>
-        <FilmList :list="d.content.top"/>
+        <FilmList :col="7" :list="d.content.top"/>
       </div>
       <div class="news">
         <div class="c_nav">
           <span class="c_nav_text silver">最近更新</span>
-          <span class="c_nav_more ">更多<b class="iconfont icon-more"/></span>
+          <a :href="`/filmClassifySearch?Pid=${d.title.id}&Sort=update_stamp`" class="c_nav_more ">更多<b class="iconfont icon-more"/></a>
         </div>
-        <FilmList :list="d.content.recent"/>
+        <FilmList :col="7" :list="d.content.recent"/>
       </div>
     </div>
 
@@ -61,7 +61,7 @@ const getFilmData = () => {
       d.title = resp.data.title
       d.content = resp.data.content
     } else {
-      ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1000})
+      ElMessage.error({message: "影片分类首页数据获取失败,请稍后刷新重试", duration: 1000})
     }
   })
 }
@@ -87,9 +87,7 @@ onMounted(() => {
 }
 
 .c_nav_more {
-  //font-size: 14px;
   background: #25252b;
-
   border-radius: 8px;
 }
 

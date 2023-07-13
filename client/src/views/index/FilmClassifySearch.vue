@@ -18,7 +18,7 @@
     </div>
 
     <!--影片列表展示-->
-    <FilmList :list="d.list"/>
+    <FilmList :col="7" :list="d.list"/>
     <!--分页展示区域-->
     <div class="pagination_container ">
       <el-pagination background layout="prev, pager, next"
@@ -106,7 +106,7 @@ const getFilmData = () => {
       d.search = resp.data.search
       d.searchParams = resp.data.params
     } else {
-      ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1000})
+      ElMessage.error({message: "影片搜索结果异常,请稍后刷新重试", duration: 1000})
     }
   })
 }
@@ -164,7 +164,6 @@ onMounted(() => {
   color: rgba(255,255,255,0.35);
   border-radius: 6px;
   margin-right: 12px;
-  //padding: 3px 0;
 }
 .t_title b{
   color: rgba(255,255,255,0.15);

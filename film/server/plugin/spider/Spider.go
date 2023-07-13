@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"server/config"
 	"server/model"
-	"server/plugin/common"
+	"server/plugin/common/dp"
 	"time"
 )
 
@@ -29,7 +29,7 @@ import (
 */
 
 const (
-	MainSite = "https://www.feisuzyapi.com/api.php/provide/vod/"
+	MainSite = "https://cj.lzcaiji.com/api.php/provide/vod/"
 )
 
 type Site struct {
@@ -39,14 +39,17 @@ type Site struct {
 
 // SiteList 播放源采集站
 var SiteList = []Site{
-	//{"tk", "https://api.tiankongapi.com/api.php/provide/vod"},
-	//{"yh", "https://m3u8.apiyhzy.com/api.php/provide/vod/"},
-	//{"zk", "https://api.1080zyku.com/inc/apijson.php"}, 数据格式不规范,不采用
+	// 备用采集站
+	//{"lz_bk", "https://cj.lzcaiji.com/api.php/provide/vod/"},
 	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
+	//{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
+	//{"bf", "https://bfzyapi.com/api.php/provide/vod/"},
+	//{"ff", "https://svip.ffzyapi8.com/api.php/provide/vod/"},
 
-	{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
+	//{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
+	{"kk", "https://kuaikan-api.com/api.php/provide/vod/from/kuaikan"},
+	{"bf", "http://by.bfzyapi.com/api.php/provide/vod/"},
 	{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
-	{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
 }
 
 // StartSpider 执行多源spider
@@ -57,15 +60,16 @@ func StartSpider() {
 	// 爬取主站点数据
 	MainSiteSpider()
 	log.Println("MainSiteSpider 主站点影片信息保存完毕")
-	// 查找并创建search数据库
+	// 查找并创建search数据库, 保存search信息, 添加索引
 	time.Sleep(time.Second * 10)
 	model.CreateSearchTable()
 	SearchInfoToMdb()
+	model.AddSearchIndex()
 	log.Println("SearchInfoToMdb 影片检索信息保存完毕")
-	// 获取其他站点数据
+	//获取其他站点数据13
 	go MtSiteSpider()
 	log.Println("Spider End , 数据保存执行完成")
-	//time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 10)
 }
 
 // CategoryList 获取分类数据
@@ -86,7 +90,7 @@ func CategoryList() {
 	// 获取分类列表信息
 	classList := movieListInfo.Class
 	// 组装分类数据信息树形结构
-	categoryTree := common.CategoryTree(classList)
+	categoryTree := dp.CategoryTree(classList)
 	// 序列化tree
 	data, _ := json.Marshal(categoryTree)
 	// 保存 tree 到redis
@@ -287,7 +291,7 @@ func StartSpiderRe() {
 func GetPageCount(r RequestInfo) (count int, err error) {
 	// 发送请求获取pageCount
 	r.Params.Set("ac", "detail")
-	r.Params.Set("pg", "1")
+	r.Params.Set("pg", "2")
 	ApiGet(&r)
 	//  判断请求结果是否为空, 如果为空直接输出错误并终止
 	if len(r.Resp) <= 0 {
@@ -328,6 +332,6 @@ func GetMovieDetail(pageNumber int, r RequestInfo) (list []model.MovieDetail, er
 		return
 	}
 	// 处理details信息
-	list = common.ProcessMovieDetailList(details.List)
+	list = dp.ProcessMovieDetailList(details.List)
 	return
 }

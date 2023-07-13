@@ -17,9 +17,9 @@
                     </el-col>
                 </el-row>
                 <el-row class="cus_content">
-                    <el-col :md="24" :lg="20" :xl="20" class="cus_content">
+                    <el-col  :md="24" :lg="20" :xl="20" class="cus_content">
                         <!--影片列表-->
-                        <FilmList :list="item.movies.slice(0,12)"/>
+                        <FilmList :col="6" :list="item.movies.slice(0,12)"/>
                     </el-col>
                     <el-col :md="0" :lg="4" :xl="4" class="hidden-md-and-down content_right">
                         <h3 class="hot_title">🔥热播{{item.nav.name}}</h3>
@@ -128,6 +128,7 @@ a {
 
 .content_right {
     width: 100%;
+    padding-left: 18px;
 }
 
 .content_right_item {

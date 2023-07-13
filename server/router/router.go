@@ -18,9 +18,10 @@ func SetupRouter() *gin.Engine {
 	r.GET(`/filmDetail`, controller.FilmDetail)
 	r.GET(`/filmPlayInfo`, controller.FilmPlayInfo)
 	r.GET(`/searchFilm`, controller.SearchFilm)
-	r.GET(`/filmCategory`, controller.FilmCategory)
 	r.GET(`/filmClassify`, controller.FilmClassify)
 	r.GET(`/filmClassifySearch`, controller.FilmTagSearch)
+	// 弃用
+	//r.GET(`/filmCategory`, controller.FilmCategory)
 
 	// 触发spider
 	spiderRoute := r.Group(`/spider`)
