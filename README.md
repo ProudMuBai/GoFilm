@@ -1,8 +1,8 @@
 # GoFilm
 
-一个 vite vue 和 gin 实现的在线观影网站
+一个基于 vue 和 gin 实现的在线观影网站
 
-演示站点: [点击访问](http://119.23.231.91:3600)
+效果展示: <a href="http://119.23.231.91:3600" target="_blank"> 演示站点(国内访问速度快)</a> 		<a href="https://m.mubai.link/" target="_blank">正式站点</a>
 
 ## 简介
 
