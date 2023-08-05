@@ -292,7 +292,7 @@ const handleBtn = (e: any) => {
 }
 
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
   .player_area {
     padding: 10px 6%;
   }
@@ -378,7 +378,7 @@ const handleBtn = (e: any) => {
 <style scoped>
 
 /*适应小尺寸*/
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   .player_area {
     padding: 5px 10px;
   }

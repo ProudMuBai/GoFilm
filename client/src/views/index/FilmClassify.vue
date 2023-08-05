@@ -96,7 +96,7 @@ onMounted(() => {
 }
 
 /**/
-@media (min-width: 650px) {
+@media (min-width: 768px) {
   .c_nav{
     margin-bottom: 15px;
   }
@@ -111,7 +111,7 @@ onMounted(() => {
 
 }
 
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   .c_nav{
     margin-bottom: 10px;
   }

@@ -95,7 +95,7 @@ button:focus-visible {
 
 
 /*滚动条样式*/
-@media (min-width: 650px) {
+@media (min-width: 768px) {
   ::-webkit-scrollbar {
     width: 3px;
   }

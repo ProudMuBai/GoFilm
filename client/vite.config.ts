@@ -25,7 +25,7 @@ export default defineConfig({
     //     port: 3600,
     //     proxy: {
     //         "/api": {
-    //             target: `http://localhost`,
+    //             // target: `http://localhost`,
     //             changeOrigin: true, // 允许跨域
     //             rewrite: path => path.replace(/^\/api/,'')
     //         }

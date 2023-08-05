@@ -111,7 +111,7 @@ const changeCurrent = (currentVal: number) => {
 <!--移动端-->
 <style scoped>
 @import "/src/assets/css/pagination.css";
-@media (max-width: 650px) {
+@media (max-width: 768px) {
     .title h2 {
         margin: 8px auto;
     }
@@ -254,7 +254,7 @@ const changeCurrent = (currentVal: number) => {
 }
 
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
     .film_item {
         flex-basis: calc(50% - 18px);
         max-width: 50%;

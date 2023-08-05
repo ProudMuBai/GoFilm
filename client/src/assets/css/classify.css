@@ -40,7 +40,7 @@
 }
 
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
     .title{
         margin-bottom: 35px;
         margin-top: 20px;
@@ -55,7 +55,7 @@
         margin: 5px 15px;
     }
 }
-@media (max-width: 650px) {
+@media (max-width: 768px) {
     .title{
         margin-bottom: 20px;
     }

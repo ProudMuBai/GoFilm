@@ -206,7 +206,7 @@ const showContent = (flag: boolean) => {
 
 <!--移动端适配-->
 <style scoped>
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   .title_mt {
     padding: 0 3px;
     display: flex;

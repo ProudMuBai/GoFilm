@@ -67,7 +67,7 @@ watchEffect(()=>{
 }
 
 /*wrap*/
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   /*展示区域*/
   .c_content {
     width: 100%;
@@ -136,7 +136,7 @@ watchEffect(()=>{
 }
 
 /*pc*/
-@media (min-width: 650px) {
+@media (min-width: 768px) {
   .c_content {
     width: 100%;
     display: flex;

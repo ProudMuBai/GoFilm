@@ -58,7 +58,7 @@
 }
 
 /*移动端缩小*/
-@media (max-width: 650px) {
+@media (max-width: 768px) {
     :deep(.number) {
         width: 35px;
         height: 35px;

@@ -124,7 +124,7 @@ onMounted(() => {
 @import "/src/assets/css/classify.css";
 @import "/src/assets/css/pagination.css";
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
   .tag {
     margin: 0 8px;
     padding: 6px 12px;
@@ -133,7 +133,7 @@ onMounted(() => {
     padding: 3px 0;
   }
 }
-@media (max-width: 650px) {
+@media (max-width: 768px) {
   .tag {
     margin: 0 5px;
     padding: 4px 10px;
@@ -193,7 +193,7 @@ onMounted(() => {
 </style>
 <!--移动端修改-->
 <style scoped>
-@media (max-width: 650px) {
+@media (max-width: 768px) {
 
   /*顶部内容区域*/
   .header {
@@ -211,7 +211,7 @@ onMounted(() => {
   max-width: 100vw;
 }
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
 
   /*顶部内容区域*/
   .header {

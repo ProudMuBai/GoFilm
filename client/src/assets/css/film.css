@@ -1,5 +1,5 @@
 /*wrap*/
-@media (max-width: 650px) {
+@media (max-width: 768px) {
     .play-link{
         line-height: 22px;
         min-width: calc(25% - 10px);
@@ -21,7 +21,7 @@
     }
 }
 /*pc*/
-@media (min-width: 650px) {
+@media (min-width: 768px) {
     .play-link{
         line-height: 34px;
         min-width: calc(16.7% - 12px);

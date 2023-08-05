@@ -38,7 +38,7 @@ import Footer from "../components/Footer.vue";
 }
 
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
     .el-main {
         margin: 0 auto;
         padding: 100px 0;
@@ -46,7 +46,7 @@ import Footer from "../components/Footer.vue";
     }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 768px) {
     .el-main {
         /*margin: 0 auto;*/
         padding: 55px 0!important;

@@ -6,7 +6,7 @@
                     <el-col :span="12" class="title">
                         <span :class="`iconfont ${item.nav.name.search('电影') != -1?'icon-film':item.nav.name.search('剧') != -1?'icon-tv':'icon-cartoon'}`"
                               style="color: #79bbff;font-size: 32px;margin-right: 10px; line-height: 130%"/>
-                        <a :href="`/categoryFilm?pid=${item.nav.id}`">{{ item.nav.name }}</a>
+                        <a :href="`/filmClassify?Pid=${item.nav.id}`">{{ item.nav.name }}</a>
                     </el-col>
                     <el-col :span="12">
                         <ul class="nav_ul">
@@ -170,7 +170,7 @@ a {
 
 <!--移动端修改-->
 <style scoped>
-@media (min-width: 650px) {
+@media (min-width: 768px) {
     .cus_content_item {
         padding: 10px;
         overflow: hidden;
@@ -178,7 +178,7 @@ a {
     }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 768px) {
     .cus_content_item {
         padding: 0 6px 0 0;
         margin-bottom: 10px;

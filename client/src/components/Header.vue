@@ -77,7 +77,7 @@ onMounted(() => {
 <!--移动端适配-->
 <style>
 /*小尺寸时隐藏状态栏*/
-@media (max-width: 650px) {
+@media (max-width: 768px) {
     .nav_right {
         display: flex;
         justify-content: space-between;
@@ -116,7 +116,7 @@ onMounted(() => {
 <style scoped>
 
 
-@media (min-width: 650px) {
+@media (min-width: 768px) {
     .header {
         width: 78%;
         z-index: 0;

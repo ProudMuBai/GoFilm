@@ -16,12 +16,12 @@ defineProps({
 
 <style scoped>
 
-@media (max-width: 650px){
+@media (max-width: 768px){
   .title {
     font-size: 20px;
   }
 }
-@media (min-width: 650px){
+@media (min-width: 768px){
   .title {
     font-size: 24px;
   }
