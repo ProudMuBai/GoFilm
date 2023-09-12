@@ -2,8 +2,8 @@
   <div class="player_area" v-show="data.loading">
     <div class="player_p">
       <!--preload-->
-
       <video-player @mounted="handleBtn" :src="data.options.src" :poster="posterImg" controls
+                    @ended="isAutoPlay"
                     :loop="false"
                     @keydown="handlePlay"
                     :bufferedPercent="30"
@@ -21,12 +21,19 @@
               <Promotion/>
             </el-icon>
             {{ data.detail.descriptor.cName }}</b>
-          <span>{{ data.detail.descriptor.classTag ? data.detail.descriptor.classTag : '未知' }}</span>
-          <span>{{ data.detail.descriptor.year }}</span>
-          <span>{{ data.detail.descriptor.area }}</span>
+          <span>{{
+              data.detail.descriptor.classTag ? data.detail.descriptor.classTag.replaceAll(',', '/') : '未知'
+            }}</span>
+          <span class="hidden-sm-and-down">{{ data.detail.descriptor.year }}</span>
+          <span class="hidden-sm-and-down">{{ data.detail.descriptor.area }}</span>
         </div>
       </div>
-
+      <div class="play_info_right">
+        <a href="javascript:;" :class="`iconfont icon-play1 ${data.autoplay?'p_r_active':''}`"
+           @click="()=>{data.autoplay= !data.autoplay}"></a>
+        <a v-show="hasNext" href="javascript:;" class="iconfont icon-iov-next"
+           @click="playNext"></a>
+      </div>
     </div>
     <!-- 播放选集   -->
     <div class="play-module">
@@ -40,7 +47,8 @@
         </div>
         <div class="play-list">
           <div class="play-list-item" v-show="data.currentTabIndex == i" v-for="(l,i) in data.detail.playList">
-            <a :class="`play-link ${item.link == data.current.link?'play-link-active':''}`" v-for="(item,index) in l" href="javascript:;"
+            <a :class="`play-link ${item.link == data.current.link?'play-link-active':''}`" v-for="(item,index) in l"
+               href="javascript:;"
                @click="playChange({sourceIndex: i, episodeIndex: index, target: this})">{{ item.episode }}</a>
           </div>
         </div>
@@ -55,7 +63,7 @@
 </template>
 
 <script lang="ts" setup>
-import {onBeforeMount, onMounted, reactive, ref, withDirectives} from "vue";
+import {computed, onBeforeMount, onMounted, reactive, ref, withDirectives} from "vue";
 import {useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
@@ -66,10 +74,8 @@ import posterImg from '../../assets/image/play.png'
 import {VideoPlayer} from '@videojs-player/vue'
 import 'video.js/dist/video-js.css'
 
-
-
 // 播放源切换事件
-const changeTab = (index:number)=>{
+const changeTab = (index: number) => {
   data.currentTabIndex = index
 }
 
@@ -115,15 +121,18 @@ const data = reactive({
   currentPlayFrom: 0,
   currentEpisode: 0,
   relate: [],
-  currentTabIndex:0,
+  currentTabIndex: 0,
 // @videojs-player 播放属性设置
+  autoplay: true,
   options: {
     title: "", //视频名称
     src: "", //视频源
     volume: 0.6, // 音量
     currentTime: 0,
-  }
+  },
 })
+//
+const hasNext = computed(() => data.current.index != data.detail.playList[data.currentPlayFrom].length - 1)
 
 // 获取路由信息
 const router = useRouter()
@@ -151,8 +160,11 @@ onBeforeMount(() => {
 const playChange = (play: { sourceIndex: number, episodeIndex: number, target: any }) => {
   let currPlay = data.detail.playList[play.sourceIndex][play.episodeIndex]
   data.current = {index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link}
+  data.currentEpisode = play.episodeIndex
   data.options.src = currPlay.link
   data.options.title = data.detail.name + "  " + currPlay.episode
+  data.currentPlayFrom = play.sourceIndex
+  data.currentTabIndex = play.sourceIndex
 }
 
 // player相关事件
@@ -160,7 +172,6 @@ const handlePlay = (e: any) => {
   e.preventDefault()
   switch (e.keyCode) {
     case 32:
-      console.log(e.target.paused)
       if (e.target.paused) {
         e.target.play()
       } else {
@@ -179,6 +190,25 @@ const handlePlay = (e: any) => {
     case 40:
       data.options.volume = data.options.volume - 0.05 < 0 ? 0 : data.options.volume - 0.05
       break
+  }
+}
+// 播放结束后是否自动播放下一集
+const isAutoPlay = () => {
+  if (!data.autoplay) {
+    return
+  }
+ playNext()
+}
+// 点击下一集按钮
+const playNext = () => {
+  if (data.current.index == data.detail.playList[data.currentPlayFrom].length - 1) {
+    return
+  }
+  playChange({sourceIndex: data.currentPlayFrom, episodeIndex: data.current.index + 1, target: ''})
+  if (data.autoplay) {
+    setTimeout(() => {
+      document.getElementsByTagName("video")[0].play()
+    }, 1000)
   }
 }
 // 主动触发快捷键
@@ -266,6 +296,8 @@ const handleBtn = (e: any) => {
   width: 100%;
   padding: 15px 5px;
   text-align: left;
+  display: flex;
+  justify-content: space-between;
 }
 
 .current_play_title {
@@ -283,6 +315,23 @@ const handleBtn = (e: any) => {
 .current_play_title a:hover {
   color: orange;
 }
+
+/*自动播放 & 下一集链接*/
+
+.play_info_right a {
+  margin-left: 10px;
+  padding: 15px 20px;
+  display: inline-block;
+  font-size: 20px;
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+.p_r_active {
+  color: #FFBB5C;
+}
+
 
 
 /* 播放区域*/
@@ -325,6 +374,11 @@ const handleBtn = (e: any) => {
     background: #888888;
   }
 
+  .play_info_right a:hover {
+    color: #FFBB5C;
+    background: rgb(0, 0, 0, 0.2);
+  }
+
 }
 
 
@@ -363,9 +417,6 @@ const handleBtn = (e: any) => {
   top: -10px;
   z-index: 50;
 }
-
-
-
 
 /*推荐列表区域*/
 .correlation {
@@ -419,5 +470,23 @@ const handleBtn = (e: any) => {
     font-size: 13px;
   }
 
+  .play_info_right {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .play_info_right a {
+    margin-left: 5px;
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 20px;
+    height: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+  }
+  .play_info_right a:active {
+    color: #FFBB5C;
+    background: rgb(0, 0, 0, 0.2);
+  }
 }
 </style>
