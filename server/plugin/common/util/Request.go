@@ -1,4 +1,4 @@
-package spider
+package util
 
 import (
 	"fmt"
@@ -11,6 +11,10 @@ import (
 	"strings"
 	"time"
 )
+
+/*
+网络请求, 数据爬取
+*/
 
 var (
 	Client = CreateClient()
@@ -32,7 +36,7 @@ func CreateClient() *colly.Collector {
 	c := colly.NewCollector()
 
 	// 设置请求使用clash的socks5代理
-	//setProxy(c)
+	setProxy(c)
 
 	// 设置代理信息
 	//if proxy, err := proxy.RoundRobinProxySwitcher("127.0.0.1:7890"); err != nil {

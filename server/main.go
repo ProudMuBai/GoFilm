@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"server/config"
 	"server/model"
 	"server/plugin/db"
 	"server/plugin/spider"
@@ -33,7 +35,7 @@ func start() {
 	spider.RegularUpdateMovie()
 	// 开启路由监听
 	r := router.SetupRouter()
-	_ = r.Run(`:3601`)
+	_ = r.Run(fmt.Sprintf(":%s", config.ListenerPort))
 
 }
 

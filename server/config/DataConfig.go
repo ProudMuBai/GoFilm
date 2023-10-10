@@ -3,9 +3,14 @@ package config
 import "time"
 
 /*
-定义一些数据库存放的key值
+ 定义一些数据库存放的key值, 以及程序运行时的相关参数配置
 */
+
+// -------------------------System Config-----------------------------------
 const (
+
+	// ListenerPort web服务监听的端口
+	ListenerPort = "3601"
 
 	// MAXGoroutine max goroutine, 执行spider中对协程的数量限制
 	MAXGoroutine = 10
@@ -17,11 +22,16 @@ const (
 	// CornUpdateAll 每月28执行一次清库更新
 	CornUpdateAll = "0 0 2 28 * ?"
 
-	// SpiderCipher 设置Spider触发指令
+	// SpiderCipher 设置Spider触发指令的验证
 	SpiderCipher = "Life in a different world from zero"
 
-	// -------------------------redis key-----------------------------------
+	// ImgCacheFlag 是否开启将主站影片图片放入本地进行存储
+	ImgCacheFlag = false
+	ImageDir     = "./resource/static/images"
+)
 
+// -------------------------redis key-----------------------------------
+const (
 	// CategoryTreeKey 分类树 key
 	CategoryTreeKey     = "CategoryTree"
 	CategoryTreeExpired = time.Hour * 24 * 90
@@ -36,6 +46,12 @@ const (
 	// MultipleSiteDetail 多站点影片信息存储key
 	MultipleSiteDetail = "MultipleSource:%s"
 
+	// SearchInfoTemp redis暂存检索数据信息
+	SearchInfoTemp = "Search:SearchInfoTemp"
+
+	SearchTitle = "Search:Pid%d:Title"
+	SearchTag   = "Search:Pid%d:%s"
+
 	// SearchCount Search scan 识别范围
 	SearchCount = 3000
 	// SearchKeys Search Key Hash
@@ -44,21 +60,16 @@ const (
 	SearchScoreListKey = "Search:SearchScoreList"
 	SearchTimeListKey  = "Search:SearchTimeList"
 	SearchHeatListKey  = "Search:SearchHeatList"
-	// SearchInfoTemp redis暂存检索数据信息
-	SearchInfoTemp = "Search:SearchInfoTemp"
-
-	SearchTitle = "Search:Pid%d:Title"
-	SearchTag   = "Search:Pid%d:%s"
 )
 
-/*API相关redis key*/
-
+// -------------------------Web API相关redis key-----------------------------------
 const (
+	// IndexCacheKey , 首页数据缓存
 	IndexCacheKey = "IndexCache"
 )
 
+// -------------------------Database Connection Params-----------------------------------
 const (
-
 	// SearchTableName 存放检索信息的数据表名
 	SearchTableName = "search"
 

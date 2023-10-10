@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"hash/fnv"
+	"path/filepath"
 	"regexp"
 	"server/config"
+	"server/plugin/common/util"
 	"server/plugin/db"
 	"strconv"
 	"strings"
@@ -90,6 +92,23 @@ type MovieDetail struct {
 }
 
 // ===================================Redis数据交互========================================================
+
+// SaveMoviePic 保存影片图片到服务器
+func SaveMoviePic(details ...*MovieDetail) {
+	for _, d := range details {
+		// 判断 detail 在redis中是否已经存在
+		if db.Rdb.Exists(db.Cxt, fmt.Sprintf(config.MovieDetailKey, d.Cid, d.Id)).Val() == 1 {
+			// 如果已经存在则直接continue
+			continue
+		}
+		// 将影片信息中的pic图片下载保存到resource/images 文件夹下
+		err := util.SaveOnlineFile(d.Picture, config.ImageDir)
+		// 如果没有异常则将detail的图片路径替换为本地的保存路径
+		if err == nil {
+			d.Picture = fmt.Sprintf("http://127.0.0.1:%s/static/image/%s", config.ListenerPort, filepath.Base(d.Picture))
+		}
+	}
+}
 
 // SaveDetails 保存影片详情信息到redis中 格式: MovieDetail:Cid?:Id?
 func SaveDetails(list []MovieDetail) (err error) {

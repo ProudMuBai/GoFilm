@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"server/config"
 	"server/controller"
 )
 
@@ -12,6 +13,9 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	// 开启跨域
 	r.Use(Cors())
+
+	// 静态资源配置
+	r.Static("/static/image", config.ImageDir)
 
 	r.GET(`/index`, controller.Index)
 	r.GET(`/navCategory`, controller.CategoriesInfo)

@@ -9,6 +9,7 @@ import (
 	"server/config"
 	"server/model"
 	"server/plugin/common/dp"
+	"server/plugin/common/util"
 	"time"
 )
 
@@ -66,7 +67,7 @@ func StartSpider() {
 	SearchInfoToMdb()
 	model.AddSearchIndex()
 	log.Println("SearchInfoToMdb 影片检索信息保存完毕")
-	//获取其他站点数据13
+	//获取其他站点数据
 	go MtSiteSpider()
 	log.Println("Spider End , 数据保存执行完成")
 	time.Sleep(time.Second * 10)
@@ -75,12 +76,12 @@ func StartSpider() {
 // CategoryList 获取分类数据
 func CategoryList() {
 	// 设置请求参数信息
-	r := RequestInfo{Uri: MainSite, Params: url.Values{}}
+	r := util.RequestInfo{Uri: MainSite, Params: url.Values{}}
 	r.Params.Set(`ac`, "list")
 	r.Params.Set(`pg`, "1")
 	r.Params.Set(`t`, "1")
 	// 执行请求, 获取一次list数据
-	ApiGet(&r)
+	util.ApiGet(&r)
 	// 解析resp数据
 	movieListInfo := model.MovieListInfo{}
 	if len(r.Resp) <= 0 {
@@ -103,7 +104,7 @@ func CategoryList() {
 // MainSiteSpider 主站点数据处理
 func MainSiteSpider() {
 	// 获取分页页数
-	pageCount, err := GetPageCount(RequestInfo{Uri: MainSite, Params: url.Values{}})
+	pageCount, err := GetPageCount(util.RequestInfo{Uri: MainSite, Params: url.Values{}})
 	// 主站点分页出错直接终止程序
 	if err != nil {
 		panic(err)
@@ -123,7 +124,7 @@ func MainSiteSpider() {
 				if !ok {
 					break
 				}
-				list, e := GetMovieDetail(pg, RequestInfo{Uri: MainSite, Params: url.Values{}})
+				list, e := GetMovieDetail(pg, util.RequestInfo{Uri: MainSite, Params: url.Values{}})
 				if e != nil {
 					log.Println("GetMovieDetail Error: ", err)
 					continue
@@ -152,7 +153,7 @@ func MtSiteSpider() {
 // PlayDetailSpider SpiderSimpleInfo 获取单个站点的播放源
 func PlayDetailSpider(s Site) {
 	// 获取分页页数
-	pageCount, err := GetPageCount(RequestInfo{Uri: s.Uri, Params: url.Values{}})
+	pageCount, err := GetPageCount(util.RequestInfo{Uri: s.Uri, Params: url.Values{}})
 	// 出错直接终止当前站点数据获取
 	if err != nil {
 		log.Println(err)
@@ -174,7 +175,7 @@ func PlayDetailSpider(s Site) {
 				if !ok {
 					break
 				}
-				list, e := GetMovieDetail(pg, RequestInfo{Uri: s.Uri, Params: url.Values{}})
+				list, e := GetMovieDetail(pg, util.RequestInfo{Uri: s.Uri, Params: url.Values{}})
 				if e != nil || len(list) <= 0 {
 					log.Println("GetMovieDetail Error: ", err)
 					continue
@@ -221,7 +222,7 @@ func UpdateMovieDetail() {
 // UpdateMainDetail 更新主站点的最新影片
 func UpdateMainDetail() {
 	// 获取分页页数
-	r := RequestInfo{Uri: MainSite, Params: url.Values{}}
+	r := util.RequestInfo{Uri: MainSite, Params: url.Values{}}
 	r.Params.Set("h", config.UpdateInterval)
 	pageCount, err := GetPageCount(r)
 	if err != nil {
@@ -256,7 +257,7 @@ func UpdateMainDetail() {
 func UpdatePlayDetail() {
 	for _, s := range SiteList {
 		// 获取单个站点的分页数
-		r := RequestInfo{Uri: s.Uri, Params: url.Values{}}
+		r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
 		r.Params.Set("h", config.UpdateInterval)
 		pageCount, err := GetPageCount(r)
 		if err != nil {
@@ -288,11 +289,11 @@ func StartSpiderRe() {
 // =========================公共方法==============================
 
 // GetPageCount 获取总页数
-func GetPageCount(r RequestInfo) (count int, err error) {
+func GetPageCount(r util.RequestInfo) (count int, err error) {
 	// 发送请求获取pageCount
 	r.Params.Set("ac", "detail")
 	r.Params.Set("pg", "2")
-	ApiGet(&r)
+	util.ApiGet(&r)
 	//  判断请求结果是否为空, 如果为空直接输出错误并终止
 	if len(r.Resp) <= 0 {
 		err = errors.New("response is empty")
@@ -309,7 +310,7 @@ func GetPageCount(r RequestInfo) (count int, err error) {
 }
 
 // GetMovieDetail 处理详情接口请求返回的数据
-func GetMovieDetail(pageNumber int, r RequestInfo) (list []model.MovieDetail, err error) {
+func GetMovieDetail(pageNumber int, r util.RequestInfo) (list []model.MovieDetail, err error) {
 	// 防止json解析异常引发panic
 	defer func() {
 		if e := recover(); e != nil {
@@ -319,7 +320,7 @@ func GetMovieDetail(pageNumber int, r RequestInfo) (list []model.MovieDetail, er
 	// 设置分页请求参数
 	r.Params.Set(`ac`, `detail`)
 	r.Params.Set(`pg`, fmt.Sprint(pageNumber))
-	ApiGet(&r)
+	util.ApiGet(&r)
 	// 影视详情信息
 	details := model.DetailListInfo{}
 	// 如果返回数据为空则直接结束本次循环
