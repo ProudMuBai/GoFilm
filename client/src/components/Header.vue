@@ -11,18 +11,40 @@
         </div>
         <!--右侧顶级分类导航 -->
         <div class="nav_right">
-            <el-link :underline="false" href="/">首页</el-link>
-            <el-link :underline="false" :href="`/filmClassify?Pid=${nav.film.id}`">电影</el-link>
-            <el-link :underline="false" :href="`/filmClassify?Pid=${nav.tv.id}`">剧集</el-link>
-            <el-link :underline="false" :href="`/filmClassify?Pid=${nav.cartoon.id}`">动漫</el-link>
-            <el-link :underline="false" :href="`/filmClassify?Pid=${nav.variety.id}`">综艺</el-link>
+            <a href="/">首页</a>
+            <a :href="`/filmClassify?Pid=${nav.film.id}`">电影</a>
+            <a :href="`/filmClassify?Pid=${nav.tv.id}`">剧集</a>
+            <a :href="`/filmClassify?Pid=${nav.cartoon.id}`">动漫</a>
+            <a :href="`/filmClassify?Pid=${nav.variety.id}`">综艺</a>
+
+          <div  class="history-link hidden-md-and-down" v-on:mouseenter="handleHistory(true)" v-on:mouseleave="handleHistory(false)">
+            <a  :href="`/filmClassify?Pid=${nav.variety.id}`">
+              <b style="font-size: 22px;" class="iconfont icon-lishijilu"/>
+            </a>
+            <Transition name="fade-slide" duration="300">
+              <div v-if="data.historyFlag" class="dropdown-container">
+                <div class="history-h">
+                  <b class="iconfont icon-lishijilu1 history-h-icon" />
+                  <span class="history-h-title">历史观看记录</span>
+                </div>
+                <div class="history-c">
+                  <a :href="h.link" class="history-c-item" v-for="h in data.historyList" >
+                    <span class="history-c-item-t">{{ h.name }}
+                    </span>
+                    <span class="history-c-item-e">{{h.episode}}</span>
+                  </a>
+                </div>
+              </div>
+            </Transition>
+          </div>
             <!--        <span style="color:#777; font-weight: bold">|</span>-->
-            <el-link href="/search" class="hidden-md-and-up" :underline="false">
+            <a href="/search" class="hidden-md-and-up" :underline="false">
                 <el-icon style="font-size: 18px">
                     <Search/>
                 </el-icon>
-            </el-link>
+            </a>
         </div>
+      <!--弹窗模块,显示按钮对应信息-->
     </div>
 
 </template>
@@ -33,9 +55,30 @@ import {useRouter} from "vue-router";
 import {Search, CircleClose} from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
 import {ApiGet} from "../utils/request";
-
-//
+import {cookieUtil,COOKIE_KEY_MAP} from "../utils/cookie";
+// 搜索关键字
 const keyword = ref<string>('')
+// 弹窗隐藏显示
+const data = reactive({
+  historyFlag: false,
+  historyList: [{}],
+})
+//
+const handleHistory = (flag:boolean)=>{
+  data.historyFlag = flag
+  if (flag) {
+    // 获取cookie中的filmHistory
+    let historyMap = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)?JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)):null
+    let arr = []
+    if (historyMap) {
+      for (let k in historyMap) {
+        arr.push(historyMap[k])
+      }
+      arr.sort((item1,item2)=> item2.timeStamp-item1.timeStamp)
+    }
+    data.historyList = arr
+  }
+}
 
 
 // 从父组件获取当前路由对象
@@ -69,9 +112,9 @@ onMounted(() => {
         }
     })
 })
-
-
 </script>
+
+
 
 
 <!--移动端适配-->
@@ -114,6 +157,136 @@ onMounted(() => {
 </style>
 
 <style scoped>
+.history-c {
+  max-height: 200px;
+  overflow-y: scroll;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.history-c .history-c-item{
+  display: flex;
+  justify-content:space-between;
+  margin: 0 auto;
+  line-height: 40px;
+}
+
+.history-c-item::before{
+  content: '';
+  height: 10px;
+  width: 10px;
+  display: inline-block;
+  position: absolute;
+  left: 22px;
+  border: 2px solid orangered;
+  background: #fff;
+  border-radius: 50%;
+  top: 15px;
+}
+.history-c-item::after{
+  content: '';
+  border-left: 1px solid #dbdee2;
+  position: absolute;
+  left: 28px;
+  top: 0;
+  height: 100%;
+  z-index: -1;
+}
+.history-c-item:hover:before{
+  content: '';
+  height: 10px;
+  width: 10px;
+  display: inline-block;
+  position: absolute;
+  left: 22px;
+  border: 2px solid orangered;
+  background: #DC3BB6FF;
+  border-radius: 50%;
+  top: 15px;
+}
+
+
+.history-c-item .history-c-item-t{
+  width: 100%;
+  text-align: left!important;
+  position: relative;
+  padding: 5px 5px 2px 55px;
+  margin: 0 10px;
+  flex: 2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+}
+.history-c-item-e{
+  flex: 1;
+  color: rgba(255,255,255,0.38);
+  padding: 5px 0 2px 0;
+}
+
+
+/*历史记录标题域*/
+.history-h {
+  width: 100%;
+  display: flex;
+  justify-content: start;
+  border-bottom: 2px solid rgba(255,255,255,.15);
+}
+.history-h-icon{
+  flex: 1;
+  font-size: 24px;
+  color: orangered;
+}
+.history-h-icon::before{
+  margin-right: 6px;
+}
+.history-h-title{
+  flex: 4;
+  text-align: left;
+  font-size: 18px;
+}
+
+.nav_right  a{
+  position: relative;
+}
+
+.dropdown-container{
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  font-size: 14px;
+  color: rgba(255,255,255,0.38);
+  margin-top: 12px;
+  min-width: 300px;
+  max-width: 330px;
+  height: auto;
+  z-index: 1000;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.85);
+  transform: translate3d(-50%,0,0);
+
+}
+.history-link{
+  position: relative;
+  min-width: 60px;
+  height: 40px;
+  line-height: 40px;
+  margin: 10px 10px;
+  font-size: 15px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.8s linear;
+}
+
+.fade-slide-enter,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translate3d(-50%,-10px,0);
+}
 
 
 @media (min-width: 768px) {
@@ -189,10 +362,10 @@ onMounted(() => {
         flex-direction: row;
     }
 
-    .nav_right a {
+    .nav_right> a {
         min-width: 60px;
         height: 40px;
-        line-height: 60px;
+        line-height: 40px;
         margin: 10px 10px;
         font-size: 15px;
         text-align: center;

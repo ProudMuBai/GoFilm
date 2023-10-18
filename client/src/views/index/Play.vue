@@ -48,6 +48,7 @@
         <div class="play-list">
           <div class="play-list-item" v-show="data.currentTabIndex == i" v-for="(l,i) in data.detail.playList">
             <a :class="`play-link ${item.link == data.current.link?'play-link-active':''}`" v-for="(item,index) in l"
+
                href="javascript:;"
                @click="playChange({sourceIndex: i, episodeIndex: index, target: this})">{{ item.episode }}</a>
           </div>
@@ -59,17 +60,17 @@
       <RelateList :relateList="data.relate"/>
     </div>
   </div>
-
 </template>
 
 <script lang="ts" setup>
-import {computed, onBeforeMount, onMounted, reactive, ref, withDirectives} from "vue";
+import {computed, onBeforeMount, onMounted, reactive, ref, watchEffect, withDirectives} from "vue";
 import {useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
 import RelateList from "../../components/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
 import posterImg from '../../assets/image/play.png'
+import {cookieUtil,COOKIE_KEY_MAP} from '../../utils/cookie'
 // 引入视频播放器组件
 import {VideoPlayer} from '@videojs-player/vue'
 import 'video.js/dist/video-js.css'
@@ -165,6 +166,7 @@ const playChange = (play: { sourceIndex: number, episodeIndex: number, target: a
   data.options.title = data.detail.name + "  " + currPlay.episode
   data.currentPlayFrom = play.sourceIndex
   data.currentTabIndex = play.sourceIndex
+
 }
 
 // player相关事件
@@ -230,6 +232,17 @@ const handleBtn = (e: any) => {
 
   }
 }
+
+// 监听播放url的变化, 触发历史记录的更新
+watchEffect(()=>{
+  //将被点击的影片信息加入本地的观看历史中, 先获取cookie,已存在则追加,否则添加
+  if (data.options.src.length >0) {
+    let historys = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
+    let link = `/play?id=${data.detail.id}&source=${data.currentPlayFrom}&episode=${data.currentEpisode}`
+    historys[data.detail.id] = { name:data.detail.name, link: link, episode: data.current.episode, timeStamp: (new Date()).valueOf()}
+    cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(historys))
+  }
+})
 
 </script>
 
