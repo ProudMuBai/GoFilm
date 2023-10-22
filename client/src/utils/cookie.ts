@@ -27,7 +27,6 @@ const cookieUtil =
                 let [k,v] = cookies[i].split("=")
                 if (k == name) {
                     return decodeURIComponent(v)
-
                 }
             }
             return "";

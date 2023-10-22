@@ -39,37 +39,43 @@ gorm.io/driver/mysql v1.4.7
   - spider         gocolly配置, 执行逻辑, 数据前置处理等
 
 ```text
-server                       
-├─ config                    
-│  └─ DataConfig.go          
-├─ controller                
-│  ├─ IndexController.go     
-│  └─ SpiderController.go    
-├─ logic                     
-│  └─ IndexLogic.go          
-├─ model                     
-│  ├─ Categories.go          
-│  ├─ LZJson.go              
-│  ├─ Movies.go              
-│  └─ Search.go              
-├─ plugin                    
-│  ├─ common                 
-│  │  ├─ JsonUtils.go        
-│  │  ├─ ProcessCategory.go  
-│  │  └─ ProcessMovies.go    
-│  ├─ db                     
-│  │  ├─ mysql.go            
-│  │  └─ redis.go            
-│  └─ spider                 
-│     ├─ Spider.go           
-│     ├─ SpiderCron.go       
-│     └─ SpiderRequest.go    
-├─ router                    
-│  └─ router.go              
-├─ go.mod                    
-├─ go.sum                    
-├─ main.go                   
-└─ README.md                 
+server                          
+├─ config                       
+│  └─ DataConfig.go             
+├─ controller                   
+│  ├─ IndexController.go        
+│  └─ SpiderController.go       
+├─ logic                        
+│  ├─ IndexLogic.go             
+│  └─ SpiderLogic.go            
+├─ model                        
+│  ├─ Categories.go             
+│  ├─ Movies.go                 
+│  ├─ RequestParams.go          
+│  ├─ ResponseJson.go           
+│  └─ Search.go                 
+├─ plugin                       
+│  ├─ common                    
+│  │  ├─ dp                     
+│  │  │  ├─ ProcessCategory.go  
+│  │  │  └─ ProcessMovies.go    
+│  │  ├─ param                  
+│  │  │  └─ SimpleParam.go      
+│  │  └─ util                   
+│  │     ├─ FileDownload.go     
+│  │     └─ Request.go          
+│  ├─ db                        
+│  │  ├─ mysql.go               
+│  │  └─ redis.go               
+│  └─ spider                    
+│     ├─ Spider.go              
+│     └─ SpiderCron.go          
+├─ router                       
+│  └─ router.go                 
+├─ go.mod                       
+├─ go.sum                       
+├─ main.go                      
+└─ README.md                    
 ```
 
 
@@ -130,8 +136,6 @@ server
 | state        | varchar  | 状态(正片)             |
 | remarks      | varchar  | 更新状态(完结 \| xx集) |
 | release_data | bigint   | 上映时间戳             |
-
-
 
 
 

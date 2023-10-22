@@ -16,57 +16,55 @@
 - router.ts 配置路由路径和组件之间的映射关系
 
 ```text
-client                        
-├─ anime_client               
-│  └─ README.md               
-├─ public                     
-│  └─ vite.svg                
-├─ src                        
-│  ├─ assets                  
-│  │  ├─ image                
-│  │  │  ├─ 404.png           
-│  │  │  ├─ cartoon.png       
-│  │  │  ├─ film.png          
-│  │  │  ├─ play.png          
-│  │  │  └─ tv.png            
-│  │  └─ svg                  
-│  │     ├─ cartoon.svg       
-│  │     ├─ film.svg          
-│  │     └─ tv.svg            
-│  ├─ components              
-│  │  ├─ Footer.vue           
-│  │  ├─ Header.vue           
-│  │  ├─ RelateList.vue       
-│  │  └─ Util.vue             
-│  ├─ router                  
-│  │  └─ router.ts            
-│  ├─ utils                   
-│  │  └─ request.ts           
-│  ├─ views                   
-│  │  ├─ error                
-│  │  │  └─ Error404.vue      
-│  │  ├─ index                
-│  │  │  ├─ CategoryFilm.vue  
-│  │  │  ├─ FilmDetails.vue   
-│  │  │  ├─ Home.vue          
-│  │  │  ├─ Play.vue          
-│  │  │  └─ SearchFilm.vue    
-│  │  └─ IndexHome.vue        
-│  ├─ App.vue                 
-│  ├─ main.ts                 
-│  ├─ style.css               
-│  └─ vite-env.d.ts           
-├─ auto-imports.d.ts          
-├─ components.d.ts            
-├─ favicon.ico                
-├─ index.html                 
-├─ package-lock.json          
-├─ package.json               
-├─ README.md                  
-├─ tsconfig.json              
-├─ tsconfig.node.json         
-└─ vite.config.ts             
-
+client                              
+├─ public                           
+│  └─ favicon.ico                   
+├─ src                              
+│  ├─ assets                        
+│  │  ├─ css                        
+│  │  │  ├─ classify.css            
+│  │  │  ├─ film.css                
+│  │  │  └─ pagination.css          
+│  │  └─ image                      
+│  │     ├─ 404.png                 
+│  │     └─ play.png                
+│  ├─ components                    
+│  │  ├─ Loading                    
+│  │  │  ├─ index.ts                
+│  │  │  └─ Loading.vue             
+│  │  ├─ FilmList.vue               
+│  │  ├─ Footer.vue                 
+│  │  ├─ Header.vue                 
+│  │  ├─ RelateList.vue             
+│  │  └─ Util.vue                   
+│  ├─ router                        
+│  │  └─ router.ts                  
+│  ├─ utils                         
+│  │  ├─ cookie.ts                  
+│  │  └─ request.ts                 
+│  ├─ views                         
+│  │  ├─ error                      
+│  │  │  └─ Error404.vue            
+│  │  ├─ index                      
+│  │  │  ├─ FilmClassify.vue        
+│  │  │  ├─ FilmClassifySearch.vue  
+│  │  │  ├─ FilmDetails.vue         
+│  │  │  ├─ Home.vue                
+│  │  │  ├─ Play.vue                
+│  │  │  └─ SearchFilm.vue          
+│  │  └─ IndexHome.vue              
+│  ├─ App.vue                       
+│  ├─ main.ts                       
+│  ├─ style.css                     
+│  └─ vite-env.d.ts                 
+├─ auto-imports.d.ts                
+├─ components.d.ts                  
+├─ index.html                       
+├─ package.json                     
+├─ README.md                        
+├─ tsconfig.json                    
+├─ tsconfig.node.json               
+└─ vite.config.ts                   
 ```
 
 ## 启动方式

@@ -2,7 +2,7 @@
 
 一个基于 vue 和 gin 实现的在线观影网站
 
-效果展示: <a href="http://119.23.231.91:3600" target="_blank"> 演示站点(国内访问速度快)</a> 		<a href="https://m.mubai.link/" target="_blank">正式站点</a>
+效果展示: <a href="http://119.23.231.91:3600" target="_blank"> 演示站点(国内访问速度快)</a> 	<a href="https://m.mubai.link/" target="_blank">主站点</a>
 
 ## 简介
 
@@ -14,102 +14,153 @@
 
 ## 目录结构
 
-- client 客户端项目目录
-- server 服务端接口项目目录
-- film 项目部署相关配置目录
+- client 客户端项目目录 [Client简介](./client/README.md)
+- server 服务端接口项目目录 [Server简介](./client/README.md)
+- film 项目部署相关配置目录 [film 项目安装](./film/README.md)
 - 详细说明请查看具体目录中的README文件
 
 ```text
-GoFilm                          
-├─ client                             
-│  ├─ public                     
-│  │  └─ favicon.ico             
-│  ├─ src                        
-│  │  ├─ assets                  
-│  │  │  ├─ image                
-│  │  │  │  ├─ 404.png           
-│  │  │  │  ├─ cartoon.png       
-│  │  │  │  ├─ film.png          
-│  │  │  │  ├─ play.png          
-│  │  │  │  └─ tv.png            
-│  │  │  └─ svg                  
-│  │  │     ├─ cartoon.svg       
-│  │  │     ├─ film.svg          
-│  │  │     └─ tv.svg            
-│  │  ├─ components              
-│  │  │  ├─ Footer.vue           
-│  │  │  ├─ Header.vue           
-│  │  │  ├─ RelateList.vue       
-│  │  │  └─ Util.vue             
-│  │  ├─ router                  
-│  │  │  └─ router.ts            
-│  │  ├─ utils                   
-│  │  │  └─ request.ts           
-│  │  ├─ views                   
-│  │  │  ├─ error                
-│  │  │  │  └─ Error404.vue      
-│  │  │  ├─ index                
-│  │  │  │  ├─ CategoryFilm.vue  
-│  │  │  │  ├─ FilmDetails.vue   
-│  │  │  │  ├─ Home.vue          
-│  │  │  │  ├─ Play.vue          
-│  │  │  │  └─ SearchFilm.vue    
-│  │  │  └─ IndexHome.vue        
-│  │  ├─ App.vue                 
-│  │  ├─ main.ts                 
-│  │  ├─ style.css               
-│  │  └─ vite-env.d.ts           
-│  ├─ auto-imports.d.ts          
-│  ├─ components.d.ts            
-│  ├─ index.html                 
-│  ├─ package-lock.json          
-│  ├─ package.json               
-│  ├─ README.md                  
-│  ├─ tsconfig.json              
-│  ├─ tsconfig.node.json         
-│  └─ vite.config.ts             
-├─ film                          
-│  ├─ data                       
-│  │  ├─ nginx                   
-│  │  │  ├─ html                 
-│  │  │  └─ nginx.conf           
-│  │  └─ redis                   
-│  │     └─ redis.conf           
-│  ├─ docker-compose.yml         
-│  ├─ Dockerfile                 
-│  └─ README.md                  
-├─ server                        
-│  ├─ config                     
-│  │  └─ DataConfig.go           
-│  ├─ controller                 
-│  │  ├─ IndexController.go      
-│  │  └─ SpiderController.go     
-│  ├─ logic                      
-│  │  └─ IndexLogic.go           
-│  ├─ model                      
-│  │  ├─ Categories.go           
-│  │  ├─ LZJson.go               
-│  │  ├─ Movies.go               
-│  │  └─ Search.go               
-│  ├─ plugin                     
-│  │  ├─ common                  
-│  │  │  ├─ ProcessCategory.go   
-│  │  │  └─ ProcessMovies.go     
-│  │  ├─ db                      
-│  │  │  ├─ mysql.go             
-│  │  │  └─ redis.go             
-│  │  └─ spider                  
-│  │     ├─ Spider.go            
-│  │     ├─ SpiderCron.go        
-│  │     └─ SpiderRequest.go     
-│  ├─ router                     
-│  │  └─ router.go               
-│  ├─ go.mod                     
-│  ├─ go.sum                     
-│  ├─ main.go                    
-│  └─ README.md                  
-├─ LICENSE                       
-└─ README.md                     
+GoFilm-main                            
+├─ client                              
+│  ├─ public                           
+│  │  └─ favicon.ico                   
+│  ├─ src                              
+│  │  ├─ assets                        
+│  │  │  ├─ css                        
+│  │  │  │  ├─ classify.css            
+│  │  │  │  ├─ film.css                
+│  │  │  │  └─ pagination.css          
+│  │  │  └─ image                      
+│  │  │     ├─ 404.png                 
+│  │  │     └─ play.png                
+│  │  ├─ components                    
+│  │  │  ├─ Loading                    
+│  │  │  │  ├─ index.ts                
+│  │  │  │  └─ Loading.vue             
+│  │  │  ├─ FilmList.vue               
+│  │  │  ├─ Footer.vue                 
+│  │  │  ├─ Header.vue                 
+│  │  │  ├─ RelateList.vue             
+│  │  │  └─ Util.vue                   
+│  │  ├─ router                        
+│  │  │  └─ router.ts                  
+│  │  ├─ utils                         
+│  │  │  ├─ cookie.ts                  
+│  │  │  └─ request.ts                 
+│  │  ├─ views                         
+│  │  │  ├─ error                      
+│  │  │  │  └─ Error404.vue            
+│  │  │  ├─ index                      
+│  │  │  │  ├─ FilmClassify.vue        
+│  │  │  │  ├─ FilmClassifySearch.vue  
+│  │  │  │  ├─ FilmDetails.vue         
+│  │  │  │  ├─ Home.vue                
+│  │  │  │  ├─ Play.vue                
+│  │  │  │  └─ SearchFilm.vue          
+│  │  │  └─ IndexHome.vue              
+│  │  ├─ App.vue                       
+│  │  ├─ main.ts                       
+│  │  ├─ style.css                     
+│  │  └─ vite-env.d.ts                 
+│  ├─ auto-imports.d.ts                
+│  ├─ components.d.ts                  
+│  ├─ index.html                       
+│  ├─ package.json                     
+│  ├─ README.md                        
+│  ├─ tsconfig.json                    
+│  ├─ tsconfig.node.json               
+│  └─ vite.config.ts                   
+├─ film                                
+│  ├─ data                             
+│  │  ├─ nginx                         
+│  │  │  ├─ html                       
+│  │  │  │  ├─ assets                  
+│  │  │  │  │  ├─ 404-b813c94a.png     
+│  │  │  │  │  ├─ index-984712d6.js    
+│  │  │  │  │  ├─ index-de4c7ff5.css   
+│  │  │  │  │  └─ play-bb9c8990.png    
+│  │  │  │  ├─ favicon.ico             
+│  │  │  │  └─ index.html              
+│  │  │  └─ nginx.conf                 
+│  │  └─ redis                         
+│  │     └─ redis.conf                 
+│  ├─ server                           
+│  │  ├─ config                        
+│  │  │  └─ DataConfig.go              
+│  │  ├─ controller                    
+│  │  │  ├─ IndexController.go         
+│  │  │  └─ SpiderController.go        
+│  │  ├─ logic                         
+│  │  │  ├─ IndexLogic.go              
+│  │  │  └─ SpiderLogic.go             
+│  │  ├─ model                         
+│  │  │  ├─ Categories.go              
+│  │  │  ├─ Movies.go                  
+│  │  │  ├─ RequestParams.go           
+│  │  │  ├─ ResponseJson.go            
+│  │  │  └─ Search.go                  
+│  │  ├─ plugin                        
+│  │  │  ├─ common                     
+│  │  │  │  ├─ dp                      
+│  │  │  │  │  ├─ ProcessCategory.go   
+│  │  │  │  │  └─ ProcessMovies.go     
+│  │  │  │  └─ param                   
+│  │  │  │     └─ SimpleParam.go       
+│  │  │  ├─ db                         
+│  │  │  │  ├─ mysql.go                
+│  │  │  │  └─ redis.go                
+│  │  │  └─ spider                     
+│  │  │     ├─ Spider.go               
+│  │  │     ├─ SpiderCron.go           
+│  │  │     └─ SpiderRequest.go        
+│  │  ├─ router                        
+│  │  │  └─ router.go                  
+│  │  ├─ go.mod                        
+│  │  ├─ go.sum                        
+│  │  ├─ main.go                       
+│  │  └─ README.md                     
+│  ├─ docker-compose.yml               
+│  ├─ Dockerfile                       
+│  └─ README.md                        
+├─ server                              
+│  ├─ config                           
+│  │  └─ DataConfig.go                 
+│  ├─ controller                       
+│  │  ├─ IndexController.go            
+│  │  └─ SpiderController.go           
+│  ├─ logic                            
+│  │  ├─ IndexLogic.go                 
+│  │  └─ SpiderLogic.go                
+│  ├─ model                            
+│  │  ├─ Categories.go                 
+│  │  ├─ Movies.go                     
+│  │  ├─ RequestParams.go              
+│  │  ├─ ResponseJson.go               
+│  │  └─ Search.go                     
+│  ├─ plugin                           
+│  │  ├─ common                        
+│  │  │  ├─ dp                         
+│  │  │  │  ├─ ProcessCategory.go      
+│  │  │  │  └─ ProcessMovies.go        
+│  │  │  ├─ param                      
+│  │  │  │  └─ SimpleParam.go          
+│  │  │  └─ util                       
+│  │  │     ├─ FileDownload.go         
+│  │  │     └─ Request.go              
+│  │  ├─ db                            
+│  │  │  ├─ mysql.go                   
+│  │  │  └─ redis.go                   
+│  │  └─ spider                        
+│  │     ├─ Spider.go                  
+│  │     └─ SpiderCron.go              
+│  ├─ router                           
+│  │  └─ router.go                     
+│  ├─ go.mod                           
+│  ├─ go.sum                           
+│  ├─ main.go                          
+│  └─ README.md                        
+├─ LICENSE                             
+└─ README.md                           
 ```
 
 
@@ -128,11 +179,17 @@ GoFilm
 
 
 
+## 更新迭代计划
+
+- 目前用户界面的一些功能有待开发和完善, 大家也可以继续提供一些好的建议
+- 目前pc端的历史记录写了一个简单的测试版, 后面有时间会同步完善pc和wrap端的历史记录和收藏功能
+- 前台功能目前基本满足观看的需求, 后续考虑切入一些登录和账户以及管理后台的功能,慢慢完善这个项目.
+
 
 
 ## JetBrains 开源证书
 
-感谢Jetbrains提供的免费开源许可, 项目开发中使用GoLang和WebStam让编程变得更加的便捷高效.
+感谢Jetbrains提供的免费开源许可, GoLang 和 WebStorm 为编程开发带来了良好的体验.
 
 
 

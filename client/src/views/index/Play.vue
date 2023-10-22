@@ -16,11 +16,11 @@
         <h3 class="current_play_title"><a
             :href="`/filmDetail?link=${data.detail.id}`">{{ data.detail.name }}</a>{{ data.current.episode }}</h3>
         <div class="tags">
-          <b>
+          <a :href="`/filmClassifySearch?Pid=${data.detail.pid}&Category=${data.detail.cid}`" >
             <el-icon>
               <Promotion/>
             </el-icon>
-            {{ data.detail.descriptor.cName }}</b>
+            {{ data.detail.descriptor.cName }}</a>
           <span>{{
               data.detail.descriptor.classTag ? data.detail.descriptor.classTag.replaceAll(',', '/') : '未知'
             }}</span>
@@ -359,9 +359,10 @@ watchEffect(()=>{
     padding: 10px 6%;
   }
 
-  .tags b {
+  .tags a {
     padding: 5px 10px;
     background-color: rgba(155, 73, 231, 0.72);
+    color: #c4c2c2;
     font-size: 13px;
     border-radius: 6px;
     margin-right: 15px;
@@ -447,8 +448,9 @@ watchEffect(()=>{
     padding: 5px 10px;
   }
 
-  .tags b {
+  .tags a {
     padding: 5px 10px;
+    color: #c4c2c2;
     background-color: rgba(155, 73, 231, 0.72);
     font-size: 13px;
     border-radius: 6px;

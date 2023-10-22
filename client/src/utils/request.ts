@@ -1,13 +1,13 @@
 import axios from "axios";
-import {ElMessage } from "element-plus";
+import {ElMessage} from "element-plus";
 
 // 自定义loading加载动画
 import {load} from "../components/Loading";
 
+let loadingCount: number = 0;
 
 const http = (options: any) => {
-    // 开启loading动画
-    load.start('')
+
     return new Promise((resolve, reject) => {
         // create an axios instance
         const service = axios.create({
@@ -17,9 +17,10 @@ const http = (options: any) => {
         });
 
         // request interceptor
-        service.interceptors.request.use(
-            (config: any) => {
-
+        service.interceptors.request.use((config: any) => {
+                // 开启loading动画
+                loadingCount++
+                load.start('')
                 // let token: string = ""; //此处换成自己获取回来的token，通常存在在cookie或者store里面
                 // if (token) {
                 //     // 让每个请求携带token-- ['X-Token']为自定义key 请根据实际情况自行修改
@@ -28,20 +29,19 @@ const http = (options: any) => {
                 //     config.headers.Authorization = +token;
                 // }
                 return config;
-            },
-            (error) => {
+            }, (error) => {
                 // Do something with request error
-                Promise.reject(error);
+                return Promise.reject(error);
             }
         );
 
         // response interceptor
-        service.interceptors.response.use(
-            (response) => {
-                load.close()
+        service.interceptors.response.use((response) => {
+                // 关闭loading动画
+                loadingCount--
+                loadingCount == 0 && load.close()
                 return response.data;
-            },
-            (error) => {
+            }, (error) => {
                 if (error.response.status == 403) {
                     ElMessage.error("请求异常: ", error)
                 } else {
@@ -49,7 +49,6 @@ const http = (options: any) => {
                 }
                 return Promise.reject(error);
             }
-
         );
         // 请求处理
         service(options)
@@ -63,11 +62,11 @@ const http = (options: any) => {
     });
 };
 
-const ApiGet = (url:string, params?:any)=>{
-   return http({url, method:`get`, params,})
+const ApiGet = (url: string, params?: any) => {
+    return http({url, method: `get`, params,})
 }
-const ApiPost = (url:string, data:any) =>{
-    return http({url, method:`post`, data,})
+const ApiPost = (url: string, data: any) => {
+    return http({url, method: `post`, data,})
 }
 
 export {http, ApiPost, ApiGet};
