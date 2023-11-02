@@ -2,7 +2,8 @@
   <div class="player_area" v-show="data.loading">
     <div class="player_p">
       <!--preload-->
-      <video-player @mounted="handleBtn" :src="data.options.src" :poster="posterImg" controls
+      <video-player @mounted="playerMount" :src="data.options.src" :poster="posterImg" controls
+                    @ready="beforePlay"
                     @ended="isAutoPlay"
                     :loop="false"
                     @keydown="handlePlay"
@@ -63,8 +64,16 @@
 </template>
 
 <script lang="ts" setup>
-import {computed, onBeforeMount, onMounted, reactive, ref, watchEffect, withDirectives} from "vue";
-import {useRouter} from "vue-router";
+import {
+  computed,
+  onBeforeMount, onBeforeUpdate,
+  reactive,
+  Ref,
+  ref,
+  watchEffect,
+  withDirectives
+} from "vue";
+import {onBeforeRouteUpdate, useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
 import RelateList from "../../components/RelateList.vue";
@@ -129,7 +138,7 @@ const data = reactive({
     title: "", //视频名称
     src: "", //视频源
     volume: 0.6, // 音量
-    currentTime: 0,
+    currentTime: 50,
   },
 })
 //
@@ -229,20 +238,34 @@ const handleBtn = (e: any) => {
       t.preventDefault()
       tiggerKeyMap(t.keyCode)
     })
-
   }
 }
+// player 加载完成事件
+const playerMount = (e:any) =>{
+  // 处理功能按钮相关事件
+  handleBtn(e)
+}
+// player 准备就绪事件
+const beforePlay = (e:any)=>{
+  // 从router参数中获取时间信息
+  let currentTime = router.currentRoute.value.query.currentTime
+  currentTime && e.target.player.currentTime(currentTime)
+}
 
-// 监听播放url的变化, 触发历史记录的更新
-watchEffect(()=>{
-  //将被点击的影片信息加入本地的观看历史中, 先获取cookie,已存在则追加,否则添加
+
+
+//影片信息加入本地的观看历史中, 先获取cookie,已存在则追加,否则添加
+const saveFilmHisroy = ()=>{
   if (data.options.src.length >0) {
+    let player = document.getElementsByTagName("video")[0]
     let historys = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
-    let link = `/play?id=${data.detail.id}&source=${data.currentPlayFrom}&episode=${data.currentEpisode}`
+    let link = `/play?id=${data.detail.id}&source=${data.currentPlayFrom}&episode=${data.currentEpisode}&currentTime=${player.currentTime}`
     historys[data.detail.id] = { name:data.detail.name, link: link, episode: data.current.episode, timeStamp: (new Date()).valueOf()}
     cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(historys))
-  }
-})
+  }}
+
+// 在浏览器关闭前或页面刷新前将当前影片的观看信息存入历史记录中
+window.addEventListener('beforeunload',saveFilmHisroy)
 
 </script>
 

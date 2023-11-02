@@ -14,7 +14,7 @@ export default defineConfig({
     //         "/api": {
     //             target: `http://127.0.0.1:3601`,
     //             changeOrigin: true, // 允许跨域
-    //             rewrite: path => path.replace(/^\/api/,'')
+    //             rewrite: path => path.replace(/^\/api/, '')
     //         }
     //     },
     // },
@@ -42,5 +42,13 @@ export default defineConfig({
         }),
     ],
     css: {devSourcemap: true},
+    build: {
+        terserOptions: {
+            compress: {
+                drop_console:true,
+                drop_debugger: true,
+            }
+        }
+    }
 
 })

@@ -66,7 +66,7 @@ const data = reactive({
   historyFlag: false,
   historyList: [{}],
 })
-//
+// 加载观看历史记录信息
 const handleHistory = (flag: boolean) => {
   data.historyFlag = flag
   if (flag) {
