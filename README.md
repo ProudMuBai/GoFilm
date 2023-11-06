@@ -2,7 +2,7 @@
 
 一个基于 vue 和 gin 实现的在线观影网站
 
-效果展示: <a href="http://119.23.231.91:3600" target="_blank"> 演示站点(国内访问速度快)</a> 	<a href="https://m.mubai.link/" target="_blank">主站点</a>
+效果展示: <a href="https://m.mubai.link/" target="_blank">点击访问演示站点</a> 
 
 ## 简介
 
