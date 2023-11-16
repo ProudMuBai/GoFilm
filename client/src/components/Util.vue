@@ -24,24 +24,25 @@
                 <MoreFilled/>
             </el-icon>
         </a>
+      <CustomDialog />
     </div>
 </template>
 
 <script setup lang="ts">
 import {ArrowUp,Sunny, Moon, MoreFilled} from '@element-plus/icons-vue'
-import {onBeforeMount, onMounted, onUnmounted, reactive} from "vue";
+import { onMounted, reactive} from "vue";
+import CustomDialog from "./Popup/CustomDialog.vue";
 
 const control = reactive({
     show: false,
     darkTheme: true,
+
 })
 
 onMounted(()=>{
 
     changeStyle(localStorage.getItem("theme")+'')
 })
-
-
 const changeStyle = (type:string)=>{
   switch (type) {
       case 'top':
