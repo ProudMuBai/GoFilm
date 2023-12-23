@@ -115,3 +115,10 @@ mysql:
     ports:
       - 3620:6379
 ```
+
+
+
+#### 4. 常见问题
+
+1.  CPU 架构为 ARM 的服务器部署时 需修改Dockerfile 文件中的 `GOARCH=amd64` 为 `GOARCH=arm`
+2.  服务器内存偏小时, 可能自行将redis容器关闭, 需在宿主机 `/etc/sysctl.conf` 文件中追加 `vm.overcommit_memory = 1` 配置, 并执行 `sysctl vm.overcommit_memory=1` 使其生效

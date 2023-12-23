@@ -13,8 +13,23 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
+  /*公共颜色*/
+  --bg-light: #ffffff;
 
+  --content-text-color: #888888;
+
+  --paging-parmary-color: #9b49e7d6;
+
+  --border-gray-color: #0000001f;
+
+  --btn-primary-color: #9b49e7;
+  --btn-pink-color: #d942bf;
+  --btn-bg-linght: #fff;
+
+  --bg-fill-light: #8d00fb1a;
 }
+
+
 
 a {
   font-weight: 500;
@@ -134,6 +149,15 @@ button:focus-visible {
   margin-right: 0!important;
 }
 
+.el-dialog__headerbtn{
+  outline: none!important;
+  border: none;
+}
+
+/*分页插件颜色*/
+.el-popper {
+  --el-color-primary: var(--paging-parmary-color);
+}
 
 
 

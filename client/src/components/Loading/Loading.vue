@@ -30,7 +30,7 @@ defineProps({
     margin-left: 10%;
     transform: translate3d(-50%, -50%, 0);
     background: rgba(0,0,0, 0.65);
-    z-index: 2002;
+    z-index: 5000;
     overflow-y: hidden;
 }
 .loader-container {

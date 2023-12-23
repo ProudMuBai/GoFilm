@@ -3,7 +3,8 @@
     <!-- 左侧logo以及搜索 -->
     <div class="nav_left">
       <!--        <img class="logo" src="/src/assets/logo.png">-->
-      <a href="/" class="site">GoFilm</a>
+      <!--<el-avatar class="logo" :size="45" :src="data.site.logo" alt="GoFilm"/>-->
+      <a href="/" class="site">{{ data.site.siteName }}</a>
       <div class="search_group">
         <input v-model="keyword" @keydown="(e)=>{e.keyCode == 13 && searchFilm()}" placeholder="搜索 动漫,剧集,电影 "
                class="search"/>
@@ -13,10 +14,13 @@
     <!--右侧顶级分类导航 -->
     <div class="nav_right">
       <a href="/">首页</a>
-      <a :href="`/filmClassify?Pid=${nav.film.id}`">电影</a>
-      <a :href="`/filmClassify?Pid=${nav.tv.id}`">剧集</a>
-      <a :href="`/filmClassify?Pid=${nav.cartoon.id}`">动漫</a>
-      <a :href="`/filmClassify?Pid=${nav.variety.id}`">综艺</a>
+      <!--<a :href="`/filmClassify?Pid=${nav.film.id}`">电影</a>-->
+      <!--<a :href="`/filmClassify?Pid=${nav.tv.id}`">剧集</a>-->
+      <!--<a :href="`/filmClassify?Pid=${nav.cartoon.id}`">动漫</a>-->
+      <!--<a :href="`/filmClassify?Pid=${nav.variety.id}`">综艺</a>-->
+      <template v-for="n in data.nav">
+        <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
+      </template>
 
       <div class="history-link hidden-md-and-down" v-on:mouseenter="handleHistory(true)"
            v-on:mouseleave="handleHistory(false)">
@@ -65,6 +69,8 @@ const keyword = ref<string>('')
 const data = reactive({
   historyFlag: false,
   historyList: [{}],
+  nav: Array,
+  site: Object,
 })
 // 加载观看历史记录信息
 const handleHistory = (flag: boolean) => {
@@ -106,17 +112,30 @@ const nav = reactive({
   tv: {},
   variety: {},
 })
+
+// 获取站点信息
+const getBasicInfo = ()=>{
+  ApiGet(`/manage/config/basic`).then((resp: any) => {
+    if (resp.code === 0) {
+      data.site = resp.data
+    } else {
+      ElMessage.error({message: resp.data.msg})
+    }
+  })
+}
 onMounted(() => {
   ApiGet('/navCategory').then((resp: any) => {
     if (resp.status === 'ok') {
-      nav.tv = resp.data.tv
-      nav.film = resp.data.film
-      nav.cartoon = resp.data.cartoon
-      nav.variety = resp.data.variety
+      // nav.tv = resp.data.tv
+      // nav.film = resp.data.film
+      // nav.cartoon = resp.data.cartoon
+      // nav.variety = resp.data.variety
+      data.nav = resp.data
     } else {
       ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1000})
     }
   })
+  getBasicInfo()
 })
 </script>
 

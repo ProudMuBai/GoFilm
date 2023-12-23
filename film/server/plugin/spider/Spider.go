@@ -1,137 +1,181 @@
 package spider
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/url"
 	"server/config"
-	"server/model"
-	"server/plugin/common/dp"
-	"time"
+	"server/model/system"
+	"server/plugin/common/conver"
+	"server/plugin/common/util"
 )
 
 /*
-	舍弃第一版的数据处理思路, v2版本
-	直接分页获取采集站点的影片详情信息
-
+	采集逻辑 v3
 
 */
 
-/*
- 1. 选择一个采集主站点, mysql检索表中只存储主站点检索的信息
- 2. 采集多个站点数据
-    2.1 主站点的采集数据完整地保存相关信息, basicInfo movieDetail search 等信息
-    2.2 其余站点数据只存储 name(影片名称), playUrl(播放url), 存储形式 Key<hash(name)>:value([]MovieUrlInfo)
- 3. api数据格式不变, 获取影片详情时通过subTitle 去redis匹配其他站点的对应播放源并整合到主站详情信息的playUrl中
- 4. 影片搜索时不再使用name进行匹配, 改为使用 subTitle 进行匹配
-*/
+var spiderCore = &JsonCollect{}
 
-const (
-	MainSite = "https://cj.lzcaiji.com/api.php/provide/vod/"
-)
+// =========================通用采集方法==============================
 
-type Site struct {
-	Name string
-	Uri  string
-}
-
-// SiteList 播放源采集站
-var SiteList = []Site{
-	// 备用采集站
-	//{"lz_bk", "https://cj.lzcaiji.com/api.php/provide/vod/"},
-	//{"fs", "https://www.feisuzyapi.com/api.php/provide/vod/"},
-	//{"su", "https://subocaiji.com/api.php/provide/vod/at/json"},
-	//{"bf", "https://bfzyapi.com/api.php/provide/vod/"},
-	//{"ff", "https://svip.ffzyapi8.com/api.php/provide/vod/"},
-
-	//{"lz", "https://cj.lziapi.com/api.php/provide/vod/"},
-	{"kk", "https://kuaikan-api.com/api.php/provide/vod/from/kuaikan"},
-	{"bf", "http://by.bfzyapi.com/api.php/provide/vod/"},
-	{"ff", "https://cj.ffzyapi.com/api.php/provide/vod/"},
-}
-
-// StartSpider 执行多源spider
-func StartSpider() {
-	// 保存分类树
-	CategoryList()
-	log.Println("CategoryList 影片分类信息保存完毕")
-	// 爬取主站点数据
-	MainSiteSpider()
-	log.Println("MainSiteSpider 主站点影片信息保存完毕")
-	// 查找并创建search数据库, 保存search信息, 添加索引
-	time.Sleep(time.Second * 10)
-	model.CreateSearchTable()
-	SearchInfoToMdb()
-	model.AddSearchIndex()
-	log.Println("SearchInfoToMdb 影片检索信息保存完毕")
-	//获取其他站点数据13
-	go MtSiteSpider()
-	log.Println("Spider End , 数据保存执行完成")
-	time.Sleep(time.Second * 10)
-}
-
-// CategoryList 获取分类数据
-func CategoryList() {
-	// 设置请求参数信息
-	r := RequestInfo{Uri: MainSite, Params: url.Values{}}
-	r.Params.Set(`ac`, "list")
-	r.Params.Set(`pg`, "1")
-	r.Params.Set(`t`, "1")
-	// 执行请求, 获取一次list数据
-	ApiGet(&r)
-	// 解析resp数据
-	movieListInfo := model.MovieListInfo{}
-	if len(r.Resp) <= 0 {
-		log.Println("MovieListInfo数据获取异常 : Resp Is Empty")
+// HandleCollect 影视采集  id-采集站ID h-时长/h
+func HandleCollect(id string, h int) error {
+	// 1. 首先通过ID获取对应采集站信息
+	s := system.FindCollectSourceById(id)
+	if s == nil {
+		log.Println("Cannot Find Collect Source Site")
+		return errors.New(" Cannot Find Collect Source Site ")
+	} else if !s.State {
+		log.Println(" The acquisition site was disabled ")
+		return errors.New(" The acquisition site was disabled ")
 	}
-	_ = json.Unmarshal(r.Resp, &movieListInfo)
-	// 获取分类列表信息
-	classList := movieListInfo.Class
-	// 组装分类数据信息树形结构
-	categoryTree := dp.CategoryTree(classList)
-	// 序列化tree
-	data, _ := json.Marshal(categoryTree)
+	// 如果是主站点且状态为启用则先获取分类tree信息
+	if s.Grade == system.MasterCollect && s.State {
+		// 是否存在分类树信息, 不存在则获取
+		if !system.ExistsCategoryTree() {
+			CollectCategory(s)
+		}
+	}
+
+	// 生成 RequestInfo
+	r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
+	// 如果 h == 0 则直接返回错误信息
+	if h == 0 {
+		log.Println(" Collect time cannot be zero ")
+		return errors.New(" Collect time cannot be zer ")
+	}
+	// 如果 h = -1 则进行全量采集
+	if h > 0 {
+		r.Params.Set("h", fmt.Sprint(h))
+	}
+	// 2. 首先获取分页采集的页数
+	pageCount, err := spiderCore.GetPageCount(r)
+	// 分页页数失败 则再进行一次尝试
+	if err != nil {
+		// 如果第二次获取分页页数依旧获取失败则关闭当前采集任务
+		pageCount, err = spiderCore.GetPageCount(r)
+		if err != nil {
+			return err
+		}
+	}
+	// 通过采集类型分别执行不同的采集方法
+	switch s.CollectType {
+	case system.CollectVideo:
+		// 采集视频资源
+		if pageCount <= config.MAXGoroutine*2 {
+			// 少量数据不开启协程
+			for i := 1; i <= pageCount; i++ {
+				collectFilm(s, h, i)
+			}
+		} else {
+			// 如果分页数量较大则开启协程
+			ConcurrentPageSpider(pageCount, s, h, collectFilm)
+		}
+		// 视频数据采集完成后同步相关信息到mysql
+		if s.Grade == system.MasterCollect {
+			// 每次成功执行完都清理redis中的相关API接口数据缓存
+			clearCache()
+			// 执行影片信息更新操作
+			if h > 0 {
+				// 执行数据更新操作
+				system.SyncSearchInfo(1)
+			} else {
+				// 清空searchInfo中的数据并重新添加, 否则执行
+				system.SyncSearchInfo(0)
+			}
+			// 开启图片同步
+			if s.SyncPictures {
+				system.SyncFilmPicture()
+			}
+		}
+
+	case system.CollectArticle, system.CollectActor, system.CollectRole, system.CollectWebSite:
+		log.Println("暂未开放此采集功能!!!")
+		return errors.New("暂未开放此采集功能")
+	}
+	log.Println("Spider Task Exercise Success")
+	return nil
+}
+
+// CollectCategory 影视分类采集
+func CollectCategory(s *system.FilmSource) {
+	// 获取分类树形数据
+	categoryTree, err := spiderCore.GetCategoryTree(util.RequestInfo{Uri: s.Uri, Params: url.Values{}})
+	if err != nil {
+		log.Println("GetCategoryTree Error: ", err)
+		return
+	}
 	// 保存 tree 到redis
-	err := model.SaveCategoryTree(string(data))
+	err = system.SaveCategoryTree(categoryTree)
 	if err != nil {
 		log.Println("SaveCategoryTree Error: ", err)
 	}
 }
 
-// MainSiteSpider 主站点数据处理
-func MainSiteSpider() {
-	// 获取分页页数
-	pageCount, err := GetPageCount(RequestInfo{Uri: MainSite, Params: url.Values{}})
-	// 主站点分页出错直接终止程序
-	if err != nil {
-		panic(err)
+// 影视详情采集
+func collectFilm(s *system.FilmSource, h, pg int) {
+	// 生成请求参数
+	r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
+	// 设置分页页数
+	r.Params.Set("pg", fmt.Sprint(pg))
+	// 如果 h = -1 则进行全量采集
+	if h > 0 {
+		r.Params.Set("h", fmt.Sprint(h))
 	}
-	// 开启协程加快分页请求速度
-	ch := make(chan int, pageCount)
+	// 执行采集方法 获取影片详情list
+	list, err := spiderCore.GetFilmDetail(r)
+	if err != nil || len(list) <= 0 {
+		log.Println("GetMovieDetail Error: ", err)
+		return
+	}
+	// 通过采集站 Grade 类型, 执行不同的存储逻辑
+	switch s.Grade {
+	case system.MasterCollect:
+		// 主站点 	保存完整影片详情信息到 redis
+		if err = system.SaveDetails(list); err != nil {
+			log.Println("SaveDetails Error: ", err)
+		}
+		// 如果主站点开启了图片同步, 则将图片url以及对应的mid存入ZSet集合中
+		if s.SyncPictures {
+			if err = system.SaveVirtualPic(conver.ConvertVirtualPicture(list)); err != nil {
+				log.Println("SaveVirtualPic Error: ", err)
+			}
+		}
+	case system.SlaveCollect:
+		// 附属站点	仅保存影片播放信息到redis
+		if err = system.SaveSitePlayList(s.Name, list); err != nil {
+			log.Println("SaveDetails Error: ", err)
+		}
+	}
+}
+
+// ConcurrentPageSpider 并发分页采集, 不限类型
+func ConcurrentPageSpider(capacity int, s *system.FilmSource, h int, collectFunc func(s *system.FilmSource, hour, pageNumber int)) {
+	// 开启协程并发执行
+	ch := make(chan int, capacity)
 	waitCh := make(chan int)
-	for i := 1; i <= pageCount; i++ {
+	for i := 1; i <= capacity; i++ {
 		ch <- i
 	}
 	close(ch)
-	for i := 0; i < config.MAXGoroutine; i++ {
+	// 开启 MAXGoroutine 数量的协程, 如果分页页数小于协程数则将协程数限制为分页页数
+	var GoroutineNum = config.MAXGoroutine
+	if capacity < GoroutineNum {
+		GoroutineNum = capacity
+	}
+	for i := 0; i < GoroutineNum; i++ {
 		go func() {
 			defer func() { waitCh <- 0 }()
 			for {
+				// 从channel中获取 pageNumber
 				pg, ok := <-ch
 				if !ok {
 					break
 				}
-				list, e := GetMovieDetail(pg, RequestInfo{Uri: MainSite, Params: url.Values{}})
-				if e != nil {
-					log.Println("GetMovieDetail Error: ", err)
-					continue
-				}
-				// 保存影片详情信息到redis
-				if err = model.SaveDetails(list); err != nil {
-					log.Println("SaveDetails Error: ", err)
-				}
+				// 执行对应的采集方法
+				collectFunc(s, h, pg)
 			}
 		}()
 	}
@@ -140,198 +184,36 @@ func MainSiteSpider() {
 	}
 }
 
-// MtSiteSpider 附属数据源处理
-func MtSiteSpider() {
-	for _, s := range SiteList {
-		// 执行每个站点的播放url缓存
-		PlayDetailSpider(s)
-		log.Println(s.Name, "playUrl 爬取完毕!!!")
-	}
-}
-
-// PlayDetailSpider SpiderSimpleInfo 获取单个站点的播放源
-func PlayDetailSpider(s Site) {
-	// 获取分页页数
-	pageCount, err := GetPageCount(RequestInfo{Uri: s.Uri, Params: url.Values{}})
-	// 出错直接终止当前站点数据获取
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	// 开启协程加快分页请求速度
-	ch := make(chan int, pageCount)
-	waitCh := make(chan int)
-	for i := 1; i <= pageCount; i++ {
-		ch <- i
-	}
-	close(ch)
-	for i := 0; i < config.MAXGoroutine; i++ {
-		go func() {
-			defer func() { waitCh <- 0 }()
-			for {
-				pg, ok := <-ch
-				if !ok {
-					break
-				}
-				list, e := GetMovieDetail(pg, RequestInfo{Uri: s.Uri, Params: url.Values{}})
-				if e != nil || len(list) <= 0 {
-					log.Println("GetMovieDetail Error: ", err)
-					continue
-				}
-				// 保存影片播放信息到redis
-				if err = model.SaveSitePlayList(s.Name, list); err != nil {
-					log.Println("SaveDetails Error: ", err)
-				}
-			}
-		}()
-	}
-	for i := 0; i < config.MAXGoroutine; i++ {
-		<-waitCh
-	}
-}
-
-// SearchInfoToMdb 扫描redis中的检索信息, 并批量存入mysql
-func SearchInfoToMdb() {
-	// 1. 从redis的Zset集合中scan扫描数据, 每次100条
-	var cursor uint64 = 0
-	var count int64 = 100
-	for {
-		infoList, nextStar := model.ScanSearchInfo(cursor, count)
-		// 2. 将扫描到的数据插入mysql中
-		model.BatchSave(infoList)
-		// 3.设置下次开始的游标
-		cursor = nextStar
-		// 4. 判断迭代是否已经结束 cursor为0则表示已经迭代完毕
-		if cursor == 0 {
-			return
-		}
-	}
-
-}
-
-// UpdateMovieDetail 定时更新主站点和其余播放源信息
-func UpdateMovieDetail() {
-	// 更新主站系列信息
-	UpdateMainDetail()
-	// 更新播放源数据信息
-	UpdatePlayDetail()
-}
-
-// UpdateMainDetail 更新主站点的最新影片
-func UpdateMainDetail() {
-	// 获取分页页数
-	r := RequestInfo{Uri: MainSite, Params: url.Values{}}
-	r.Params.Set("h", config.UpdateInterval)
-	pageCount, err := GetPageCount(r)
-	if err != nil {
-		log.Printf("Update MianStieDetail failed")
-	}
-	// 保存本次更新的所有详情信息
-	var ds []model.MovieDetail
-	// 获取分页数据
-	for i := 1; i <= pageCount; i++ {
-		list, err := GetMovieDetail(i, r)
-		if err != nil {
-			continue
-		}
-		// 保存更新的影片信息, 同类型直接覆盖
-		if err = model.SaveDetails(list); err != nil {
-			log.Printf("Update MianStieDetail failed, SaveDetails Error ")
-		}
-		ds = append(ds, list...)
-	}
-
-	// 整合详情信息切片
-	var sl []model.SearchInfo
-	for _, d := range ds {
-		// 通过id 获取对应的详情信息
-		sl = append(sl, model.ConvertSearchInfo(d))
-	}
-	// 调用批量保存或更新方法, 如果对应mid数据存在则更新, 否则执行插入
-	model.BatchSaveOrUpdate(sl)
-}
-
-// UpdatePlayDetail 更新最x小时的影片播放源数据
-func UpdatePlayDetail() {
-	for _, s := range SiteList {
-		// 获取单个站点的分页数
-		r := RequestInfo{Uri: s.Uri, Params: url.Values{}}
-		r.Params.Set("h", config.UpdateInterval)
-		pageCount, err := GetPageCount(r)
-		if err != nil {
-			log.Printf("Update %s playDetail failed", s.Name)
-		}
-		for i := 1; i <= pageCount; i++ {
-			// 获取详情信息, 保存到对应hashKey中
-			list, e := GetMovieDetail(i, r)
-			if e != nil || len(list) <= 0 {
-				log.Println("GetMovieDetail Error: ", err)
-				continue
-			}
-			// 保存影片播放信息到redis
-			if err = model.SaveSitePlayList(s.Name, list); err != nil {
-				log.Println("SaveDetails Error: ", err)
+// BatchCollect 批量采集, 采集指定的所有站点最近x小时内更新的数据
+func BatchCollect(h int, ids ...string) {
+	for _, id := range ids {
+		// 如果查询到对应Id的资源站信息, 且资源站处于启用状态
+		if fs := system.FindCollectSourceById(id); fs != nil && fs.State {
+			// 执行当前站点的采集任务
+			if err := HandleCollect(fs.Id, h); err != nil {
+				log.Println(err)
 			}
 		}
 	}
 }
 
-// StartSpiderRe 清空存储数据,从零开始获取
-func StartSpiderRe() {
-	// 删除已有的存储数据, redis 和 mysql中的存储数据全部清空
-	model.RemoveAll()
-	// 执行完整数据获取
-	StartSpider()
-}
-
-// =========================公共方法==============================
-
-// GetPageCount 获取总页数
-func GetPageCount(r RequestInfo) (count int, err error) {
-	// 发送请求获取pageCount
-	r.Params.Set("ac", "detail")
-	r.Params.Set("pg", "2")
-	ApiGet(&r)
-	//  判断请求结果是否为空, 如果为空直接输出错误并终止
-	if len(r.Resp) <= 0 {
-		err = errors.New("response is empty")
-		return
-	}
-	// 获取pageCount
-	res := model.DetailListInfo{}
-	err = json.Unmarshal(r.Resp, &res)
-	if err != nil {
-		return
-	}
-	count = int(res.PageCount)
-	return
-}
-
-// GetMovieDetail 处理详情接口请求返回的数据
-func GetMovieDetail(pageNumber int, r RequestInfo) (list []model.MovieDetail, err error) {
-	// 防止json解析异常引发panic
-	defer func() {
-		if e := recover(); e != nil {
-			log.Println("GetMovieDetail Failed : ", e)
+// AutoCollect 自动进行对所有已启用站点的采集任务
+func AutoCollect(h int) {
+	// 获取采集站中所有站点, 进行遍历
+	for _, s := range system.GetCollectSourceList() {
+		// 如果当前站点为启用状态 则执行 HandleCollect 进行数据采集
+		if s.State {
+			if err := HandleCollect(s.Id, h); err != nil {
+				log.Println(err)
+			}
 		}
-	}()
-	// 设置分页请求参数
-	r.Params.Set(`ac`, `detail`)
-	r.Params.Set(`pg`, fmt.Sprint(pageNumber))
-	ApiGet(&r)
-	// 影视详情信息
-	details := model.DetailListInfo{}
-	// 如果返回数据为空则直接结束本次循环
-	if len(r.Resp) <= 0 {
-		err = errors.New("response is empty")
-		return
 	}
-	// 序列化详情数据
-	if err = json.Unmarshal(r.Resp, &details); err != nil {
-		return
-	}
-	// 处理details信息
-	list = dp.ProcessMovieDetailList(details.List)
-	return
+}
+
+// StarZero 情况站点内所有影片信息
+func StarZero(h int) {
+	// 首先清除影视信息
+	system.FilmZero()
+	// 开启自动采集
+	AutoCollect(h)
 }

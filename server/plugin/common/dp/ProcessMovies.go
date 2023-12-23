@@ -1,15 +1,15 @@
 package dp
 
 import (
-	"server/model"
+	"server/model/system"
 	"strings"
 )
 
 // ProcessMovieListInfo 处理影片列表中的信息
-func ProcessMovieListInfo(list []model.MovieInfo) []model.Movie {
-	var movies []model.Movie
+func ProcessMovieListInfo(list []system.MovieInfo) []system.Movie {
+	var movies []system.Movie
 	for _, info := range list {
-		movies = append(movies, model.Movie{
+		movies = append(movies, system.Movie{
 			Id:       info.Id,
 			Name:     info.Name,
 			Cid:      info.Cid,
@@ -24,8 +24,8 @@ func ProcessMovieListInfo(list []model.MovieInfo) []model.Movie {
 }
 
 // ProcessMovieDetailList 处理影片详情列表数据
-func ProcessMovieDetailList(list []model.MovieDetailInfo) []model.MovieDetail {
-	var detailList []model.MovieDetail
+func ProcessMovieDetailList(list []system.MovieDetailInfo) []system.MovieDetail {
+	var detailList []system.MovieDetail
 	for _, d := range list {
 		detailList = append(detailList, ProcessMovieDetail(d))
 	}
@@ -33,15 +33,15 @@ func ProcessMovieDetailList(list []model.MovieDetailInfo) []model.MovieDetail {
 }
 
 // ProcessMovieDetail 处理单个影片详情信息
-func ProcessMovieDetail(detail model.MovieDetailInfo) model.MovieDetail {
-	md := model.MovieDetail{
+func ProcessMovieDetail(detail system.MovieDetailInfo) system.MovieDetail {
+	md := system.MovieDetail{
 		Id:       detail.Id,
 		Cid:      detail.Cid,
 		Pid:      detail.Pid,
 		Name:     detail.Name,
 		Picture:  detail.Pic,
 		DownFrom: detail.DownFrom,
-		MovieDescriptor: model.MovieDescriptor{
+		MovieDescriptor: system.MovieDescriptor{
 			SubTitle:    detail.SubTitle,
 			CName:       detail.CName,
 			EnName:      detail.EnName,
@@ -74,21 +74,21 @@ func ProcessMovieDetail(detail model.MovieDetailInfo) model.MovieDetail {
 }
 
 // ProcessPlayInfo 处理影片播放数据信息
-func ProcessPlayInfo(info, sparator string) [][]model.MovieUrlInfo {
-	var res [][]model.MovieUrlInfo
+func ProcessPlayInfo(info, separator string) [][]system.MovieUrlInfo {
+	var res [][]system.MovieUrlInfo
 	// 1. 通过分隔符区分多个片源数据
-	for _, l := range strings.Split(info, sparator) {
+	for _, l := range strings.Split(info, separator) {
 		// 2.对每个片源的集数和播放地址进行分割
-		var item []model.MovieUrlInfo
+		var item []system.MovieUrlInfo
 		for _, p := range strings.Split(l, "#") {
 			// 3. 处理 Episode$Link 形式的播放信息
 			if strings.Contains(p, "$") {
-				item = append(item, model.MovieUrlInfo{
+				item = append(item, system.MovieUrlInfo{
 					Episode: strings.Split(p, "$")[0],
 					Link:    strings.Split(p, "$")[1],
 				})
 			} else {
-				item = append(item, model.MovieUrlInfo{
+				item = append(item, system.MovieUrlInfo{
 					Episode: "O(∩_∩)O",
 					Link:    p,
 				})
@@ -101,24 +101,24 @@ func ProcessPlayInfo(info, sparator string) [][]model.MovieUrlInfo {
 }
 
 // ProcessPlayInfoV2 处理影片信息方案二 只保留m3u8播放源
-func ProcessPlayInfoV2(info, sparator string) [][]model.MovieUrlInfo {
-	var res [][]model.MovieUrlInfo
-	if sparator != "" {
+func ProcessPlayInfoV2(info, separator string) [][]system.MovieUrlInfo {
+	var res [][]system.MovieUrlInfo
+	if separator != "" {
 		// 1. 通过分隔符切分播放源地址
-		for _, l := range strings.Split(info, sparator) {
+		for _, l := range strings.Split(info, separator) {
 			// 只对m3u8播放源 和 .mp4下载地址进行处理
 			if strings.Contains(l, ".m3u8") || strings.Contains(l, ".mp4") {
 				// 2.对每个片源的集数和播放地址进行分割
-				var item []model.MovieUrlInfo
+				var item []system.MovieUrlInfo
 				for _, p := range strings.Split(l, "#") {
 					// 3. 处理 Episode$Link 形式的播放信息
 					if strings.Contains(p, "$") {
-						item = append(item, model.MovieUrlInfo{
+						item = append(item, system.MovieUrlInfo{
 							Episode: strings.Split(p, "$")[0],
 							Link:    strings.Split(p, "$")[1],
 						})
 					} else {
-						item = append(item, model.MovieUrlInfo{
+						item = append(item, system.MovieUrlInfo{
 							Episode: "O(∩_∩)O",
 							Link:    p,
 						})
@@ -132,16 +132,16 @@ func ProcessPlayInfoV2(info, sparator string) [][]model.MovieUrlInfo {
 		// 只对m3u8播放源 和 .mp4下载地址进行处理
 		if strings.Contains(info, ".m3u8") || strings.Contains(info, ".mp4") {
 			// 2.对每个片源的集数和播放地址进行分割
-			var item []model.MovieUrlInfo
+			var item []system.MovieUrlInfo
 			for _, p := range strings.Split(info, "#") {
 				// 3. 处理 Episode$Link 形式的播放信息
 				if strings.Contains(p, "$") {
-					item = append(item, model.MovieUrlInfo{
+					item = append(item, system.MovieUrlInfo{
 						Episode: strings.Split(p, "$")[0],
 						Link:    strings.Split(p, "$")[1],
 					})
 				} else {
-					item = append(item, model.MovieUrlInfo{
+					item = append(item, system.MovieUrlInfo{
 						Episode: "O(∩_∩)O",
 						Link:    p,
 					})

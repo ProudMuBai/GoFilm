@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"server/logic"
-	"server/model"
+	"server/model/system"
 	"strconv"
 	"strings"
 )
@@ -26,7 +26,8 @@ func Index(c *gin.Context) {
 
 // CategoriesInfo 分类信息获取
 func CategoriesInfo(c *gin.Context) {
-	data := logic.IL.GetCategoryInfo()
+	//data := logic.IL.GetCategoryInfo()
+	data := logic.IL.GetNavCategory()
 
 	if data == nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -55,7 +56,7 @@ func FilmDetail(c *gin.Context) {
 	// 获取影片详情信息
 	detail := logic.IL.GetFilmDetail(id)
 	// 获取相关推荐影片数据
-	page := model.Page{Current: 0, PageSize: 14}
+	page := system.Page{Current: 0, PageSize: 14}
 	relateMovie := logic.IL.RelateMovie(detail, &page)
 	c.JSON(http.StatusOK, gin.H{
 		"status": StatusOk,
@@ -82,7 +83,7 @@ func FilmPlayInfo(c *gin.Context) {
 	// 获取影片详情信息
 	detail := logic.IL.GetFilmDetail(id)
 	// 推荐影片信息
-	page := model.Page{Current: 0, PageSize: 14}
+	page := system.Page{Current: 0, PageSize: 14}
 	relateMovie := logic.IL.RelateMovie(detail, &page)
 	c.JSON(http.StatusOK, gin.H{
 		"status": StatusOk,
@@ -101,7 +102,7 @@ func SearchFilm(c *gin.Context) {
 	keyword := c.DefaultQuery("keyword", "")
 	currStr := c.DefaultQuery("current", "1")
 	current, _ := strconv.Atoi(currStr)
-	page := model.Page{PageSize: 10, Current: current}
+	page := system.Page{PageSize: 10, Current: current}
 	bl := logic.IL.SearchFilmInfo(strings.TrimSpace(keyword), &page)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -115,7 +116,7 @@ func SearchFilm(c *gin.Context) {
 
 // FilmTagSearch 通过tag获取满足条件的对应影片
 func FilmTagSearch(c *gin.Context) {
-	params := model.SearchTagsVO{}
+	params := system.SearchTagsVO{}
 	pidStr := c.DefaultQuery("Pid", "")
 	cidStr := c.DefaultQuery("Category", "")
 	yStr := c.DefaultQuery("Year", "")
@@ -137,7 +138,7 @@ func FilmTagSearch(c *gin.Context) {
 	// 设置分页信息
 	currentStr := c.DefaultQuery("current", "1")
 	current, _ := strconv.Atoi(currentStr)
-	page := model.Page{PageSize: 49, Current: current}
+	page := system.Page{PageSize: 49, Current: current}
 	logic.IL.GetFilmsByTags(params, &page)
 	// 获取当前分类Title
 	// 返回对应信息
@@ -175,7 +176,7 @@ func FilmClassify(c *gin.Context) {
 	pid, _ := strconv.ParseInt(pidStr, 10, 64)
 	title := logic.IL.GetPidCategory(pid)
 	// 2. 设置分页信息
-	page := model.Page{PageSize: 21, Current: 1}
+	page := system.Page{PageSize: 21, Current: 1}
 	// 3. 获取当前分类下的 最新上映, 排行榜, 最近更新 影片信息
 	c.JSON(http.StatusOK, gin.H{
 		"status": StatusOk,
@@ -207,7 +208,7 @@ func FilmCategory(c *gin.Context) {
 	// 2 设置分页信息
 	currentStr := c.DefaultQuery("current", "1")
 	current, _ := strconv.Atoi(currentStr)
-	page := model.Page{PageSize: 49, Current: current}
+	page := system.Page{PageSize: 49, Current: current}
 	// 2.1 如果不存在cid则根据Pid进行查询
 	if cidStr == "" {
 		// 2.2 如果存在pid则根据pid进行查找

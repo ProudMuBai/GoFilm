@@ -1,10 +1,9 @@
 package logic
 
 import (
-	"fmt"
+	"errors"
 	"log"
-	"server/config"
-	"server/model"
+	"server/model/system"
 	"server/plugin/spider"
 )
 
@@ -13,32 +12,49 @@ type SpiderLogic struct {
 
 var SL *SpiderLogic
 
-// ReZero 清空所有数据从零开始拉取
-func (sl *SpiderLogic) ReZero() {
-	// 如果指令正确,则执行重制
-	spider.StartSpiderRe()
+// BatchCollect 批量采集
+func (sl *SpiderLogic) BatchCollect(time int, ids []string) {
+	go spider.BatchCollect(time, ids...)
 }
 
-// FixDetail 重新获取主站点数据信息
-func (sl *SpiderLogic) FixDetail() {
-	spider.MainSiteSpider()
-	log.Println("FilmDetail 重制完成!!!")
-	// 先截断表中的数据
-	model.TunCateSearchTable()
-	// 重新扫描完整的信息到mysql中
-	spider.SearchInfoToMdb()
-	log.Println("SearchInfo 重制完成!!!")
-}
-
-// SpiderMtPlayRe 多站点播放数据清空重新获取
-func (sl *SpiderLogic) SpiderMtPlayRe() {
-	// 先清空有所附加播放源
-	var keys []string
-	for _, site := range spider.SiteList {
-		keys = append(keys, fmt.Sprintf(config.MultipleSiteDetail, site.Name))
+// StartCollect 执行对指定站点的采集任务
+func (sl *SpiderLogic) StartCollect(id string, h int) error {
+	// 先判断采集站是否存在于系统数据中
+	if fs := system.FindCollectSourceById(id); fs == nil {
+		return errors.New("采集任务开启失败采集站信息不存在")
 	}
-	model.DelMtPlay(keys)
-	// 如果指令正确,则执行详情数据获取
-	spider.MtSiteSpider()
-	log.Println("MtSiteSpider 重制完成!!!")
+	// 存在则开启协程执行采集方法
+	go func() {
+		err := spider.HandleCollect(id, h)
+		if err != nil {
+			log.Printf("资源站[%s]采集任务执行失败: %s", id, err)
+		}
+	}()
+	return nil
+}
+
+// AutoCollect 自动采集
+func (sl *SpiderLogic) AutoCollect(time int) {
+	go spider.AutoCollect(time)
+}
+
+// ZeroCollect 数据清除从零开始采集
+func (sl *SpiderLogic) ZeroCollect(time int) {
+	go spider.StarZero(time)
+}
+
+// FilmClassCollect 影视分类采集, 直接覆盖当前分类数据
+func (sl *SpiderLogic) FilmClassCollect() error {
+	l := system.GetCollectSourceListByGrade(system.MasterCollect)
+	if l == nil {
+		return errors.New("未获取到主采集站信息")
+	}
+	// 获取主站点信息, 只取第一条有效
+	for _, fs := range l {
+		if fs.State {
+			go spider.CollectCategory(&fs)
+			return nil
+		}
+	}
+	return errors.New("未获取到已启用的主采集站信息")
 }

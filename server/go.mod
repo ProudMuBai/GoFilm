@@ -5,11 +5,13 @@ go 1.20
 require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/gocolly/colly/v2 v2.1.0
+	github.com/golang-jwt/jwt/v5 v5.1.0
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/robfig/cron/v3 v3.0.0
 	gorm.io/driver/mysql v1.4.7
 	gorm.io/gorm v1.24.6
 )
+
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.1 // indirect
