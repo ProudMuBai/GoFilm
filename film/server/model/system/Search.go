@@ -261,7 +261,6 @@ func BatchSave(list []SearchInfo) {
 	if err := tx.CreateInBatches(list, len(list)).Error; err != nil {
 		// 插入失败则回滚事务, 重新进行插入
 		tx.Rollback()
-		return
 	}
 	// 保存成功后将相应tag数据缓存到redis中
 	BatchHandleSearchTag(list...)
@@ -357,26 +356,26 @@ func SyncSearchInfo(model int) {
 
 // SearchInfoToMdb 扫描redis中的检索信息, 并批量存入mysql (model 执行模式 0-清空并保存 || 1-更新)
 func SearchInfoToMdb(model int) {
+	// 获取集合中的元素数量, 如果集合中没有元素则直接返回
+	count := db.Rdb.ZCard(db.Cxt, config.SearchInfoTemp).Val()
+	if count <= 0 {
+		return
+	}
 	// 1.从redis中批量扫描详情信息
-	list, cursor := db.Rdb.ZScan(db.Cxt, config.SearchInfoTemp, 0, "*", config.MaxScanCount).Val()
+	list := db.Rdb.ZPopMax(db.Cxt, config.SearchInfoTemp, config.MaxScanCount).Val()
 	// 如果扫描到的信息为空则直接退出
 	if len(list) <= 0 {
 		return
 	}
 	// 2. 处理数据
 	var sl []SearchInfo
-	for i, s := range list {
-		// 3. 判断当前是否是元素
-		if i%2 == 0 {
-			info := SearchInfo{}
-			_ = json.Unmarshal([]byte(s), &info)
-			info.Model = gorm.Model{}
-			// 获取完则删除元素, 避免重复保存
-			db.Rdb.ZRem(db.Cxt, config.SearchInfoTemp, []byte(s))
-			sl = append(sl, info)
-		}
+	for _, s := range list {
+		// 解析详情数据
+		info := SearchInfo{}
+		_ = json.Unmarshal([]byte(s.Member.(string)), &info)
+		sl = append(sl, info)
 	}
-	//
+	// 通过model执行对应的保存方法
 	switch model {
 	case 0:
 		// 批量添加 SearchInfo
@@ -386,9 +385,7 @@ func SearchInfoToMdb(model int) {
 		BatchSaveOrUpdate(sl)
 	}
 	//  如果 SearchInfoTemp 依然存在数据, 则递归执行
-	if cursor > 0 {
-		SearchInfoToMdb(model)
-	}
+	SearchInfoToMdb(model)
 }
 
 // ================================= API 数据接口信息处理 =================================
@@ -533,8 +530,8 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 }
 
 // GetMultiplePlay 通过影片名hash值匹配播放源
-func GetMultiplePlay(siteName, key string) []MovieUrlInfo {
-	data := db.Rdb.HGet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteName), key).Val()
+func GetMultiplePlay(siteId, key string) []MovieUrlInfo {
+	data := db.Rdb.HGet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteId), key).Val()
 	var playList []MovieUrlInfo
 	_ = json.Unmarshal([]byte(data), &playList)
 	return playList

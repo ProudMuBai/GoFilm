@@ -1,14 +1,18 @@
 package spider
 
 import (
+	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"log"
 	"net/url"
 	"server/config"
+	"server/model/collect"
 	"server/model/system"
 	"server/plugin/common/conver"
 	"server/plugin/common/util"
+	"time"
 )
 
 /*
@@ -18,7 +22,7 @@ import (
 
 var spiderCore = &JsonCollect{}
 
-// =========================通用采集方法==============================
+// ======================================================= 通用采集方法  =======================================================
 
 // HandleCollect 影视采集  id-采集站ID h-时长/h
 func HandleCollect(id string, h int) error {
@@ -64,7 +68,15 @@ func HandleCollect(id string, h int) error {
 	switch s.CollectType {
 	case system.CollectVideo:
 		// 采集视频资源
-		if pageCount <= config.MAXGoroutine*2 {
+		// 如果采集源参数中采集间隔参数大于500ms,则使用单线程采集
+		if s.Interval > 500 {
+			// 少量数据不开启协程
+			for i := 1; i <= pageCount; i++ {
+				collectFilm(s, h, i)
+				// 执行一次采集后休眠指定时长
+				time.Sleep(time.Duration(s.Interval) * time.Millisecond)
+			}
+		} else if pageCount <= config.MAXGoroutine*2 {
 			// 少量数据不开启协程
 			for i := 1; i <= pageCount; i++ {
 				collectFilm(s, h, i)
@@ -75,8 +87,6 @@ func HandleCollect(id string, h int) error {
 		}
 		// 视频数据采集完成后同步相关信息到mysql
 		if s.Grade == system.MasterCollect {
-			// 每次成功执行完都清理redis中的相关API接口数据缓存
-			clearCache()
 			// 执行影片信息更新操作
 			if h > 0 {
 				// 执行数据更新操作
@@ -89,6 +99,8 @@ func HandleCollect(id string, h int) error {
 			if s.SyncPictures {
 				system.SyncFilmPicture()
 			}
+			// 每次成功执行完都清理redis中的相关API接口数据缓存
+			clearCache()
 		}
 
 	case system.CollectArticle, system.CollectActor, system.CollectRole, system.CollectWebSite:
@@ -145,7 +157,7 @@ func collectFilm(s *system.FilmSource, h, pg int) {
 		}
 	case system.SlaveCollect:
 		// 附属站点	仅保存影片播放信息到redis
-		if err = system.SaveSitePlayList(s.Name, list); err != nil {
+		if err = system.SaveSitePlayList(s.Id, list); err != nil {
 			log.Println("SaveDetails Error: ", err)
 		}
 	}
@@ -216,4 +228,35 @@ func StarZero(h int) {
 	system.FilmZero()
 	// 开启自动采集
 	AutoCollect(h)
+}
+
+// ======================================================= 公共方法  =======================================================
+
+// CollectApiTest 测试采集接口是否可用
+func CollectApiTest(s system.FilmSource) error {
+	// 使用当前采集站接口采集一页数据
+	r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
+	r.Params.Set("ac", s.CollectType.GetActionType())
+	r.Params.Set("pg", "3")
+	err := util.ApiTest(&r)
+	// 首先核对接口返回值类型
+	if err == nil {
+		// 如果返回值类型为Json则执行Json序列化
+		if s.ResultModel == system.JsonResult {
+			var dp = collect.FilmDetailLPage{}
+			if err = json.Unmarshal(r.Resp, &dp); err != nil {
+				return errors.New(fmt.Sprint("测试失败, 返回数据异常, JSON序列化失败: ", err))
+			}
+			return nil
+		} else if s.ResultModel == system.XmlResult {
+			// 如果返回值类型为XML则执行XML序列化
+			var rd = collect.RssD{}
+			if err = xml.Unmarshal(r.Resp, &rd); err != nil {
+				return errors.New(fmt.Sprint("测试失败, 返回数据异常, XML序列化失败", err))
+			}
+			return nil
+		}
+		return errors.New("测试失败, 接口返回值类型不符合规范")
+	}
+	return errors.New(fmt.Sprint("测试失败, 请求响应异常 : ", err.Error()))
 }

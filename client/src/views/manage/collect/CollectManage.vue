@@ -37,6 +37,13 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column prop="grade" align="center" label="采集间隔">
+        <template #default="scope">
+          <el-tag disable-transitions type="success">
+            {{scope.row.interval >0 ?`${scope.row.interval} ms`:`无限制` }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="采集方式">
         <template #default="scope">
           <el-select v-model="scope.row.cd" class="m-2" placeholder="Select" size="small">
@@ -71,6 +78,11 @@
         <el-form-item label="接口地址">
           <el-input v-model="form.add.uri" placeholder="资源采集链接,本站只采集综合资源或m3u8资源"/>
         </el-form-item>
+        <el-form-item label="间隔时长">
+          <el-tooltip class="box-item" effect="dark" content="单次采集请求的时间间隔, 单位/ms" placement="top">
+            <el-input-number v-model="form.add.interval" :step="100" step-strictly />
+          </el-tooltip>
+        </el-form-item>
         <el-form-item label="接口类型">
           <el-radio-group v-model="form.add.resultModel">
             <el-radio :label="0">JSON</el-radio>
@@ -98,6 +110,7 @@
         <el-form-item label="是否启用">
           <el-switch v-model="form.add.state" inline-prompt active-text="启用" inactive-text="禁用"/>
         </el-form-item>
+
       </el-form>
       <template #footer>
       <span class="dialog-footer">
@@ -115,6 +128,11 @@
         </el-form-item>
         <el-form-item label="接口地址">
           <el-input v-model="form.edit.uri" placeholder="资源采集链接,本站只采集综合资源或m3u8资源"/>
+        </el-form-item>
+        <el-form-item label="间隔时长">
+          <el-tooltip class="box-item" effect="dark" content="单次采集请求的时间间隔, 单位/ms" placement="top">
+            <el-input-number v-model="form.edit.interval" :step="100" step-strictly />
+          </el-tooltip>
         </el-form-item>
         <el-form-item label="接口类型">
           <el-radio-group v-model="form.edit.resultModel">
@@ -211,8 +229,8 @@ interface FilmSource {
 }
 
 const form = reactive({
-  add: {name: '', uri: '', resultModel: 0, grade: 1, collectType: 0, syncPictures: false, state: false,},
-  edit: {id:'', name: '', uri: '', resultModel: 0, grade: 1, collectType: 0, syncPictures: false, state: false,},
+  add: {name: '', uri: '', resultModel: 0, grade: 1, collectType: 0, syncPictures: false, state: false, interval: 0},
+  edit: {id:'', name: '', uri: '', resultModel: 0, grade: 1, collectType: 0, syncPictures: false, state: false,interval:0},
   batch: {ids:[],time: 0},
   options:[]
 
@@ -352,7 +370,7 @@ const cancelDialog = ()=>{
   dialogV.editV = false
   dialogV.batchV = false
   // 还原表单状态
-  form.add = {name: '', uri: '', resultModel: 0, grade: 1, collectType: 0, syncPictures: false, state: false,}
+  form.add = {name: '', uri: '', resultModel: 0, grade: 1, collectType: 0, syncPictures: false, state: false, interval: 0}
 }
 
 const getCollectList = ()=>{

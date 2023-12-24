@@ -1,5 +1,6 @@
 package system
 
+// SearchTagsVO 搜索标签请求参数
 type SearchTagsVO struct {
 	Pid      int64  `json:"pid"`
 	Cid      int64  `json:"cid"`
@@ -99,4 +100,16 @@ type UserInfoVo struct {
 	NickName string `json:"nickName"` // 昵称
 	Avatar   string `json:"avatar"`   // 头像
 	Status   int    `json:"status"`   // 状态
+}
+
+// PlayLinkVo 多站点播放链接数据列表
+type PlayLinkVo struct {
+	Id       string         `json:"id"`
+	Name     string         `json:"name"`
+	LinkList []MovieUrlInfo `json:"linkList"`
+}
+
+type MovieDetailVo struct {
+	MovieDetail
+	List []PlayLinkVo `json:"list"`
 }

@@ -3,7 +3,6 @@ package spider
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"server/model/collect"
 	"server/model/system"
@@ -20,8 +19,8 @@ type FilmCollect interface {
 	GetCategoryTree(r util.RequestInfo) (*system.CategoryTree, error)
 	// GetPageCount 获取API接口的分页页数
 	GetPageCount(r util.RequestInfo) (count int, err error)
-	// GetDetail 获取指定pageNumber的具体数据
-	GetDetail(pageNumber int, r util.RequestInfo) (list []system.MovieDetail, err error)
+	// GetFilmDetail 获取影片详情信息,返回影片详情列表
+	GetFilmDetail(r util.RequestInfo) (list []system.MovieDetail, err error)
 }
 
 // ------------------------------------------------- JSON Collect -------------------------------------------------
@@ -55,7 +54,7 @@ func (jc *JsonCollect) GetCategoryTree(r util.RequestInfo) (*system.CategoryTree
 	return tree, err
 }
 
-// GetPageCount 获取总页数
+// GetPageCount 获取分页总页数
 func (jc *JsonCollect) GetPageCount(r util.RequestInfo) (count int, err error) {
 	// 发送请求获取pageCount, 默认为获取 ac = detail
 	if len(r.Params.Get("ac")) <= 0 {
@@ -75,43 +74,6 @@ func (jc *JsonCollect) GetPageCount(r util.RequestInfo) (count int, err error) {
 		return
 	}
 	count = int(res.PageCount)
-	return
-}
-
-// GetDetail 处理详情接口请求返回的数据
-func (jc *JsonCollect) GetDetail(pageNumber int, r util.RequestInfo) (list []system.MovieDetail, err error) {
-	// 防止json解析异常引发panic
-	defer func() {
-		if e := recover(); e != nil {
-			log.Println("GetMovieDetail Failed : ", e)
-		}
-	}()
-	// 设置分页请求参数
-	r.Params.Set(`ac`, `detail`)
-	r.Params.Set(`pg`, fmt.Sprint(pageNumber))
-	util.ApiGet(&r)
-	// 影视详情信息
-	detailPage := collect.FilmDetailLPage{}
-	//details := system.DetailListInfo{}
-	// 如果返回数据为空则直接结束本次循环
-	if len(r.Resp) <= 0 {
-		err = errors.New("response is empty")
-		return
-	}
-	// 序列化详情数据
-	if err = json.Unmarshal(r.Resp, &detailPage); err != nil {
-		return
-	}
-
-	// 将影视原始详情信息保存到redis中
-	// 获取主站点uri
-	mc := system.GetCollectSourceListByGrade(system.MasterCollect)[0]
-	if mc.Uri == r.Uri {
-		collect.BatchSaveOriginalDetail(detailPage.List)
-	}
-
-	// 处理details信息
-	list = conver.ConvertFilmDetails(detailPage.List)
 	return
 }
 

@@ -68,6 +68,7 @@ type FilmSource struct {
 	SyncPictures bool               `json:"syncPictures"` // 是否同步图片到服务器
 	CollectType  ResourceType       `json:"collectType"`  // 采集资源类型
 	State        bool               `json:"state"`        // 是否启用
+	Interval     int                `json:"interval"`     // 采集时间间隔 单位/ms
 }
 
 // SaveCollectSourceList 保存采集站Api列表

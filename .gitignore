@@ -26,5 +26,5 @@ package-lock.json
 static/
 
 
-*Privide*.go
-
+ProvideController.go
+ProvideLogic.go

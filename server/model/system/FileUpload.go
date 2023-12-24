@@ -89,52 +89,59 @@ func GetPicturePage(page *Page) []Picture {
 
 // SaveVirtualPic 保存待同步的图片信息
 func SaveVirtualPic(pl []VirtualPicture) error {
-	// 保存对应的
+	// 保存对应的待同步图片信息
 	var zl []redis.Z
 	for _, p := range pl {
 		// 首先查询 Gallery 表中是否存在当前ID对应的图片信息, 如果不存在则保存
-		if !ExistPictureByRid(p.Id) {
-			m, _ := json.Marshal(p)
-			zl = append(zl, redis.Z{Score: float64(p.Id), Member: m})
-		}
+		//if !ExistPictureByRid(p.Id) {
+		//	m, _ := json.Marshal(p)
+		//	zl = append(zl, redis.Z{Score: float64(p.Id), Member: m})
+		//}
+
+		// 只要开启图片同步则将图片信息存入待同步图片信息集合中, 是否同步图片交由真正同步到本地时进行决断
+		m, _ := json.Marshal(p)
+		zl = append(zl, redis.Z{Score: float64(p.Id), Member: m})
 	}
 	return db.Rdb.ZAdd(db.Cxt, config.VirtualPictureKey, zl...).Err()
 }
 
 // SyncFilmPicture 同步新采集入栈还未同步的图片
 func SyncFilmPicture() {
+	// 获取集合中的元素数量, 如果集合中没有元素则直接返回
+	count := db.Rdb.ZCard(db.Cxt, config.VirtualPictureKey).Val()
+	if count <= 0 {
+		return
+	}
 	// 扫描待同步图片的信息, 每次扫描count条
-	sl, cursor := db.Rdb.ZScan(db.Cxt, config.VirtualPictureKey, 0, "*", config.MaxScanCount).Val()
+	sl := db.Rdb.ZPopMax(db.Cxt, config.VirtualPictureKey, config.MaxScanCount).Val()
 	if len(sl) <= 0 {
 		return
 	}
 	// 获取 VirtualPicture
-	for i, s := range sl {
-		if i%2 == 0 {
-			// 获取图片信息
-			vp := VirtualPicture{}
-			_ = json.Unmarshal([]byte(s), &vp)
-			// 删除已经取出的数据
-			db.Rdb.ZRem(db.Cxt, config.VirtualPictureKey, []byte(s))
-			// 将图片同步到服务器
-			fileName, err := util.SaveOnlineFile(vp.Link, config.FilmPictureUploadDir)
-			if err != nil {
-				continue
-			}
-			// 完成同步后将图片信息保存到 Gallery 中
-			SaveGallery(Picture{
-				Link:        fmt.Sprint(config.FilmPictureAccess, fileName),
-				Uid:         config.UserIdInitialVal,
-				RelevanceId: vp.Id,
-				PicType:     0,
-				PicUid:      regexp.MustCompile(`\.[^.]+$`).ReplaceAllString(fileName, ""),
-			})
+	for _, s := range sl {
+		// 获取图片信息
+		vp := VirtualPicture{}
+		_ = json.Unmarshal([]byte(s.Member.(string)), &vp)
+		// 判断当前影片是否已经同步过图片, 如果已经同步则直接跳过后续逻辑
+		if ExistPictureByRid(vp.Id) {
+			continue
 		}
+		// 将图片同步到服务器中
+		fileName, err := util.SaveOnlineFile(vp.Link, config.FilmPictureUploadDir)
+		if err != nil {
+			continue
+		}
+		// 完成同步后将图片信息保存到 Gallery 中
+		SaveGallery(Picture{
+			Link:        fmt.Sprint(config.FilmPictureAccess, fileName),
+			Uid:         config.UserIdInitialVal,
+			RelevanceId: vp.Id,
+			PicType:     0,
+			PicUid:      regexp.MustCompile(`\.[^.]+$`).ReplaceAllString(fileName, ""),
+		})
 	}
-	// 如果 cursor != 0 则继续递归执行
-	if cursor > 0 {
-		SyncFilmPicture()
-	}
+	// 递归执行直到图片暂存信息为空
+	SyncFilmPicture()
 }
 
 // ReplaceDetailPic 将影片详情中的图片地址替换为自己的

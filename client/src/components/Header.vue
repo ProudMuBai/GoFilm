@@ -115,7 +115,7 @@ const nav = reactive({
 
 // 获取站点信息
 const getBasicInfo = ()=>{
-  ApiGet(`/manage/config/basic`).then((resp: any) => {
+  ApiGet(`/config/basic`).then((resp: any) => {
     if (resp.code === 0) {
       data.site = resp.data
     } else {
@@ -126,13 +126,9 @@ const getBasicInfo = ()=>{
 onMounted(() => {
   ApiGet('/navCategory').then((resp: any) => {
     if (resp.status === 'ok') {
-      // nav.tv = resp.data.tv
-      // nav.film = resp.data.film
-      // nav.cartoon = resp.data.cartoon
-      // nav.variety = resp.data.variety
       data.nav = resp.data
     } else {
-      ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1000})
+      ElMessage.error({message: "导航分类信息获取失败", duration: 1000})
     }
   })
   getBasicInfo()

@@ -78,9 +78,7 @@ provide('collapse', {
   --el-table-border-color: #9b49e733;
 }
 
-:deep(.el-table th) {
-  //color: skyblue;
-}
+
 
 :deep(.el-radio-group) {
   --el-color-primary: #9b49e7;

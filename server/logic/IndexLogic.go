@@ -67,15 +67,16 @@ func (i *IndexLogic) IndexPage() map[string]interface{} {
 }
 
 // GetFilmDetail 影片详情信息页面处理
-func (i *IndexLogic) GetFilmDetail(id int) system.MovieDetail {
+func (i *IndexLogic) GetFilmDetail(id int) system.MovieDetailVo {
 	// 通过Id 获取影片search信息
 	search := system.SearchInfo{}
 	db.Mdb.Where("mid", id).First(&search)
 	// 获取redis中的完整影视信息 MovieDetail:Cid11:Id24676
 	movieDetail := system.GetDetailByKey(fmt.Sprintf(config.MovieDetailKey, search.Cid, search.Mid))
+	var res = system.MovieDetailVo{MovieDetail: movieDetail}
 	//查找其他站点是否存在影片对应的播放源
-	multipleSource(&movieDetail)
-	return movieDetail
+	res.List = multipleSource(&movieDetail)
+	return res
 }
 
 // GetCategoryInfo 分类信息获取, 组装导航栏需要的信息
@@ -183,7 +184,11 @@ func (i *IndexLogic) SearchTags(pid int64) map[string]interface{} {
 	 2. 仅对主站点影片name进行映射关系处理并将结果添加到map中
 	    例如: xxx第一季  xxx
 */
-func multipleSource(detail *system.MovieDetail) {
+func multipleSource(detail *system.MovieDetail) []system.PlayLinkVo {
+	// 生成多站点的播放源信息
+	master := system.GetCollectSourceListByGrade(system.MasterCollect)
+	var playList = []system.PlayLinkVo{{master[0].Id, master[0].Name, detail.PlayList[0]}}
+
 	// 整合多播放源, 初始化存储key map
 	names := make(map[string]int)
 	// 1. 判断detail的dbId是否存在, 存在则添加到names中作为匹配条件
@@ -206,18 +211,21 @@ func multipleSource(detail *system.MovieDetail) {
 			names[system.GenerateHashKey(v)] = 0
 		}
 	}
-	// 遍历站点列表
+	// 遍历所有附属站点列表
 	sc := system.GetCollectSourceListByGrade(system.SlaveCollect)
 	for _, s := range sc {
 		for k, _ := range names {
-			pl := system.GetMultiplePlay(s.Name, k)
+			pl := system.GetMultiplePlay(s.Id, k)
 			if len(pl) > 0 {
 				// 如果当前站点已经匹配到数据则直接退出当前循环
-				detail.PlayList = append(detail.PlayList, pl)
+				//detail.PlayList = append(detail.PlayList, pl)
+				playList = append(playList, system.PlayLinkVo{Id: s.Id, Name: s.Name, LinkList: pl})
 				break
 			}
 		}
 	}
+
+	return playList
 }
 
 // GetFilmsByTags 通过searchTag 返回满足条件的分页影片信息

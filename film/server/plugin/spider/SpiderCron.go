@@ -14,42 +14,7 @@ var (
 	CronCollect *cron.Cron = CreateCron()
 )
 
-// RegularUpdateMovie 定时更新, 每半小时获取一次站点的最近x小时数据
-func RegularUpdateMovie() {
-	//创建一个定时任务对象
-	c := cron.New(cron.WithSeconds())
-	// 添加定时任务每x 分钟更新一次最近x小时的影片数据
-	taskId, err := c.AddFunc(config.CornMovieUpdate, func() {
-		// 执行更新最近x小时影片的Spider
-		log.Println("执行一次影片更新任务...")
-		UpdateMovieDetail()
-		// 执行更新任务后清理redis中的相关API接口数据缓存
-		clearCache()
-	})
-
-	// 开启定时任务每月最后一天凌晨两点, 执行一次清库重取数据
-	taskId2, err := c.AddFunc(config.CornUpdateAll, func() {
-		StartSpiderRe()
-	})
-
-	if err != nil {
-		log.Println("Corn Start Error: ", err)
-	}
-
-	log.Println(taskId, "------", taskId2)
-	log.Printf("%v", c.Entries())
-
-	//c.Start()
-}
-
-// StartCrontab 启动定时任务
-func StartCrontab() {
-	// 从redis中读取待启动的定时任务列表
-
-	// 影片更新定时任务列表
-	CronCollect.Start()
-}
-
+// CreateCron 创建定时任务
 func CreateCron() *cron.Cron {
 	return cron.New(cron.WithSeconds())
 }

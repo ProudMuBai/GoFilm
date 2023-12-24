@@ -73,14 +73,14 @@
         <div class="module-heading">
           <p class=" play-module-title">播放列表</p>
           <div class="play-tab-group">
-            <a  href="javascript:;"  :class="`play-tab-item ${data.currentTabIndex ==i ? 'tab-active':''}`"
-                v-for="(item,i) in data.detail.playList" @click="changeTab(i)" >{{`播放地址${i+1}`}}</a>
+            <a  href="javascript:;"  :class="`play-tab-item ${data.currentTabId == item.id ? 'tab-active':''}`"
+                v-for="item in data.detail.list" @click="changeTab(item.id)" >{{ item.name }}</a>
           </div>
         </div>
         <div class="play-list">
-          <div class="play-list-item" v-show="data.currentTabIndex == i" v-for="(l,i) in data.detail.playList">
-            <a class="play-link" v-for="(item,index) in l" href="javascript:;"
-               @click="play({source: i, episode: index})">{{ item.episode }}</a>
+          <div class="play-list-item" v-show="data.currentTabId == item.id " v-for="item in data.detail.list">
+            <a class="play-link" v-for="(v,i) in item.linkList" href="javascript:;"
+               @click="play({source: item.id, episode: i})">{{ v.episode }}</a>
           </div>
 
         </div>
@@ -136,11 +136,12 @@ const data = reactive({
       dbScore: '',
       hits: '',
       content: '',
-    }
+    },
+    list: []
   },
   relate: [],
   loading: false,
-  currentTabIndex: 0,
+  currentTabId: '',
 })
 
 // 对部分信息过长进行处理
@@ -157,7 +158,7 @@ const handleLongText = (t: string): string => {
 onBeforeMount(() => {
   let link = router.currentRoute.value.query.link
   ApiGet('/filmDetail', {id: link}).then((resp: any) => {
-    if (resp.status === "ok") {
+    if (resp.code === 0) {
       data.detail = resp.data.detail
       // 去除影视简介中的无用内容和特殊标签格式等
       data.detail.name = data.detail.name.replace(/(～.*～)/g, '')
@@ -166,12 +167,13 @@ onBeforeMount(() => {
       // 处理过长数据
       data.detail.descriptor.actor = handleLongText(data.detail.descriptor.actor)
       data.detail.descriptor.director = handleLongText(data.detail.descriptor.director)
+      data.currentTabId = resp.data.detail.list[0].id
       data.loading = true
     } else {
       ElMessage({
         type: "error",
         dangerouslyUseHTMLString: true,
-        message: resp.message,
+        message: resp.msg,
       })
     }
   })
@@ -179,12 +181,12 @@ onBeforeMount(() => {
 })
 
 // 播放源切换
-const changeTab = (index:number)=>{
-  data.currentTabIndex = index
+const changeTab = (id:string)=>{
+  data.currentTabId = id
 }
 
 // 选集播放点击事件
-const play = (change: { source: number, episode: number }) => {
+const play = (change: { source: string, episode: number }) => {
   router.push({path: `/play`, query: {id: `${router.currentRoute.value.query.link}`, ...change}})
 }
 

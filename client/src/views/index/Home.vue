@@ -1,10 +1,10 @@
 <template>
     <div class="container">
         <div class="content_item" v-for="item in data.info.content">
-            <template v-if="item.nav.name !='综艺' & item.nav.name !='综艺片'">
+            <template v-if="item.nav.show">
                 <el-row class="row-bg  cus_nav" justify="space-between">
                     <el-col :span="12" class="title">
-                        <span :class="`iconfont ${item.nav.name.search('电影') != -1?'icon-film':item.nav.name.search('剧') != -1?'icon-tv':'icon-cartoon'}`"
+                        <span :class="`iconfont ${item.nav.name.search('电影') != -1?'icon-film':item.nav.name.search('剧') != -1?'icon-tv':item.nav.name.search('动漫')!= -1?'icon-cartoon':'icon-variety'}`"
                               style="color: #79bbff;font-size: 32px;margin-right: 10px; line-height: 130%"/>
                         <a :href="`/filmClassify?Pid=${item.nav.id}`">{{ item.nav.name }}</a>
                     </el-col>

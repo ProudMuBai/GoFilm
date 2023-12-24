@@ -18,9 +18,7 @@ onMounted(()=>{
 
 <style scoped>
 .container {
-  //background: url("/src/assets/image/managebg.png");
-  //width: 100vw;
-  //height: 100vh;
+
 }
 
 

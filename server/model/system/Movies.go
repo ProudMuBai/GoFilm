@@ -160,7 +160,7 @@ func SaveMovieBasicInfo(detail MovieDetail) {
 }
 
 // SaveSitePlayList 仅保存播放url列表信息到当前站点
-func SaveSitePlayList(siteName string, list []MovieDetail) (err error) {
+func SaveSitePlayList(id string, list []MovieDetail) (err error) {
 	// 如果list 为空则直接返回
 	if len(list) <= 0 {
 		return nil
@@ -183,7 +183,7 @@ func SaveSitePlayList(siteName string, list []MovieDetail) (err error) {
 	// 如果结果不为空,则将数据保存到redis中
 	if len(res) > 0 {
 		// 保存形式 key: MultipleSource:siteName Hash[hash(movieName)]list
-		err = db.Rdb.HMSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteName), res).Err()
+		err = db.Rdb.HMSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, id), res).Err()
 	}
 	return
 }
