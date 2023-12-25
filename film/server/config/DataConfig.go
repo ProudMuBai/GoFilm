@@ -110,10 +110,10 @@ const (
 
 	//mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 
-	MysqlDsn = "root:MuBai0916$@(mysql:3306)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
+	MysqlDsn = "root:root@(mysql:3306)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
 
 	// Redis连接信息
 	RedisAddr     = `redis:6379`
-	RedisPassword = `MuBai0916$`
+	RedisPassword = `root`
 	RedisDBNo     = 0
 )
