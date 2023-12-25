@@ -3,7 +3,6 @@ package db
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"server/config"
 )
