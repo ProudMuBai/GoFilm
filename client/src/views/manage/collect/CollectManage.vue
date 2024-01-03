@@ -80,7 +80,7 @@
         </el-form-item>
         <el-form-item label="间隔时长">
           <el-tooltip class="box-item" effect="dark" content="单次采集请求的时间间隔, 单位/ms" placement="top">
-            <el-input-number v-model="form.add.interval" :step="100" step-strictly />
+            <el-input-number v-model="form.add.interval" :min="0" :step="100" step-strictly />
           </el-tooltip>
         </el-form-item>
         <el-form-item label="接口类型">
@@ -131,7 +131,7 @@
         </el-form-item>
         <el-form-item label="间隔时长">
           <el-tooltip class="box-item" effect="dark" content="单次采集请求的时间间隔, 单位/ms" placement="top">
-            <el-input-number v-model="form.edit.interval" :step="100" step-strictly />
+            <el-input-number v-model="form.edit.interval" :min="0" :step="100" step-strictly />
           </el-tooltip>
         </el-form-item>
         <el-form-item label="接口类型">

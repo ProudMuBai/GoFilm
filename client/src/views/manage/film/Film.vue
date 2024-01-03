@@ -265,7 +265,6 @@ onMounted(() => {
   max-width: 100%;
   text-align: center;
   padding-right: 50px;
-
 }
 
 :deep(.el-pagination) {
@@ -273,11 +272,6 @@ onMounted(() => {
   justify-content: end;
   --el-color-primary: var(--paging-parmary-color);
 }
-
-:deep(.el-select-dropdown__item) {
-  --el-color-primary: red !important;
-}
-
 
 :deep(.el-pager li) {
   --el-pagination-button-bg-color: var(--btn-bg-linght);

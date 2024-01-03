@@ -70,6 +70,11 @@ func FilmPlayInfo(c *gin.Context) {
 	}
 	// 获取影片详情信息
 	detail := logic.IL.GetFilmDetail(id)
+	// 如果 playFrom 为空, 则设置默认播放源和默认影片数据
+	if len(playFrom) <= 1 && len(detail.List) > 0 {
+		playFrom = detail.List[0].Id
+
+	}
 	// 获取当前影片播放信息
 	var currentPlay system.MovieUrlInfo
 	for _, v := range detail.List {

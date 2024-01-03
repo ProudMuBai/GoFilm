@@ -640,10 +640,10 @@ func GetSearchInfosByTags(st SearchTagsVO, page *Page) []SearchInfo {
 				qw = qw.Where("class_tag LIKE ?", fmt.Sprintf("%%%v%%", value))
 			case "sort":
 				if strings.EqualFold(value.(string), "release_stamp") {
-					qw.Order(fmt.Sprintf("year DESC ,%v Desc", value))
+					qw.Order(fmt.Sprintf("year DESC ,%v DESC", value))
 					break
 				}
-				qw.Order(fmt.Sprintf("%v Desc", value))
+				qw.Order(fmt.Sprintf("%v DESC", value))
 			default:
 				break
 			}

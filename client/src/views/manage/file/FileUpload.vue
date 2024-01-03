@@ -1,41 +1,34 @@
 <template>
   <div class="container">
-    <div class="title_container">
-      <h3>文件上传</h3>
-    </div>
+<!--    <div class="title_container">
+      <h3>海报墙预览</h3>
+    </div>-->
     <div class="content">
       <el-upload v-model:file-list="data.photoWall" action="#" list-type="picture-card"
           :on-remove="handleRemove" :http-request="customUpload">
         <template #file="{ file }">
-          <div>
-            <el-image class="el-upload-list__item-thumbnail" :src="file.link"  fit="cover" />
+            <el-image class="el-upload-list__item-thumbnail" style="width: 100%;height: 100%" :src="file.link"  fit="cover" />
             <span class="el-upload-list__item-actions">
           <span class="el-upload-list__item-preview" @click="handlePictureCardPreview(file)">
             <el-icon><zoom-in /></el-icon>
           </span>
-          <span class="el-upload-list__item-delete">
+          <span class="el-upload-list__item-delete" v-if="false">
             <el-icon><Download /></el-icon>
           </span>
-          <span class="el-upload-list__item-delete">
+          <span class="el-upload-list__item-delete" @click="delImage(file)" >
             <el-icon><Delete /></el-icon>
           </span>
         </span>
-          </div>
         </template>
         <el-icon><Plus /></el-icon>
       </el-upload>
 
-      <el-upload v-if="false" class="upload-demo" drag action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15" multiple>
-        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-        <div class="el-upload__text">
-          删除文件 或<em>点击上传</em>
-        </div>
-        <template #tip>
-          <div class="el-upload__tip">
-            jpg/png files with a size less than 500kb
-          </div>
-        </template>
-      </el-upload>
+      <div class="pagination">
+        <el-pagination  background layout="prev, pager, next"
+                       :total="data.page.total" v-model:page-size="data.page.pageSize"
+                       v-model:current-page="data.page.current"
+                       @change="getPhotoPage" hide-on-single-page/>
+      </div>
     </div>
   </div>
 </template>
@@ -52,6 +45,7 @@ import {Preview} from "../../../components/Global/preview";
 
 const data = reactive({
   photoWall: [],
+  page: {current:1, pageSize: 39, pageNumber: 0, total: 0},
   imgList:[""]
 })
 const customUpload = (options:any)=>{
@@ -70,10 +64,12 @@ const customUpload = (options:any)=>{
   })
 }
 
+// 分页数据获取
 const getPhotoPage = ()=>{
-  ApiGet(`/manage/file/list`, ).then((resp: any) => {
+  ApiGet(`/manage/file/list`, {current: data.page.current} ).then((resp: any) => {
     if (resp.code === 0) {
-      data.photoWall = resp.data
+      data.photoWall = resp.data.list
+      data.page = resp.data.page
     } else {
       ElMessage.error({message: resp.msg})
     }
@@ -83,11 +79,18 @@ const getPhotoPage = ()=>{
 onMounted(()=>{
   getPhotoPage()
 })
-const handleRemove: UploadProps['onRemove'] = (uploadFile, uploadFiles) => {
-  console.log(uploadFile, uploadFiles)
+const delImage = (file:any)=>{
+  ApiGet(`/manage/file/del`, {id: file.ID} ).then((resp: any) => {
+    if (resp.code === 0) {
+      getPhotoPage()
+      ElMessage.success({message: resp.msg})
+    } else {
+      ElMessage.error({message: resp.msg})
+    }
+  })
 }
 
-// const handlePictureCardPreview: UploadProps['onPreview'] = (uploadFile) => {
+// 图片放大预览
 const handlePictureCardPreview  = (currentFile:any) => {
   let list = data.photoWall.map((item:any)=>{
     return item.link
@@ -101,7 +104,31 @@ const handlePictureCardPreview  = (currentFile:any) => {
   background: var(--bg-light);
 }
 .content {
-  display: flex;
-  justify-content: start;
+  width: 100%;
+  padding: 10px 0;
 }
+.title_container {
+  margin: 10px 0 10px 0;
+}
+:deep(.el-upload-list--picture-card ) {
+  padding: 10px 10px;
+}
+:deep(.el-upload-list__item ) {
+  margin: 10px auto!important;
+}
+:deep(.el-upload--picture-card){
+  margin: 10px auto;
+}
+
+.pagination {
+  padding: 20px 0;
+  text-align: center;
+}
+
+:deep(.el-pagination) {
+  width: 100% !important;
+  justify-content: center;
+  --el-color-primary: var(--paging-parmary-color);
+}
+
 </style>

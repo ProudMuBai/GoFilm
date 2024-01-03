@@ -22,8 +22,8 @@ func FilmSourceInit() {
 	}
 	var l []system.FilmSource = []system.FilmSource{
 		{Id: util.GenerateSalt(), Name: "HD(lzBk)", Uri: `https://cj.lzcaiji.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
-		{Id: util.GenerateSalt(), Name: "HD(sn)", Uri: `https://suoniapi.com/api.php/provide/vod/from/snm3u8/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
-		{Id: util.GenerateSalt(), Name: "HD(bf)", Uri: `https://bfzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true, Interval: 1600},
+		{Id: util.GenerateSalt(), Name: "HD(sn)", Uri: `https://suoniapi.com/api.php/provide/vod/from/snm3u8/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true, Interval: 2000},
+		{Id: util.GenerateSalt(), Name: "HD(bf)", Uri: `https://bfzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true, Interval: 2500},
 		{Id: util.GenerateSalt(), Name: "HD(ff)", Uri: `http://cj.ffzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
 		{Id: util.GenerateSalt(), Name: "HD(kk)", Uri: `https://kuaikan-api.com/api.php/provide/vod/from/kuaikan/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
 		//{Id: util.GenerateSalt(), Name: "HD(lz)", Uri: `https://cj.lziapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},

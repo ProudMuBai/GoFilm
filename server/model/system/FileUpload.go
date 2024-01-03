@@ -6,21 +6,24 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"log"
+	"path/filepath"
 	"regexp"
 	"server/config"
 	"server/plugin/common/util"
 	"server/plugin/db"
+	"strings"
 )
 
-// Picture 图片信息对象
-type Picture struct {
+// FileInfo 图片信息对象
+type FileInfo struct {
 	gorm.Model
 	Link        string `json:"link"`        // 图片链接
 	Uid         int    `json:"uid"`         // 上传人ID
 	RelevanceId int64  `json:"relevanceId"` // 关联资源ID
-	PicType     int    `json:"picType"`     // 图片类型 (0 影片封面, 1 用户头像)
-	PicUid      string `json:"picUid"`      // 图片唯一标识, 通常为文件名
-	//Size        int    `json:"size"`        // 图片大小
+	Type        int    `json:"type"`        // 文件类型 (0 影片封面, 1 用户头像)
+	Fid         string `json:"fid"`         // 图片唯一标识, 通常为文件名
+	FileType    string `json:"fileType"`    // 文件类型, txt, png, jpg
+	//Size        int    `json:"size"`        // 文件大小
 }
 
 // VirtualPicture 采集入站,待同步的图片信息
@@ -32,57 +35,80 @@ type VirtualPicture struct {
 //------------------------------------------------本地图库------------------------------------------------
 
 // TableName 设置图片存储表的表名
-func (p *Picture) TableName() string {
-	return config.PictureTableName
+func (f *FileInfo) TableName() string {
+	return config.FileTableName
 }
 
-// CreatePictureTable 创建图片关联信息存储表
-func CreatePictureTable() {
+// StoragePath 获取文件的保存路径
+func (f *FileInfo) StoragePath() string {
+	var storage string
+	switch f.FileType {
+	case "jpeg", "jpg", "png", "webp":
+		storage = strings.Replace(f.Link, config.FilmPictureAccess, fmt.Sprint(config.FilmPictureUploadDir, "/"), 1)
+	default:
+	}
+	return storage
+}
+
+// CreateFileTable 创建图片关联信息存储表
+func CreateFileTable() {
 	// 如果不存在则创建表 并设置自增ID初始值为10000
-	if !ExistPictureTable() {
-		err := db.Mdb.AutoMigrate(&Picture{})
+	if !ExistFileTable() {
+		err := db.Mdb.AutoMigrate(&FileInfo{})
 		if err != nil {
-			log.Println("Create Table Picture Failed: ", err)
+			log.Println("Create Table FileInfo Failed: ", err)
 		}
 	}
 }
 
-// ExistPictureTable 是否存在Picture表
-func ExistPictureTable() bool {
+// ExistFileTable 是否存在Picture表
+func ExistFileTable() bool {
 	// 1. 判断表中是否存在当前表
-	return db.Mdb.Migrator().HasTable(&Picture{})
+	return db.Mdb.Migrator().HasTable(&FileInfo{})
 }
 
 // SaveGallery 保存图片关联信息
-func SaveGallery(p Picture) {
-	db.Mdb.Create(&p)
+func SaveGallery(f FileInfo) {
+	db.Mdb.Create(&f)
 }
 
-// ExistPictureByRid 查找图片信息是否存在
-func ExistPictureByRid(rid int64) bool {
+// ExistFileInfoByRid 查找图片信息是否存在
+func ExistFileInfoByRid(rid int64) bool {
 	var count int64
-	db.Mdb.Model(&Picture{}).Where("relevance_id = ?", rid).Count(&count)
+	db.Mdb.Model(&FileInfo{}).Where("relevance_id = ?", rid).Count(&count)
 	return count > 0
 }
 
-// GetPictureByRid 通过关联的资源id获取对应的图片信息
-func GetPictureByRid(rid int64) Picture {
-	var p Picture
-	db.Mdb.Where("relevance_id = ?", rid).First(&p)
-	return p
+// GetFileInfoByRid 通过关联的资源id获取对应的图片信息
+func GetFileInfoByRid(rid int64) FileInfo {
+	var f FileInfo
+	db.Mdb.Where("relevance_id = ?", rid).First(&f)
+	return f
 }
 
-func GetPicturePage(page *Page) []Picture {
-	var pl []Picture
-	query := db.Mdb.Model(&Picture{})
+// GetFileInfoById 通过ID获取对应的图片信息
+func GetFileInfoById(id uint) FileInfo {
+	var f = FileInfo{}
+	db.Mdb.First(&f, id)
+	return f
+}
+
+// GetFileInfoPage 获取文件关联信息分页数据
+func GetFileInfoPage(tl []string, page *Page) []FileInfo {
+	var fl []FileInfo
+	query := db.Mdb.Model(&FileInfo{}).Where("file_type IN ?", tl).Order("id DESC")
 	// 获取分页相关参数
 	GetPage(query, page)
 	// 获取分页数据
-	if err := query.Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&pl).Error; err != nil {
+	if err := query.Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&fl).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
-	return pl
+	return fl
+}
+
+func DelFileInfo(id uint) {
+	db.Mdb.Unscoped().Delete(&FileInfo{}, id)
 }
 
 //------------------------------------------------图片同步------------------------------------------------
@@ -123,7 +149,7 @@ func SyncFilmPicture() {
 		vp := VirtualPicture{}
 		_ = json.Unmarshal([]byte(s.Member.(string)), &vp)
 		// 判断当前影片是否已经同步过图片, 如果已经同步则直接跳过后续逻辑
-		if ExistPictureByRid(vp.Id) {
+		if ExistFileInfoByRid(vp.Id) {
 			continue
 		}
 		// 将图片同步到服务器中
@@ -132,12 +158,13 @@ func SyncFilmPicture() {
 			continue
 		}
 		// 完成同步后将图片信息保存到 Gallery 中
-		SaveGallery(Picture{
+		SaveGallery(FileInfo{
 			Link:        fmt.Sprint(config.FilmPictureAccess, fileName),
 			Uid:         config.UserIdInitialVal,
 			RelevanceId: vp.Id,
-			PicType:     0,
-			PicUid:      regexp.MustCompile(`\.[^.]+$`).ReplaceAllString(fileName, ""),
+			Type:        0,
+			Fid:         regexp.MustCompile(`\.[^.]+$`).ReplaceAllString(fileName, ""),
+			FileType:    strings.TrimPrefix(filepath.Ext(fileName), "."),
 		})
 	}
 	// 递归执行直到图片暂存信息为空
@@ -147,21 +174,21 @@ func SyncFilmPicture() {
 // ReplaceDetailPic 将影片详情中的图片地址替换为自己的
 func ReplaceDetailPic(d *MovieDetail) {
 	// 查询影片对应的本地图片信息
-	if ExistPictureByRid(d.Id) {
+	if ExistFileInfoByRid(d.Id) {
 		// 如果存在关联的本地图片, 则查询对应的图片信息
-		p := GetPictureByRid(d.Id)
+		f := GetFileInfoByRid(d.Id)
 		// 替换采集站的图片链接为本地链接
-		d.Picture = p.Link
+		d.Picture = f.Link
 	}
 }
 
 // ReplaceBasicDetailPic 替换影片基本数据中的封面图为本地图片
 func ReplaceBasicDetailPic(d *MovieBasicInfo) {
 	// 查询影片对应的本地图片信息
-	if ExistPictureByRid(d.Id) {
+	if ExistFileInfoByRid(d.Id) {
 		// 如果存在关联的本地图片, 则查询对应的图片信息
-		p := GetPictureByRid(d.Id)
+		f := GetFileInfoByRid(d.Id)
 		// 替换采集站的图片链接为本地链接
-		d.Picture = p.Link
+		d.Picture = f.Link
 	}
 }

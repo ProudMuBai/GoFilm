@@ -15,20 +15,6 @@ const (
 	// MAXGoroutine max goroutine, 执行spider中对协程的数量限制
 	MAXGoroutine = 10
 
-	// CornMovieUpdate 影片更新定时任务间隔
-	CornMovieUpdate = "0 0/20 * * * ?"
-	// UpdateInterval 获取最近几小时更新的影片 (h 小时) 默认3小时
-	UpdateInterval = "3"
-	// CornUpdateAll 每月28执行一次清库更新
-	CornUpdateAll = "0 0 2 28 * ?"
-
-	// SpiderCipher 设置Spider触发指令的验证
-	SpiderCipher = "Life in a different world from zero"
-
-	// ImgCacheFlag 是否开启将主站影片图片放入本地进行存储
-	ImgCacheFlag = false
-	//ImageDir             = "./resource/static/images"
-
 	FilmPictureUploadDir = "./static/upload/gallery"
 	FilmPictureUrlPath   = "/upload/pic/poster/"
 	FilmPictureAccess    = "/api/upload/pic/poster/"
@@ -62,15 +48,6 @@ const (
 	VirtualPictureKey = "VirtualPicture"
 	// MaxScanCount redis Scan 操作每次扫描的数据量, 每次最多扫描300条数据
 	MaxScanCount = 300
-
-	// SearchCount Search scan 识别范围
-	SearchCount = 3000
-	// SearchKeys Search Key Hash
-	SearchKeys = "SearchKeys"
-	// SearchScoreListKey 根据评分检索的key
-	SearchScoreListKey = "Search:SearchScoreList"
-	SearchTimeListKey  = "Search:SearchTimeList"
-	SearchHeatListKey  = "Search:SearchHeatList"
 )
 
 const (
@@ -106,7 +83,7 @@ const (
 	SearchTableName  = "search"
 	UserTableName    = "users"
 	UserIdInitialVal = 10000
-	PictureTableName = "picture"
+	FileTableName    = "files"
 
 	//mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 

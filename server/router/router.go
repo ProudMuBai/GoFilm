@@ -95,6 +95,8 @@ func SetupRouter() *gin.Engine {
 		fileRoute := manageRoute.Group(`/file`)
 		{
 			fileRoute.POST(`/upload`, controller.SingleUpload)
+			fileRoute.GET(`/upload/multiple`, controller.MultipleUpload)
+			fileRoute.GET(`/del`, controller.DelFile)
 			fileRoute.GET(`/list`, controller.PhotoWall)
 		}
 

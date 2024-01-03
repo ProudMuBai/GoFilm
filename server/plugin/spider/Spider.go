@@ -201,10 +201,17 @@ func BatchCollect(h int, ids ...string) {
 	for _, id := range ids {
 		// 如果查询到对应Id的资源站信息, 且资源站处于启用状态
 		if fs := system.FindCollectSourceById(id); fs != nil && fs.State {
+			// 采用协程并发执行, 每个站点单独开启一个协程执行
+			go func() {
+				err := HandleCollect(fs.Id, h)
+				if err != nil {
+					log.Println(err)
+				}
+			}()
 			// 执行当前站点的采集任务
-			if err := HandleCollect(fs.Id, h); err != nil {
-				log.Println(err)
-			}
+			//if err := HandleCollect(fs.Id, h); err != nil {
+			//	log.Println(err)
+			//}
 		}
 	}
 }

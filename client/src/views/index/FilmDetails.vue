@@ -59,7 +59,7 @@
         </p>
       </div>
       <p>
-        <el-button type="warning" class="player" size="large" @click="play({episode:0,source:0})" round>
+        <el-button type="warning" class="player" size="large" @click="play({episode:0,source:data.detail.list[0].id})" round>
           <el-icon>
             <CaretRight/>
           </el-icon>
@@ -155,6 +155,32 @@ const handleLongText = (t: string): string => {
   return res.trimEnd()
 }
 
+
+
+// 播放源切换
+const changeTab = (id:string)=>{
+  data.currentTabId = id
+}
+
+// 选集播放点击事件
+const play = (change: { source: string, episode: number }) => {
+  router.push({path: `/play`, query: {id: `${router.currentRoute.value.query.link}`, ...change}})
+}
+
+// 内容展开收起效果
+const multiBtn = ref({state: false, text: '展开'})
+const textContent = ref()
+const showContent = (flag: boolean) => {
+  if (flag) {
+    multiBtn.value = {state: !flag, text: '展开'}
+    textContent.value.style.webkitLineClamp = 2
+    return
+  }
+  multiBtn.value = {state: !flag, text: '收起'}
+  textContent.value.style.webkitLineClamp = 8
+}
+
+// 页面加载数据初始化
 onBeforeMount(() => {
   let link = router.currentRoute.value.query.link
   ApiGet('/filmDetail', {id: link}).then((resp: any) => {
@@ -179,29 +205,6 @@ onBeforeMount(() => {
   })
 
 })
-
-// 播放源切换
-const changeTab = (id:string)=>{
-  data.currentTabId = id
-}
-
-// 选集播放点击事件
-const play = (change: { source: string, episode: number }) => {
-  router.push({path: `/play`, query: {id: `${router.currentRoute.value.query.link}`, ...change}})
-}
-
-// 内容展开收起效果
-const multiBtn = ref({state: false, text: '展开'})
-const textContent = ref()
-const showContent = (flag: boolean) => {
-  if (flag) {
-    multiBtn.value = {state: !flag, text: '展开'}
-    textContent.value.style.webkitLineClamp = 2
-    return
-  }
-  multiBtn.value = {state: !flag, text: '收起'}
-  textContent.value.style.webkitLineClamp = 8
-}
 </script>
 
 

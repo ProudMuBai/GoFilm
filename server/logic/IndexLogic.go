@@ -22,8 +22,6 @@ var IL *IndexLogic
 
 // IndexPage 首页数据处理
 func (i *IndexLogic) IndexPage() map[string]interface{} {
-	//声明返回值
-	//Info := make(map[string]interface{})
 	// 首页请求时长较高, 采用redis进行缓存, 在定时任务更新影片时清除对应缓存
 	// 判断是否存在缓存数据, 存在则直接将数据返回
 	Info := system.GetCacheData(config.IndexCacheKey)
@@ -34,21 +32,14 @@ func (i *IndexLogic) IndexPage() map[string]interface{} {
 	// 1. 首页分类数据处理 导航分类数据处理, 只提供 电影 电视剧 综艺 动漫 四大顶级分类和其子分类
 	tree := system.CategoryTree{Category: &system.Category{Id: 0, Name: "分类信息"}}
 	sysTree := system.GetCategoryTree()
-	//  由于采集源数据格式不一,因此采用名称匹配
-	//for _, c := range sysTree.Children {
-	//	switch c.Category.Name {
-	//	case "电影", "电影片", "连续剧", "电视剧", "综艺", "综艺片", "动漫", "动漫片":
-	//		tree.Children = append(tree.Children, c)
-	//	}
-	//}
-
+	// 只展示show=true的分页影片信息
 	for _, c := range sysTree.Children {
 		// 只针对一级分类进行处理
 		if c.Show {
 			tree.Children = append(tree.Children, c)
 		}
 	}
-
+	// 返回分类信息
 	Info["category"] = tree
 	// 2. 提供用于首页展示的顶级分类影片信息, 每分类 14条数据
 	var list []map[string]interface{}
@@ -62,7 +53,7 @@ func (i *IndexLogic) IndexPage() map[string]interface{} {
 	}
 	Info["content"] = list
 	// 不存在首页数据缓存时将查询数据缓存到redis中
-	//system.DataCache(config.IndexCacheKey, Info)
+	system.DataCache(config.IndexCacheKey, Info)
 	return Info
 }
 

@@ -11,5 +11,5 @@ func TableInIt() {
 	// 创建 Search Table
 	system.CreateSearchTable()
 	// 创建图片信息管理表
-	system.CreatePictureTable()
+	system.CreateFileTable()
 }

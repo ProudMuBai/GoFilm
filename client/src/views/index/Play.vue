@@ -126,7 +126,6 @@ const data = reactive({
     list: [],
   },
   current: {index: 0, episode: '', link: ''},
-  currentTabName: '',
   currentEpisode: 0,
   relate: [],
   currentTabId: '', // 当前播放源ID
@@ -152,27 +151,7 @@ const hasNext = computed(() => {
 
 // 获取路由信息
 const router = useRouter()
-onBeforeMount(() => {
-  let query = router.currentRoute.value.query
-  ApiGet(`/filmPlayInfo`, {id: query.id, playFrom: query.source, episode: query.episode}).then((resp: any) => {
-    if (resp.code === 0) {
-      data.detail = resp.data.detail
-      data.current = {index: resp.data.currentEpisode, ...resp.data.current}
-      // data.currentPlayFrom = resp.data.currentPlayFrom
-      data.currentEpisode = resp.data.currentEpisode
-      data.relate = resp.data.relate
-      // 设置当前选中的播放源
-      data.currentTabName = `tab-${query.source}`
-      // 设置当前的视频播放url
-      data.options.src = data.current.link
-      // 设置当前播放源ID信息
-      data.currentTabId = resp.data.currentPlayFrom
-      data.loading = true
-    } else {
-      ElMessage.error({message: resp.msg})
-    }
-  })
-})
+
 
 // 点击播集数播放对应影片
 const playChange = (play: { sourceId: string, episodeIndex: number, target: any }) => {
@@ -278,6 +257,27 @@ const saveFilmHisroy = ()=>{
 // 在浏览器关闭前或页面刷新前将当前影片的观看信息存入历史记录中
 window.addEventListener('beforeunload',saveFilmHisroy)
 
+
+// 初始化页面数据
+onBeforeMount(() => {
+  let query = router.currentRoute.value.query
+  ApiGet(`/filmPlayInfo`, {id: query.id, playFrom: query.source, episode: query.episode}).then((resp: any) => {
+    if (resp.code === 0) {
+      data.detail = resp.data.detail
+      data.current = {index: resp.data.currentEpisode, ...resp.data.current}
+      // data.currentPlayFrom = resp.data.currentPlayFrom
+      data.currentEpisode = resp.data.currentEpisode
+      data.relate = resp.data.relate
+      // 设置当前的视频播放url
+      data.options.src = data.current.link
+      // 设置当前播放源ID信息
+      data.currentTabId = resp.data.currentPlayFrom
+      data.loading = true
+    } else {
+      ElMessage.error({message: resp.msg})
+    }
+  })
+})
 </script>
 
 <style scoped>
