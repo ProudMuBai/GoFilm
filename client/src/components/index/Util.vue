@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import {ArrowUp,Sunny, Moon, MoreFilled} from '@element-plus/icons-vue'
 import { onMounted, reactive} from "vue";
-import CustomDialog from "./Popup/CustomDialog.vue";
+import CustomDialog from "../Popup/CustomDialog.vue";
 
 const control = reactive({
     show: false,

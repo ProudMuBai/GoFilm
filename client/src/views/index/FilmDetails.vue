@@ -100,7 +100,7 @@ import {onBeforeMount, reactive, ref,} from "vue";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from 'element-plus'
 import {Promotion, CaretRight} from "@element-plus/icons-vue";
-import RelateList from "../../components/RelateList.vue";
+import RelateList from "../../components/index/RelateList.vue";
 // 获取路由对象
 const router = useRouter()
 const data = reactive({

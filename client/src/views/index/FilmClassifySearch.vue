@@ -42,7 +42,7 @@ import {useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
 import {ArrowRightBold, ArrowLeftBold} from '@element-plus/icons-vue'
-import FilmList from "../../components/FilmList.vue";
+import FilmList from "../../components/index/FilmList.vue";
 
 // 页面所需数据
 const d = reactive({
@@ -99,12 +99,13 @@ const handleParams = ()=> {
 const getFilmData = () => {
   let query = router.currentRoute.value.query
   ApiGet(`/filmClassifySearch`, {...query}).then((resp: any) => {
-    if (resp.status === 'ok') {
+    if (resp.code === 0) {
       d.title = resp.data.title
       d.list = resp.data.list
-      d.page = resp.page
+      d.page = resp.data.page
       d.search = resp.data.search
       d.searchParams = resp.data.params
+      console.log(d)
     } else {
       ElMessage.error({message: "影片搜索结果异常,请稍后刷新重试", duration: 1000})
     }

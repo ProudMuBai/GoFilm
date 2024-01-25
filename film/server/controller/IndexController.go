@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"server/logic"
 	"server/model/system"
 	"strconv"
@@ -25,18 +24,11 @@ func Index(c *gin.Context) {
 func CategoriesInfo(c *gin.Context) {
 	//data := logic.IL.GetCategoryInfo()
 	data := logic.IL.GetNavCategory()
-
-	if data == nil {
-		c.JSON(http.StatusOK, gin.H{
-			`status`:  StatusFailed,
-			`message`: `暂无分类信息!!!`,
-		})
+	if data == nil || len(data) <= 0 {
+		system.Failed("暂无分类信息", c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		`status`: StatusOk,
-		`data`:   data,
-	})
+	system.Success(data, "分类信息获取成功", c)
 }
 
 // FilmDetail 影片详情信息查询
@@ -102,14 +94,12 @@ func SearchFilm(c *gin.Context) {
 	current, _ := strconv.Atoi(currStr)
 	page := system.Page{PageSize: 10, Current: current}
 	bl := logic.IL.SearchFilmInfo(strings.TrimSpace(keyword), &page)
+	if page.Total <= 0 {
+		system.Failed("暂无相关影片信息", c)
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": StatusOk,
-		"data": gin.H{
-			"list": bl,
-			"page": page,
-		},
-	})
+	system.Success(gin.H{"list": bl, "page": page}, "影片搜索成功", c)
 }
 
 // FilmTagSearch 通过tag获取满足条件的对应影片
@@ -119,10 +109,7 @@ func FilmTagSearch(c *gin.Context) {
 	cidStr := c.DefaultQuery("Category", "")
 	yStr := c.DefaultQuery("Year", "")
 	if pidStr == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "缺少分类信息",
-		})
+		system.Failed("缺少分类信息", c)
 		return
 	}
 	params.Pid, _ = strconv.ParseInt(pidStr, 10, 64)
@@ -140,34 +127,28 @@ func FilmTagSearch(c *gin.Context) {
 	logic.IL.GetFilmsByTags(params, &page)
 	// 获取当前分类Title
 	// 返回对应信息
-	c.JSON(http.StatusOK, gin.H{
-		"status": StatusOk,
-		"data": gin.H{
-			"title":  logic.IL.GetPidCategory(params.Pid).Category,
-			"list":   logic.IL.GetFilmsByTags(params, &page),
-			"search": logic.IL.SearchTags(params.Pid),
-			"params": map[string]string{
-				"Pid":      pidStr,
-				"Category": cidStr,
-				"Plot":     params.Plot,
-				"Area":     params.Area,
-				"Language": params.Language,
-				"Year":     yStr,
-				"Sort":     params.Sort,
-			},
+	system.Success(gin.H{
+		"title":  logic.IL.GetPidCategory(params.Pid).Category,
+		"list":   logic.IL.GetFilmsByTags(params, &page),
+		"search": logic.IL.SearchTags(params.Pid),
+		"params": map[string]string{
+			"Pid":      pidStr,
+			"Category": cidStr,
+			"Plot":     params.Plot,
+			"Area":     params.Area,
+			"Language": params.Language,
+			"Year":     yStr,
+			"Sort":     params.Sort,
 		},
 		"page": page,
-	})
+	}, "分类影片数据获取成功", c)
 }
 
 // FilmClassify  影片分类首页数据展示
 func FilmClassify(c *gin.Context) {
 	pidStr := c.DefaultQuery("Pid", "")
 	if pidStr == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "缺少分类信息",
-		})
+		system.Failed("主分类信息获取异常", c)
 		return
 	}
 	// 1. 顶部Title数据
@@ -176,12 +157,8 @@ func FilmClassify(c *gin.Context) {
 	// 2. 设置分页信息
 	page := system.Page{PageSize: 21, Current: 1}
 	// 3. 获取当前分类下的 最新上映, 排行榜, 最近更新 影片信息
-	c.JSON(http.StatusOK, gin.H{
-		"status": StatusOk,
-		"data": gin.H{
-			"title":   title,
-			"content": logic.IL.GetFilmClassify(pid, &page),
-		},
-		"page": page,
-	})
+	system.Success(gin.H{
+		"title":   title,
+		"content": logic.IL.GetFilmClassify(pid, &page),
+	}, "分类影片信息获取成功", c)
 }

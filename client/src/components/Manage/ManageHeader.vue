@@ -122,6 +122,8 @@ const changePassword = ()=>{
       // 退出登录成功则删除本地的token信息并返回到 登录 /login 界面
       // clearAuthToken()
       // router.push(`/login`)
+      form.changePwd = {password: '', newPassword: '', confirmPassword: ''}
+      dialogV.changePwd = false
       ElMessage.success({message: resp.message})
     } else {
       ElMessage.error({message: resp.message})

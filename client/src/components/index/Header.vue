@@ -14,14 +14,9 @@
     <!--右侧顶级分类导航 -->
     <div class="nav_right">
       <a href="/">首页</a>
-      <!--<a :href="`/filmClassify?Pid=${nav.film.id}`">电影</a>-->
-      <!--<a :href="`/filmClassify?Pid=${nav.tv.id}`">剧集</a>-->
-      <!--<a :href="`/filmClassify?Pid=${nav.cartoon.id}`">动漫</a>-->
-      <!--<a :href="`/filmClassify?Pid=${nav.variety.id}`">综艺</a>-->
       <template v-for="n in data.nav">
         <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
       </template>
-
       <div class="history-link hidden-md-and-down" v-on:mouseenter="handleHistory(true)"
            v-on:mouseleave="handleHistory(false)">
         <a :href="`/filmClassify?Pid=${nav.variety.id}`">
@@ -61,8 +56,8 @@ import {onMounted, reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {Search, CircleClose} from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
-import {ApiGet} from "../utils/request";
-import {cookieUtil, COOKIE_KEY_MAP} from "../utils/cookie";
+import {ApiGet} from "../../utils/request";
+import {cookieUtil, COOKIE_KEY_MAP} from "../../utils/cookie";
 // 搜索关键字
 const keyword = ref<string>('')
 // 弹窗隐藏显示
@@ -119,13 +114,13 @@ const getBasicInfo = ()=>{
     if (resp.code === 0) {
       data.site = resp.data
     } else {
-      ElMessage.error({message: resp.data.msg})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
 onMounted(() => {
   ApiGet('/navCategory').then((resp: any) => {
-    if (resp.status === 'ok') {
+    if (resp.code === 0) {
       data.nav = resp.data
     } else {
       ElMessage.error({message: "导航分类信息获取失败", duration: 1000})

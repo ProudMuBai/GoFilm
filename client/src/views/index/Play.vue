@@ -74,7 +74,7 @@ import {
 import {onBeforeRouteUpdate, useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
-import RelateList from "../../components/RelateList.vue";
+import RelateList from "../../components/index/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
 import posterImg from '../../assets/image/play.png'
 import {cookieUtil,COOKIE_KEY_MAP} from '../../utils/cookie'

@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-import Util from "./components/Util.vue";
+import Util from "./components/index/Util.vue";
 import zhCn from "element-plus/dist/locale/zh-cn.min.js";
 </script>
 

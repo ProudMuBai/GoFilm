@@ -43,14 +43,19 @@
 import 'element-plus/theme-chalk/display.css'
 import {onBeforeMount, reactive} from "vue";
 import {ApiGet} from "../../utils/request";
-import FilmList from "../../components/FilmList.vue";
+import FilmList from "../../components/index/FilmList.vue";
+import {ElMessage} from "element-plus";
 
 const data = reactive({
     info: {}
 })
 onBeforeMount(() => {
     ApiGet('/index').then((resp: any) => {
+      if (resp.code == 0) {
         data.info = resp.data
+      } else {
+        ElMessage.error({message: resp.message})
+      }
     })
 })
 

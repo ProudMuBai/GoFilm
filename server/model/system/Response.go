@@ -67,6 +67,20 @@ func FailedWithData(data any, message string, c *gin.Context) {
 	Result(FAILED, data, message, c)
 }
 
+// CustomResult 自定义返回状态以及相关数据, 用于异常返回情况
+func CustomResult(statusCode int, code int, data any, msg string, c *gin.Context) {
+	c.JSON(statusCode, Response{
+		Code: code,
+		Data: data,
+		Msg:  msg,
+	})
+}
+
+// ExceptionResult 异常状态返回
+func ExceptionResult(statusCode int, message string, c *gin.Context) {
+	CustomResult(statusCode, SUCCESS, nil, message, c)
+}
+
 // GetPage 获取分页相关数据
 func GetPage(db *gorm.DB, page *Page) {
 	var count int64

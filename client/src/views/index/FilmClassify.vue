@@ -40,7 +40,7 @@ import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
 import {onMounted, reactive} from "vue";
 import {useRouter} from "vue-router";
-import FilmList from "../../components/FilmList.vue";
+import FilmList from "../../components/index/FilmList.vue";
 import {Bottom} from "@element-plus/icons-vue";
 
 const d = reactive({
@@ -57,11 +57,11 @@ const router = useRouter()
 const getFilmData = () => {
   let query = router.currentRoute.value.query
   ApiGet(`/filmClassify`, {Pid: query.Pid}).then((resp: any) => {
-    if (resp.status === 'ok') {
+    if (resp.code === 0 ) {
       d.title = resp.data.title
       d.content = resp.data.content
     } else {
-      ElMessage.error({message: "影片分类首页数据获取失败,请稍后刷新重试", duration: 1000})
+      ElMessage.error({message: resp.msg, duration: 1000})
     }
   })
 }
