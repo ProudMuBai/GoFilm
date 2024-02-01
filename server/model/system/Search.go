@@ -515,7 +515,7 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	// 除名称外的相似影片使用随机排序
 	sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
 	// 条件拼接完成后加上limit参数
-	sql = fmt.Sprintf("(%s)  limit %d,%d", sql, page.Current, page.PageSize)
+	sql = fmt.Sprintf("SELECT * FROM (%s) t limit %d,%d", sql, page.Current, page.PageSize)
 	// 执行sql
 	var list []SearchInfo
 	db.Mdb.Raw(sql).Scan(&list)
