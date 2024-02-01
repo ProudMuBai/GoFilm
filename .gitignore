@@ -22,3 +22,9 @@ package-lock.json
 
 .idea/
 .idea
+# 文件保留路径
+static/
+
+
+ProvideController.go
+ProvideLogic.go

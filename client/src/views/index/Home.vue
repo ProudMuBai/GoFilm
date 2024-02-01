@@ -1,17 +1,19 @@
 <template>
     <div class="container">
         <div class="content_item" v-for="item in data.info.content">
-            <template v-if="item.nav.name !='综艺' & item.nav.name !='综艺片'">
+            <template v-if="item.nav.show">
                 <el-row class="row-bg  cus_nav" justify="space-between">
                     <el-col :span="12" class="title">
-                        <span :class="`iconfont ${item.nav.name.search('电影') != -1?'icon-film':item.nav.name.search('剧') != -1?'icon-tv':'icon-cartoon'}`"
+                        <span :class="`iconfont ${item.nav.name.search('电影') != -1?'icon-film':item.nav.name.search('剧') != -1?'icon-tv':item.nav.name.search('动漫')!= -1?'icon-cartoon':'icon-variety'}`"
                               style="color: #79bbff;font-size: 32px;margin-right: 10px; line-height: 130%"/>
                         <a :href="`/filmClassify?Pid=${item.nav.id}`">{{ item.nav.name }}</a>
                     </el-col>
                     <el-col :span="12">
                         <ul class="nav_ul">
-                            <li v-for="c in item.nav.children" class="nav_category hidden-md-and-down"><a
-                                    :href="`/filmClassifySearch?Pid=${c.pid}&Category=${c.id}`">{{ c.name }}</a></li>
+                            <template v-for="c in item.nav.children">
+                              <li  class="nav_category hidden-md-and-down" v-if="c.show" ><a
+                                  :href="`/filmClassifySearch?Pid=${c.pid}&Category=${c.id}`">{{ c.name }}</a></li>
+                            </template>
                             <li class="nav_category hidden-md-and-down"><a :href="`/filmClassify?Pid=${item.nav.id}`">更多 ></a></li>
                         </ul>
                     </el-col>
@@ -19,7 +21,7 @@
                 <el-row class="cus_content">
                     <el-col  :md="24" :lg="20" :xl="20" class="cus_content">
                         <!--影片列表-->
-                        <FilmList :col="6" :list="item.movies.slice(0,12)"/>
+                        <FilmList v-if="item.movies" :col="6" :list="item.movies.slice(0,12)"/>
                     </el-col>
                     <el-col :md="0" :lg="4" :xl="4" class="hidden-md-and-down content_right">
                         <h3 class="hot_title">🔥热播{{item.nav.name}}</h3>
@@ -41,14 +43,19 @@
 import 'element-plus/theme-chalk/display.css'
 import {onBeforeMount, reactive} from "vue";
 import {ApiGet} from "../../utils/request";
-import FilmList from "../../components/FilmList.vue";
+import FilmList from "../../components/index/FilmList.vue";
+import {ElMessage} from "element-plus";
 
 const data = reactive({
     info: {}
 })
 onBeforeMount(() => {
     ApiGet('/index').then((resp: any) => {
+      if (resp.code == 0) {
         data.info = resp.data
+      } else {
+        ElMessage.error({message: resp.message})
+      }
     })
 })
 

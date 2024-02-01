@@ -42,16 +42,14 @@
         <div class="module-heading">
           <p class=" play-module-title">播放列表</p>
           <div class="play-tab-group">
-            <a href="javascript:;" :class="`play-tab-item ${data.currentTabIndex ==i ? 'tab-active':''}`"
-               v-for="(item,i) in data.detail.playList" @click="changeTab(i)">{{ `播放地址${i + 1}` }}</a>
+            <a href="javascript:;" :class="`play-tab-item ${data.currentTabId == item.id ? 'tab-active':''}`"
+               v-for="item in data.detail.list" @click="changeTab(item.id)">{{ item.name }}</a>
           </div>
         </div>
         <div class="play-list">
-          <div class="play-list-item" v-show="data.currentTabIndex == i" v-for="(l,i) in data.detail.playList">
-            <a :class="`play-link ${item.link == data.current.link?'play-link-active':''}`" v-for="(item,index) in l"
-
-               href="javascript:;"
-               @click="playChange({sourceIndex: i, episodeIndex: index, target: this})">{{ item.episode }}</a>
+          <div class="play-list-item" v-show="data.currentTabId == item.id" v-for="item in data.detail.list">
+            <a :class="`play-link ${v.link == data.current.link?'play-link-active':''}`" v-for="(v,i) in item.linkList"
+               href="javascript:;" @click="playChange({sourceId: item.id, episodeIndex: i, target: this})">{{ v.episode }}</a>
           </div>
         </div>
       </div>
@@ -76,7 +74,7 @@ import {
 import {onBeforeRouteUpdate, useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from "element-plus";
-import RelateList from "../../components/RelateList.vue";
+import RelateList from "../../components/index/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
 import posterImg from '../../assets/image/play.png'
 import {cookieUtil,COOKIE_KEY_MAP} from '../../utils/cookie'
@@ -85,8 +83,8 @@ import {VideoPlayer} from '@videojs-player/vue'
 import 'video.js/dist/video-js.css'
 
 // 播放源切换事件
-const changeTab = (index: number) => {
-  data.currentTabIndex = index
+const changeTab = (id: string) => {
+  data.currentTabId = id
 }
 
 // 播放页所需数据
@@ -124,14 +122,13 @@ const data = reactive({
       dbScore: '',
       hits: '',
       content: '',
-    }
+    },
+    list: [],
   },
   current: {index: 0, episode: '', link: ''},
-  currentTabName: '',
-  currentPlayFrom: 0,
   currentEpisode: 0,
   relate: [],
-  currentTabIndex: 0,
+  currentTabId: '', // 当前播放源ID
 // @videojs-player 播放属性设置
   autoplay: true,
   options: {
@@ -142,40 +139,32 @@ const data = reactive({
   },
 })
 //
-const hasNext = computed(() => data.current.index != data.detail.playList[data.currentPlayFrom].length - 1)
+const hasNext = computed(() => {
+  let flag = false
+  data.detail.list.forEach((item:any)=>{
+    if (data.currentTabId == item.id) {
+      flag = data.current.index != item.linkList.length - 1
+    }
+  })
+  return flag
+})
 
 // 获取路由信息
 const router = useRouter()
-onBeforeMount(() => {
-  let query = router.currentRoute.value.query
-  ApiGet(`/filmPlayInfo`, {id: query.id, playFrom: query.source, episode: query.episode}).then((resp: any) => {
-    if (resp.status === 'ok') {
-      data.detail = resp.data.detail
-      data.current = {index: resp.data.currentEpisode, ...resp.data.current}
-      data.currentPlayFrom = resp.data.currentPlayFrom
-      data.currentEpisode = resp.data.currentEpisode
-      data.relate = resp.data.relate
-      // 设置当前选中的播放源
-      data.currentTabName = `tab-${query.source}`
-      // 设置当前的视频播放url
-      data.options.src = data.current.link
-      data.loading = true
-    } else {
-      ElMessage.error("影片信息加载失败,请尝试刷新页面!!!")
-    }
-  })
-})
+
 
 // 点击播集数播放对应影片
-const playChange = (play: { sourceIndex: number, episodeIndex: number, target: any }) => {
-  let currPlay = data.detail.playList[play.sourceIndex][play.episodeIndex]
-  data.current = {index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link}
-  data.currentEpisode = play.episodeIndex
-  data.options.src = currPlay.link
-  data.options.title = data.detail.name + "  " + currPlay.episode
-  data.currentPlayFrom = play.sourceIndex
-  data.currentTabIndex = play.sourceIndex
-
+const playChange = (play: { sourceId: string, episodeIndex: number, target: any }) => {
+  data.detail.list.forEach((item:any)=>{
+    if (item.id == play.sourceId) {
+      let currPlay =item.linkList[play.episodeIndex]
+      data.current = {index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link}
+      data.currentEpisode = play.episodeIndex
+      data.options.src = currPlay.link
+      data.options.title = data.detail.name + "  " + currPlay.episode
+      data.currentTabId =  play.sourceId
+    }
+  })
 }
 
 // player相关事件
@@ -212,10 +201,11 @@ const isAutoPlay = () => {
 }
 // 点击下一集按钮
 const playNext = () => {
-  if (data.current.index == data.detail.playList[data.currentPlayFrom].length - 1) {
+  // 如果不存在下一集信息则直接返回
+  if (!hasNext.value) {
     return
   }
-  playChange({sourceIndex: data.currentPlayFrom, episodeIndex: data.current.index + 1, target: ''})
+  playChange({sourceId: data.currentTabId, episodeIndex: data.current.index + 1, target: ''})
   if (data.autoplay) {
     setTimeout(() => {
       document.getElementsByTagName("video")[0].play()
@@ -267,6 +257,27 @@ const saveFilmHisroy = ()=>{
 // 在浏览器关闭前或页面刷新前将当前影片的观看信息存入历史记录中
 window.addEventListener('beforeunload',saveFilmHisroy)
 
+
+// 初始化页面数据
+onBeforeMount(() => {
+  let query = router.currentRoute.value.query
+  ApiGet(`/filmPlayInfo`, {id: query.id, playFrom: query.source, episode: query.episode}).then((resp: any) => {
+    if (resp.code === 0) {
+      data.detail = resp.data.detail
+      data.current = {index: resp.data.currentEpisode, ...resp.data.current}
+      // data.currentPlayFrom = resp.data.currentPlayFrom
+      data.currentEpisode = resp.data.currentEpisode
+      data.relate = resp.data.relate
+      // 设置当前的视频播放url
+      data.options.src = data.current.link
+      // 设置当前播放源ID信息
+      data.currentTabId = resp.data.currentPlayFrom
+      data.loading = true
+    } else {
+      ElMessage.error({message: resp.msg})
+    }
+  })
+})
 </script>
 
 <style scoped>

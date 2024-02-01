@@ -13,8 +13,23 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
+  /*公共颜色*/
+  --bg-light: #ffffff;
 
+  --content-text-color: #888888;
+
+  --paging-parmary-color: #9b49e7d6;
+
+  --border-gray-color: #0000001f;
+
+  --btn-primary-color: #9b49e7;
+  --btn-pink-color: #d942bf;
+  --btn-bg-linght: #fff;
+
+  --bg-fill-light: #8d00fb1a;
 }
+
+
 
 a {
   font-weight: 500;
@@ -108,6 +123,42 @@ button:focus-visible {
     background: rgba(255,255,255,0.25);
   }
 }
+
+/*el-dialog样式*/
+@media (min-width: 768px){
+  .el-dialog__body{
+    padding: 45px!important;
+  }
+
+}
+@media (max-width: 768px){
+  .el-dialog__body{
+    padding: 20px!important;
+  }
+  .el-dialog__header{
+    padding: 12px 0 8px 0 !important;
+  }
+}
+
+.el-dialog{
+  border-radius: 8px !important;
+  background-image: linear-gradient( 135deg, #81FFEF 10%, #F067B4 100%) !important;
+}
+.el-dialog__header{
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  margin-right: 0!important;
+}
+
+.el-dialog__headerbtn{
+  outline: none!important;
+  border: none;
+}
+
+/*分页插件颜色*/
+.el-popper {
+  --el-color-primary: var(--paging-parmary-color);
+}
+
 
 
 
