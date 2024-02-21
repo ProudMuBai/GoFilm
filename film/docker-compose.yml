@@ -68,6 +68,7 @@ services:
       - /opt/film/data/redis/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - film-network
+    command: redis-server /usr/local/etc/redis/redis.conf
 networks:
   film-network:
     driver: bridge

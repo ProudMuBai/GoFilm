@@ -84,7 +84,7 @@ const (
 	UserTableName    = "users"
 	UserIdInitialVal = 10000
 	FileTableName    = "files"
-	
+
 	//mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 
 	MysqlDsn = "root:root@(mysql:3306)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"

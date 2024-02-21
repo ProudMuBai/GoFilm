@@ -1,6 +1,7 @@
 <template>
-  <div class="c_content" v-if="true">
-    <div class="item" v-for="item in d.list" :style="{width: `calc(${d.width-1}%)`}">
+  <div class="c_content" v-if="d.list" >
+    <template v-if="d.list.length > 0">
+      <div class="item" v-for="item in d.list" :style="{width: `calc(${d.width-1}%)`}">
         <div v-if="item.id != -99">
           <a :href="`/filmDetail?link=${item.id}`" class="default_image link_content">
             <div class="tag_group">
@@ -14,7 +15,9 @@
           <a :href="`/filmDetail?link=${item.id}`" class="content_text_tag">{{ item.name.split("[")[0] }}</a>
           <span class="cus_remark hidden-md-and-down">{{ item.remarks }}</span>
         </div>
-    </div>
+      </div>
+    </template>
+    <el-empty v-if="d.list.length <= 0" style="padding: 10px 0;margin: 0 auto" description="暂无相关数据"/>
   </div>
 </template>
 
@@ -37,18 +40,18 @@ const handleImg = (e: Event) => {
 }
 
 // 监听父组件传递的参数的变化
-watchEffect(()=>{
+watchEffect(() => {
   // 首先获取当前设备类型
   const userAgent = navigator.userAgent.toLowerCase();
   let isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent)
   // 如果是PC, 为防止flex布局最后一行元素不足出现错位, 使用空元素补齐list
-  let c = isMobile ? 3 : props.col? props.col: 0
-  let l:any= props.list
+  let c = isMobile ? 3 : props.col ? props.col : 0
+  let l: any = props.list
   let len = l.length
   d.width = isMobile ? 31 : Math.floor(100 / c)
-  if (len % c !=0) {
-    for (let i = 0; i < c - len %c ; i++) {
-      let temp:any = {...l[0] as any}
+  if (len % c != 0) {
+    for (let i = 0; i < c - len % c; i++) {
+      let temp: any = {...l[0] as any}
       temp.id = -99
       l.push(temp)
     }
@@ -57,13 +60,24 @@ watchEffect(()=>{
 })
 
 
-
 </script>
 
 <style scoped>
 .default_image {
   background: url("/src/assets/image/404.png");
   background-size: cover;
+}
+
+:deep(.el-empty) {
+  --el-empty-fill-color-1: rgba(155, 73, 231, 0.72);
+  --el-empty-fill-color-2: #67d9e891;
+  --el-empty-fill-color-3: rgb(106 19 187 / 72%);
+  --el-empty-fill-color-4: #67d9e8;
+  --el-empty-fill-color-5: #5abcc9;
+  --el-empty-fill-color-6: #9fb2d9;
+  --el-empty-fill-color-7: #61989f;
+  --el-empty-fill-color-8: #697dc5;
+  --el-empty-fill-color-9: rgb(43 51 63 / 44%);
 }
 
 /*wrap*/
@@ -77,8 +91,8 @@ watchEffect(()=>{
   }
 
   .c_content .item {
-  /*  flex-basis: calc(33% - 7px);
-    max-width: 33%;*/
+    /*  flex-basis: calc(33% - 7px);
+      max-width: 33%;*/
     margin: 0 4px 20px 4px;
     box-sizing: border-box;
     overflow: hidden;

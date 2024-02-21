@@ -162,11 +162,11 @@ server
 
 - 响应结构
 
-```json
+```text
 {
-    code: 0|1, // 成功|失败
-	data: {}, // 数据内容
-    msg: "",  // 提示信息
+    code: 0|1,		// 成功|失败
+	data: {},	// 数据内容
+    msg: "",		// 提示信息
 }
 ```
 
@@ -189,33 +189,33 @@ server
 
 ```text
 {
-    "code": 0,				// 状态码
-    "data": {
+    "code": 0,		// 状态码
+    "data": {		// 数据内容
         "category": {				// 分类信息
             "id": 0,				// 分类ID
-            "name": "分类信息",		// 分类名称
+            "name": "xxx",			// 分类名称
             "pid": 0,				// 上级分类ID
             "show": false,			// 是否展示
-            "children": [], 		// 子分类信息
+            "children": [], 			// 子分类信息
         },
         "content": [				// 内容区数据
             {
                 "hot": [			// 热播影片
                     {
                         "CreatedAt": "2024-01-13T19:04:01+08:00",		// 创建时间
-                        "DeletedAt": null,								// 删除时间
-                        "ID": 100,										// ID
-                        "UpdatedAt": "2024-01-13T19:04:01+08:00",		// 更新时间
+                        "DeletedAt": null,				// 删除时间
+                        "ID": 100,						// ID
+                        "UpdatedAt": "2024-01-13T19:04:01+08:00",	// 更新时间
                         "area": "xxx",					// 地区
                         "cName": "xxx",					// 分类名称
-                        "cid": 45,						// 分类ID
+                        "cid": 45,					// 分类ID
                         "classTag": "xxx",				// 剧情标签
-                        "hits": 0,						// 热度
+                        "hits": 0,					// 热度
                         "initial": "X",					// 首字母
                         "language": "xxx",				// 语言 
                         "mid": 10000,					// 影片ID
                         "name": "xxx",					// 影片名称
-                        "pid": 1,						// 上级分类ID
+                        "pid": 1,					// 上级分类ID
                         "releaseStamp": 1704880403,		// 上映时间戳
                         "remarks": "xxx",			 	// 备注信息 [预告|完结|更新至xx集]
                         "score": 0,						// 评分
@@ -228,8 +228,8 @@ server
         		"movies": [			// 近期更新影片
                     {
                         "id": 10000,						// 影片ID
-                        "cid": 6,							// 分类ID
-                        "pid": 1,							// 上级分类ID
+                        "cid": 6,					// 分类ID
+                        "pid": 1,					// 上级分类ID
                         "name": "xxxx",						// 影片名称
                         "subTitle": "xxxx",					// 子标题, 别名
                         "cName": "xxx",						// 分类名称

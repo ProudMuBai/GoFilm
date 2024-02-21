@@ -231,7 +231,8 @@ const getTaskList = ()=>{
       if (resp.status === "ok") {
         data.taskList = resp.data
       } else {
-        ElMessage.error({message: resp.message})
+        data.taskList = []
+        ElMessage.warning({message: resp.message})
       }
     })
 }

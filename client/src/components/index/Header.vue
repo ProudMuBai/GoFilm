@@ -13,10 +13,12 @@
     </div>
     <!--右侧顶级分类导航 -->
     <div class="nav_right">
-      <a href="/">首页</a>
-      <template v-for="n in data.nav">
-        <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
-      </template>
+     <div class="nav_link">
+       <a href="/">首页</a>
+       <template v-for="n in data.nav">
+         <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
+       </template>
+     </div>
       <div class="history-link hidden-md-and-down" v-on:mouseenter="handleHistory(true)"
            v-on:mouseleave="handleHistory(false)">
         <a :href="`/filmClassify?Pid=${nav.variety.id}`">
@@ -137,18 +139,30 @@ onMounted(() => {
 @media (max-width: 768px) {
   .nav_right {
     display: flex;
+    width: 100%;
     justify-content: space-between;
-    /*display: none!important;*/
+    height: 40px;
   }
-
-  .nav_right a {
+  .nav_link {
+    display: flex;
+    justify-content: space-between;
+    height: 40px;
+    width: 90%;
+    overflow-y: scroll;
+  }
+  .nav_link a {
+    white-space: nowrap;
     color: #ffffff;
     flex-basis: calc(19% - 5px);
     padding: 0 10px;
     line-height: 40px;
-    /*border-radius: 5px;*/
-    /*border: 1px solid rebeccapurple;*/
 
+  }
+  .nav_right .hidden-md-and-up {
+    color: #ffffff;
+    flex-basis: calc(19% - 5px);
+    padding: 0 10px;
+    line-height: 40px;
   }
 
   .nav_right a:hover {
@@ -245,7 +259,7 @@ onMounted(() => {
     flex-direction: row;
   }
 
-  .nav_right > a {
+  .nav_right  a {
     min-width: 60px;
     height: 40px;
     line-height: 40px;

@@ -21,12 +21,12 @@ func FilmSourceInit() {
 		return
 	}
 	var l []system.FilmSource = []system.FilmSource{
-		{Id: util.GenerateSalt(), Name: "HD(lzBk)", Uri: `https://cj.lzcaiji.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
+		{Id: util.GenerateSalt(), Name: "HD(lzBk)", Uri: `https://cj.lziapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
 		{Id: util.GenerateSalt(), Name: "HD(sn)", Uri: `https://suoniapi.com/api.php/provide/vod/from/snm3u8/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true, Interval: 2000},
 		{Id: util.GenerateSalt(), Name: "HD(bf)", Uri: `https://bfzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true, Interval: 2500},
 		{Id: util.GenerateSalt(), Name: "HD(ff)", Uri: `http://cj.ffzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
 		{Id: util.GenerateSalt(), Name: "HD(kk)", Uri: `https://kuaikan-api.com/api.php/provide/vod/from/kuaikan/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
-		//{Id: util.GenerateSalt(), Name: "HD(lz)", Uri: `https://cj.lziapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
+		//{Id: util.GenerateSalt(), Name: "HD(lzBk)", Uri: `https://cj.lzcaiji.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
 		//{Id: util.GenerateSalt(), Name: "HD(fs)", Uri: `https://www.feisuzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
 		//{Id: util.GenerateSalt(), Name: "HD(bfApp)", Uri: `http://app.bfzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false, CollectType: system.CollectVideo, State: true},
 		//Id: util.GenerateSalt(), {Name: "HD(bfBk)", Uri: `http://by.bfzyapi.com/api.php/provide/vod/`, ResultModel: system.JsonResult, Grade: system.SlaveCollect, SyncPictures: false,CollectType:system.CollectVideo, State: false},
@@ -39,7 +39,7 @@ func FilmSourceInit() {
 
 // CollectCrontabInit 初始化系统预定义的定时任务
 func CollectCrontabInit() {
-	// 如果系统已经存在Task定时任务信息,则直接返回
+	// 如果系统已经存在Task定时任务信息,则将redis中的定时任务信息重新添加到执行队列
 	if system.ExistTask() {
 		// 将系统中的定时任务重新设置到 CollectCron中
 		for _, task := range system.GetAllFilmTask() {
