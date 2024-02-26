@@ -54,12 +54,12 @@ const c = reactive({
 
 const updateBasicConfig = ()=>{
   ApiPost(`/manage/config/basic/update`, c.site).then((resp: any) => {
-    if (resp.status === 'ok') {
+    if (resp.code === 0) {
       // console.log(window.location.hostname)
-      ElMessage.success({message: resp.message})
+      ElMessage.success({message: resp.msg})
       getBasicInfo()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
   // 更新后重新从后端获取最新数据
@@ -70,7 +70,7 @@ const getBasicInfo = ()=>{
       // console.log(window.location.hostname)
       c.site = resp.data
     } else {
-      ElMessage.error({message: resp.data.msg})
+      ElMessage.error({message: resp.msg})
     }
   })
 }

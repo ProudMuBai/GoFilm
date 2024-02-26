@@ -144,12 +144,12 @@ const form = reactive({
 
 const addTask = ()=>{
   ApiPost(`/manage/cron/add`, form.add).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       cancelDialog()
       getTaskList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -157,12 +157,12 @@ const addTask = ()=>{
 const updateTask = ()=>{
   console.log(form.edit)
   ApiPost(`/manage/cron/update`, {id: form.edit.id, ids: form.edit.ids, time: form.edit.time, state: form.edit.state, remark: form.edit.remark}).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       cancelDialog()
       getTaskList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -185,22 +185,22 @@ const openAddDialog = ()=>{
 // 删除定时任务
 const delTask = (id:string)=>{
   ApiGet(`/manage/cron/del`, {id:id}).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       getTaskList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
 
 const changeTaskState = (id:string,state:boolean)=>{
   ApiPost(`/manage/cron/change`, {id:id,state:state}).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       getTaskList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -209,30 +209,30 @@ const openEditDialog = (id:string)=>{
   dialogV.editV = true
   getOptions()
   ApiGet(`/manage/cron/find`,{id:id}).then((resp: any) => {
-    if (resp.status === "ok") {
+    if (resp.code === 0) {
       form.edit = resp.data
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
 
 const getOptions = ()=>{
   ApiGet(`/manage/collect/options`).then((resp: any) => {
-    if (resp.status === "ok") {
+    if (resp.code === 0) {
       form.options = resp.data
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
 const getTaskList = ()=>{
     ApiGet(`/manage/cron/list`).then((resp: any) => {
-      if (resp.status === "ok") {
+      if (resp.code === 0) {
         data.taskList = resp.data
       } else {
         data.taskList = []
-        ElMessage.warning({message: resp.message})
+        ElMessage.warning({message: resp.msg})
       }
     })
 }

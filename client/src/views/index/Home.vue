@@ -143,7 +143,7 @@ onBeforeMount(() => {
     if (resp.code == 0) {
       data.info = resp.data
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 })

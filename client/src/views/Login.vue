@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <video class="container-bg" src="../assets/image/bg.mp4"
+    <video v-if="false" class="container-bg" src=""
            autoplay="autoplay" loop="loop" muted="muted"></video>
     <div class="container-form" >
       <form class="cus-form">
@@ -37,10 +37,10 @@ const data = reactive({
 const router = useRouter()
 const login = ()=>{
   ApiPost('/login', {userName: data.userName, password: data.password}).then((resp:any)=>{
-    if (resp.status == 'ok') {
+    if (resp.code == 0) {
       router.push('/manage/index')
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -55,6 +55,7 @@ const login = ()=>{
   width: 100vw;
   height: 100vh;
   color: #343333;
+  background: url("../assets/image/managebg.png");
 }
 .container-bg {
   background-color: #b07ada;

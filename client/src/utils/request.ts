@@ -54,7 +54,7 @@ const http = (options: any) => {
                 loadingCount == 0 && load.close()
                 if (error.response.status == 401) {
                     router.replace('/login')
-                    ElMessage.error(error.response.data.message)
+                    ElMessage.error(error.response.data.msg)
                     // ElMessage.error(`未获取授权信息, 请先登录!!!`)
                 } else if (error.response.status == 403) {
                     ElMessage.error(`无访问权限!!!`)

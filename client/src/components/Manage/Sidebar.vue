@@ -80,7 +80,7 @@ const getSiteInfo = ()=>{
     if (resp.code == 0) {
       data.site = resp.data
     } else {
-      ElMessage.error({message: resp.data.msg})
+      ElMessage.error({message: resp.msg})
     }
   })
 }

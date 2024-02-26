@@ -118,15 +118,15 @@ const rules = reactive({
 // 修改密码
 const changePassword = ()=>{
   ApiPost(`/changePassword`, {password: form.changePwd.password, newPassword: form.changePwd.newPassword}).then((resp: any) => {
-    if (resp.status === 'ok') {
+    if (resp.code === 0) {
       // 退出登录成功则删除本地的token信息并返回到 登录 /login 界面
       // clearAuthToken()
       // router.push(`/login`)
       form.changePwd = {password: '', newPassword: '', confirmPassword: ''}
       dialogV.changePwd = false
-      ElMessage.success({message: resp.message})
+      ElMessage.success({message: resp.msg})
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -140,12 +140,12 @@ const cancelDialog = () => {
 const logout = () => {
   // 发送请求使当前的token信息失效
   ApiGet(`/logout`).then((resp: any) => {
-    if (resp.status === 'ok') {
+    if (resp.code === 0 ) {
       // 退出登录成功则删除本地的token信息并返回到 登录 /login 界面
       clearAuthToken()
       router.push(`/login`)
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }

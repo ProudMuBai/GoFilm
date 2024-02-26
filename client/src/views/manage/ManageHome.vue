@@ -31,7 +31,6 @@ const collapse = ref(false)
 
 // 改变侧边栏菜单的 展开|收起 状态
 const changeCollapse = () => {
-  console.log(collapse.value)
   collapse.value = !collapse.value
 }
 // 传递给子组件使用

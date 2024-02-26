@@ -239,22 +239,22 @@ const form = reactive({
 const openBatchCollect = ()=>{
   dialogV.batchV = true
   ApiGet(`/manage/collect/options`, ).then((resp: any) => {
-    if (resp.status === "ok") {
+    if (resp.code === 0) {
       form.options = resp.data
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
 
 const startBatchCollect = ()=>{
   ApiPost(`/manage/spider/start`, {ids: form.batch.ids, time: form.batch.time, batch: true}).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       cancelDialog()
       getCollectList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -262,11 +262,11 @@ const startBatchCollect = ()=>{
 //  开启采集
 const startTask = (row:any)=>{
   ApiPost(`/manage/spider/start`, {id:row.id, time: row.cd, batch: false}).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       getCollectList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -294,22 +294,22 @@ const restrict = (t:number)=>{
 // 添加采集资源站
 const addSite = ()=>{
   ApiPost(`/manage/collect/add`, form.add).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       cancelDialog()
       getCollectList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
 // 测试添加的采集接口是否可用
 const apiTest = (params:any)=>{
   ApiPost(`/manage/collect/test`, params).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -318,10 +318,10 @@ const apiTest = (params:any)=>{
 const openEditDialog = (id:string)=>{
   // 从后台获取采集站信息
   ApiGet(`/manage/collect/find`, {id:id}).then((resp: any) => {
-    if (resp.status === "ok") {
+    if (resp.code === 0 ) {
       form.edit = resp.data
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
   dialogV.editV = true
@@ -331,11 +331,11 @@ const openEditDialog = (id:string)=>{
 // switch 开关
 const changeSourceState = (s:any)=>{
   ApiPost(`/manage/collect/change`, {id:s.id, state: s.state, syncPictures: s.syncPictures}).then((resp: any) => {
-    if (resp.status === "ok") {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       getCollectList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -343,12 +343,12 @@ const changeSourceState = (s:any)=>{
 //更新资源站点信息
 const updateSite = (params:FilmSource)=>{
   ApiPost(`/manage/collect/update`, params).then((resp: any) => {
-    if (resp.status === "ok") {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       dialogV.editV = false
       getCollectList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -356,11 +356,11 @@ const updateSite = (params:FilmSource)=>{
 // 删除采集资源站
 const delSourceSite = (id:string) =>{
   ApiGet(`/manage/collect/del`, {id:id}).then((resp:any)=>{
-    if (resp.status ==='ok') {
-      ElMessage.success({message: resp.message})
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
       getCollectList()
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
@@ -375,7 +375,7 @@ const cancelDialog = ()=>{
 
 const getCollectList = ()=>{
   ApiGet(`/manage/collect/list`).then((resp: any) => {
-    if (resp.status === "ok") {
+    if (resp.code === 0) {
       data.siteList = resp.data.map((item: any) => {
         switch (item.collectType) {
           case 0:
@@ -398,7 +398,7 @@ const getCollectList = ()=>{
         return item
       })
     } else {
-      ElMessage.error({message: resp.message})
+      ElMessage.error({message: resp.msg})
     }
   })
 }
