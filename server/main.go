@@ -7,17 +7,18 @@ import (
 	"server/plugin/SystemInit"
 	"server/plugin/db"
 	"server/router"
+	"time"
 )
 
 func init() {
 	// 执行初始化前等待20s , 让mysql服务完成初始化指令
-	//time.Sleep(time.Second * 20)
+	time.Sleep(time.Second * 20)
 	//初始化redis客户端
 	err := db.InitRedisConn()
 	if err != nil {
 		panic(err)
 	}
-	// 初始化mysql
+	// 初始化mysql00000
 	err = db.InitMysql()
 	if err != nil {
 		panic(err)

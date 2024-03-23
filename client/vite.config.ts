@@ -13,6 +13,7 @@ export default defineConfig({
         proxy: {
             "/api": {
                 target: `http://127.0.0.1:3601`,
+                // target: `http://1.94.30.26:3601`,
                 changeOrigin: true, // 允许跨域
                 rewrite: path => path.replace(/^\/api/, '')
             }
