@@ -16,17 +16,20 @@
   /*公共颜色*/
   --bg-light: #ffffff;
 
+  --text-color-primary: #ffffff;
   --content-text-color: #888888;
 
   --paging-parmary-color: #9b49e7d6;
+  --paging-parmary-color-hover: #a574b7;
 
   --border-gray-color: #0000001f;
 
-  --btn-primary-color: #9b49e7;
+  --btn-primary-color: #8636cc;
   --btn-pink-color: #d942bf;
   --btn-bg-linght: #fff;
 
   --bg-fill-light: #8d00fb1a;
+
 }
 
 

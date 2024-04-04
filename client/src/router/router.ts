@@ -24,6 +24,7 @@ import FilmClass from "../views/manage/film/FilmClass.vue";
 import Film from "../views/manage/film/Film.vue";
 import FileUpload from "../views/manage/file/FileUpload.vue";
 import FilmAdd from "../views/manage/film/FilmAdd.vue";
+import CustomPlay from "../views/index/CustomPlay.vue";
 
 
 // 2. 定义一个路由
@@ -39,6 +40,7 @@ const routes = [
             {path: 'search', component: SearchFilm},
             {path: 'filmClassify', component: FilmClassify},
             {path: 'filmClassifySearch', component: FilmClassifySearch},
+            {path: '/custom/player', component: CustomPlay},
         ]
     },
     {path: '/login', component: Login},

@@ -213,7 +213,7 @@ const playNext = () => {
   }
 }
 // 主动触发快捷键
-const tiggerKeyMap = (keyCode: number) => {
+const triggerKeyMap = (keyCode: number) => {
   let player = document.getElementsByTagName("video")[0]
   player.focus()
   const event = document.createEvent('HTMLEvents');
@@ -226,7 +226,7 @@ const handleBtn = (e: any) => {
   for (let el of btns) {
     el.addEventListener('keydown', function (t: any) {
       t.preventDefault()
-      tiggerKeyMap(t.keyCode)
+      triggerKeyMap(t.keyCode)
     })
   }
 }

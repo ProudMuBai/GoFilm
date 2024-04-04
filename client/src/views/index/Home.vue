@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="hidden-sm-and-up banner_wrap" @touchstart="touchS" @touchend="touchE" >
-      <el-carousel  v-model="data.banner.current" ref="wrap"  :interval="5000" trigger="hover" height="200px" arrow="never" >
+      <el-carousel  v-model="data.banner.current" ref="wrap" :pause-on-hover="false"   :interval="5000" trigger="hover" height="200px" arrow="never" >
         <el-carousel-item v-for="item in banners" :key="item"  >
           <el-image style="width: 100%; height: 100%;" :src="item.picture" fit="fill"/>
           <p class="carousel-title">{{ item.name }}</p>
@@ -69,10 +69,7 @@ import {onBeforeMount, reactive, ref} from "vue";
 import {ApiGet} from "../../utils/request";
 import FilmList from "../../components/index/FilmList.vue";
 import {ElMessage} from "element-plus";
-import Banner01 from '../../assets/image/banner/banner01.jpg'
-import Banner02 from '../../assets/image/banner/banner02.jpg'
-import Banner03 from '../../assets/image/banner/banner03.jpg'
-import Banner04 from '../../assets/image/banner/banner04.jpeg'
+
 
 
 // 轮播数据拟态
@@ -82,32 +79,28 @@ let banners = [
     year: 2012,
     cName: '动漫',
     poster: 'https://img.bfzypic.com/upload/vod/20230424-43/06e79232a4650aea00f7476356a49847.jpg',
-    picture: Banner01,
-    // picture: 'https://s2.loli.net/2024/02/21/Wt1QDhabdEI7HcL.jpg'
+    picture: 'https://s2.loli.net/2024/02/21/Wt1QDhabdEI7HcL.jpg'
   },
   {
     name: '从零开始的异世界生活',
     year: 2016,
     cName: '动漫',
     poster: 'https://img.bfzypic.com/upload/vod/20230424-29/82e3aec3f43103fa1b7e5a0e7f7c3806.jpg',
-    picture: Banner02,
-    // picture: 'https://s2.loli.net/2024/02/21/UkpdhIRO12fsy6C.jpg'
+    picture: 'https://s2.loli.net/2024/02/21/UkpdhIRO12fsy6C.jpg'
   },
   {
     name: '五等分的新娘',
     year: 2020,
     cName: '动漫',
     poster: 'https://img.bfzypic.com/upload/vod/20230424-38/dfff403cfd9a5b7d6eed8b4f1b3dedb1.jpg',
-    picture: Banner03
-    // picture: 'https://s2.loli.net/2024/02/21/wXJr59Zuv4tcKNp.jpg'
+    picture: 'https://s2.loli.net/2024/02/21/wXJr59Zuv4tcKNp.jpg'
   },
   {
     name: '我的青春恋爱物语果然有问题',
     year: 2018,
     cName: '动漫',
     poster: 'https://img.bfzypic.com/upload/vod/20230424-37/e5c9ec121c2cba230243c333447e818a.jpg',
-    picture: Banner04,
-    // picture: 'https://s2.loli.net/2024/02/21/oMAGzSliK2YbhRu.jpg'
+    picture: 'https://s2.loli.net/2024/02/21/oMAGzSliK2YbhRu.jpg'
   },
 ]
 
@@ -127,15 +120,16 @@ const touchS = (e:any)=>{
 const touchE = (e:any)=>{
   data.banner.touch.end = e.changedTouches[0].pageX
   let distance = data.banner.touch.end - data.banner.touch.star
-  console.log(distance)
   if (distance >= 50) {
-    let index = data.banner.touch.index - 1
-    data.banner.touch.index = index >= 0 ? index : banners.length-1
+    // let index = data.banner.touch.index - 1
+    // data.banner.touch.index = index >= 0 ? index : banners.length-1
+    wrap.value?.prev()
   } else if (distance <= -50) {
-    let index = data.banner.touch.index + 1
-    data.banner.touch.index = index <= banners.length - 1 ? index : 0
+    // let index = data.banner.touch.index + 1
+    // data.banner.touch.index = index <= banners.length - 1 ? index : 0
+    wrap.value?.next()
   }
-  wrap.value?.setActiveItem(data.banner.touch.index)
+  // wrap.value?.setActiveItem(data.banner.touch.index)
 }
 
 const data = reactive({
