@@ -30,9 +30,15 @@ film
 >
 >可自行将根目录下的server和client内容与此目录下的对应文件进行替换
 
-## 2. 程序构建运行
+## 2. 程序部署
 
-### 1. 环境准备
+>安装说明:
+>
+>- 新增 1Panel 安装方式(类似于宝塔, 宝塔要注册且下载很慢, 所以后续应该也不会出宝塔安装)
+>- Readme文件内容保持简洁, 所以详细安装说明放到GithubPage的博客页了
+>- 完整的详细安装文档请前往个人博客页查看: [GoFilm安装文档](https://blog.mubai.link/2024/04/21/Docs/gofilm/)
+
+### 1. 环境准备  (Docker)
 
 1.  Linux 服务器
 2.  安装 docker, docker compose 服务

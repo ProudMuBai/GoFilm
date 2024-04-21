@@ -4,8 +4,9 @@ services:
   nginx:
     container_name: film_nginx
     image: nginx
+    restart: always
     ports:
-      - "80:80"
+      - 80:80
     volumes:
       - /opt/film/data/nginx/html:/usr/share/nginx/html
       - /opt/film/data/nginx/nginx.conf:/etc/nginx/nginx.conf
@@ -20,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: always
     environment:
       MYSQL_HOST: mysql
       MYSQL_PORT: 3661
@@ -29,7 +31,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 3662
     ports:
-      - "3601:3601"
+      - 3601:3601
     networks:
       - film-network
     depends_on:
@@ -42,6 +44,7 @@ services:
   mysql:
     container_name: film_mysql
     image: mysql
+    restart: always
     ports:
     - 3610:3306
     environment:
@@ -62,6 +65,7 @@ services:
   redis:
     container_name: film_redis
     image: redis
+    restart: always
     ports:
       - 3620:6379
     volumes:
