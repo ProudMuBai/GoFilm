@@ -561,7 +561,13 @@ func GetTagsByTitle(pid int64, t string) []string {
 	// 过滤分类tag
 	switch t {
 	case "Category":
-		tags = db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, t), 0, -1).Val()
+		//tags = db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, t), 0, -1).Val()
+		// 获取所有展示的子分类
+		for _, c := range GetChildrenTree(pid) {
+			if c.Show {
+				tags = append(tags, fmt.Sprintf("%s:%d", c.Name, c.Id))
+			}
+		}
 	case "Plot":
 		tags = db.Rdb.ZRevRange(db.Cxt, fmt.Sprintf(config.SearchTag, pid, t), 0, 10).Val()
 	case "Area":

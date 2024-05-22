@@ -54,8 +54,8 @@ services:
       - film-network
     command: [
           'mysqld',
-          '--default-authentication-plugin=mysql_native_password',
-          '--innodb-buffer-pool-size=80M',
+          '--default-storage-engine=INNODB',
+          '--innodb-buffer-pool-size=128M',
           '--character-set-server=utf8mb4',
           '--collation-server=utf8mb4_unicode_ci',
           '--default-time-zone=+8:00',
@@ -69,10 +69,11 @@ services:
     ports:
       - 3620:6379
     volumes:
-      - /opt/film/data/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - /opt/film/data/redis/redis.conf:/etc/redis/redis.conf
+      - /opt/film/data/redis/data:/data
     networks:
       - film-network
-    command: redis-server /usr/local/etc/redis/redis.conf
+    command: redis-server /etc/redis/redis.conf
 networks:
   film-network:
     driver: bridge

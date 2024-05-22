@@ -85,7 +85,7 @@ func ValidSpec(spec string) error {
 	return err
 }
 
-// 清理API接口数据缓存
-func clearCache() {
+// ClearCache 清理API接口数据缓存
+func ClearCache() {
 	system.RemoveCache(config.IndexCacheKey)
 }

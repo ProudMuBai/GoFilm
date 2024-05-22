@@ -100,7 +100,7 @@ func HandleCollect(id string, h int) error {
 				system.SyncFilmPicture()
 			}
 			// 每次成功执行完都清理redis中的相关API接口数据缓存
-			clearCache()
+			ClearCache()
 		}
 
 	case system.CollectArticle, system.CollectActor, system.CollectRole, system.CollectWebSite:

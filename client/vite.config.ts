@@ -4,7 +4,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import {ElementPlusResolver} from "unplugin-vue-components/resolvers";
 
-// https://vitejs.dev/config/
+
 export default defineConfig({
     // 本地测试环境
     server: {
@@ -12,8 +12,8 @@ export default defineConfig({
         port: 3600,
         proxy: {
             "/api": {
-                // target: `http://127.0.0.1:3601`,
-                target: `http://1.94.30.26:3601`,
+                target: `http://127.0.0.1:3601`,
+                // target: `http://1.94.30.26:3601`,
                 changeOrigin: true, // 允许跨域
                 rewrite: path => path.replace(/^\/api/, '')
             }

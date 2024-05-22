@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"server/logic"
 	"server/model/system"
 	"server/plugin/SystemInit"
@@ -13,10 +12,7 @@ import (
 )
 
 func ManageIndex(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "hahah",
-	})
+	system.SuccessOnlyMsg("后台管理中心", c)
 	return
 }
 
@@ -24,10 +20,7 @@ func ManageIndex(c *gin.Context) {
 
 // FilmSourceList 采集站点信息
 func FilmSourceList(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status": StatusOk,
-		"data":   logic.ML.GetFilmSourceList(),
-	})
+	system.Success(logic.ML.GetFilmSourceList(), "影视源站点信息获取成功", c)
 	return
 }
 
@@ -35,169 +28,111 @@ func FilmSourceList(c *gin.Context) {
 func FindFilmSource(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "参数异常, 资源站标识不能为空",
-		})
+		system.Failed("参数异常, 资源站标识不能为空", c)
 		return
 	}
 	fs := logic.ML.GetFilmSource(id)
 	if fs == nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "数据异常,资源站信息不存在",
-		})
+		system.Failed("数据异常,资源站信息不存在", c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status": StatusOk,
-		"data":   fs,
-	})
+	system.Success(fs, "原站点详情信息查找成功", c)
 }
 
+// FilmSourceAdd 添加采集源
 func FilmSourceAdd(c *gin.Context) {
 	var s = system.FilmSource{}
 	// 获取请求参数
 	if err := c.ShouldBindJSON(&s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "请求参数异常",
-		})
+		system.Failed("请求参数异常", c)
 		return
 	}
 	// 校验必要参数
 	if err := validFilmSource(s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": err.Error(),
-		})
+		system.Failed(err.Error(), c)
 		return
 	}
 	// 如果采集站开启图片同步, 且采集站为附属站点则返回错误提示
 	if s.SyncPictures && (s.Grade == system.SlaveCollect) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "附属站点无法开启图片同步功能",
-		})
+		system.Failed("附属站点无法开启图片同步功能", c)
 		return
 	}
 	// 执行 spider
 	if err := spider.CollectApiTest(s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "资源接口测试失败, 请确认接口有效再添加",
-		})
+		system.Failed("资源接口测试失败, 请确认接口有效再添加", c)
 		return
 	}
 	// 测试通过后将资源站信息添加到list
 	if err := logic.ML.SaveFilmSource(s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": fmt.Sprint("资源站添加失败: ", err.Error()),
-		})
+		system.Failed(fmt.Sprint("资源站添加失败: ", err.Error()), c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "添加成功",
-	})
+	system.SuccessOnlyMsg("添加成功", c)
 }
 
 func FilmSourceUpdate(c *gin.Context) {
 	var s = system.FilmSource{}
 	// 获取请求参数
 	if err := c.ShouldBindJSON(&s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "请求参数异常",
-		})
+		system.Failed("请求参数异常", c)
 		return
 	}
 	// 校验必要参数
 	if err := validFilmSource(s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": err.Error(),
-		})
+		system.Failed(err.Error(), c)
 		return
 	}
 	// 如果采集站开启图片同步, 且采集站为附属站点则返回错误提示
 	if s.SyncPictures && (s.Grade == system.SlaveCollect) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "附属站点无法开启图片同步功能",
-		})
+		system.Failed("附属站点无法开启图片同步功能", c)
 		return
 	}
 	// 校验Id信息是否为空
 	if s.Id == "" {
-		c.JSON(http.StatusOK, gin.H{"status": StatusFailed, "message": "参数异常, 资源站标识不能为空"})
+		system.Failed("参数异常, 资源站标识不能为空", c)
 		return
 	}
 	fs := logic.ML.GetFilmSource(s.Id)
 	if fs == nil {
-		c.JSON(http.StatusOK, gin.H{"status": StatusFailed, "message": "数据异常,资源站信息不存在"})
+		system.Failed("数据异常,资源站信息不存在", c)
 		return
 	}
 	// 如果 uri发生变更则执行spider测试
 	if fs.Uri != s.Uri {
 		// 执行 spider
 		if err := spider.CollectApiTest(s); err != nil {
-			c.JSON(http.StatusOK, gin.H{
-				"status":  StatusFailed,
-				"message": "资源接口测试失败, 请确认更新的数据接口是否有效",
-			})
+			system.Failed("资源接口测试失败, 请确认更新的数据接口是否有效", c)
 			return
 		}
 	}
 	// 更新资源站信息
 	if err := logic.ML.UpdateFilmSource(s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": fmt.Sprint("资源站更新失败: ", err.Error()),
-		})
+		system.Failed(fmt.Sprint("资源站更新失败: ", err.Error()), c)
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "更新成功",
-	})
-
+	system.SuccessOnlyMsg("更新成功", c)
 }
 
 func FilmSourceChange(c *gin.Context) {
 	var s = system.FilmSource{}
 	// 获取请求参数
 	if err := c.ShouldBindJSON(&s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "请求参数异常",
-		})
+		system.Failed("请求参数异常", c)
 		return
 	}
 	if s.Id == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "参数异常, 资源站标识不能为空",
-		})
+		system.Failed("参数异常, 资源站标识不能为空", c)
 		return
 	}
 	// 查找对应的资源站点信息
 	fs := logic.ML.GetFilmSource(s.Id)
 	if fs == nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "数据异常,资源站信息不存在",
-		})
+		system.Failed("数据异常,资源站信息不存在", c)
 		return
 	}
 	// 如果采集站开启图片同步, 且采集站为附属站点则返回错误提示
 	if s.SyncPictures && (fs.Grade == system.SlaveCollect) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "附属站点无法开启图片同步功能",
-		})
+		system.Failed("附属站点无法开启图片同步功能", c)
 		return
 	}
 	if s.State != fs.State || s.SyncPictures != fs.SyncPictures {
@@ -206,39 +141,24 @@ func FilmSourceChange(c *gin.Context) {
 			Grade: fs.Grade, SyncPictures: s.SyncPictures, CollectType: fs.CollectType, State: s.State}
 		// 更新资源站信息
 		if err := logic.ML.UpdateFilmSource(s); err != nil {
-			c.JSON(http.StatusOK, gin.H{
-				"status":  StatusFailed,
-				"message": fmt.Sprint("资源站更新失败: ", err.Error()),
-			})
+			system.Failed(fmt.Sprint("资源站更新失败: ", err.Error()), c)
 			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "更新成功",
-	})
+	system.SuccessOnlyMsg("更新成功", c)
 }
 
 func FilmSourceDel(c *gin.Context) {
 	id := c.Query("id")
 	if len(id) <= 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "资源站ID信息不能为空",
-		})
+		system.Failed("资源站ID信息不能为空", c)
 		return
 	}
 	if err := logic.ML.DelFilmSource(id); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": fmt.Sprint("删除资源站失败: ", err.Error()),
-		})
+		system.Failed("删除资源站失败", c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "删除成功:",
-	})
+	system.SuccessOnlyMsg("删除成功", c)
 }
 
 // FilmSourceTest 测试影视站点数据是否可用
@@ -246,32 +166,20 @@ func FilmSourceTest(c *gin.Context) {
 	var s = system.FilmSource{}
 	// 获取请求参数
 	if err := c.ShouldBindJSON(&s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "请求参数异常",
-		})
+		system.Failed("请求参数异常", c)
 		return
 	}
 	// 校验必要参数
 	if err := validFilmSource(s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": err.Error(),
-		})
+		system.Failed(err.Error(), c)
 		return
 	}
 	// 执行 spider
 	if err := spider.CollectApiTest(s); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": err.Error(),
-		})
+		system.Failed(err.Error(), c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "测试成功!!!",
-	})
+	system.SuccessOnlyMsg("测试成功!!!", c)
 }
 
 // GetNormalFilmSource 获取状态为启用的采集站信息
@@ -283,10 +191,7 @@ func GetNormalFilmSource(c *gin.Context) {
 			l = append(l, system.FilmTaskOptions{Id: v.Id, Name: v.Name})
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status": StatusOk,
-		"data":   l,
-	})
+	system.Success(l, "影视源信息获取成功", c)
 }
 
 // ------------------------------------------------------ 站点基本配置 ------------------------------------------------------
@@ -303,47 +208,31 @@ func UpdateSiteBasic(c *gin.Context) {
 	if err := c.ShouldBindJSON(&bc); err == nil {
 		// 对参数进行校验
 		if !util.ValidDomain(bc.Domain) && !util.ValidIPHost(bc.Domain) {
-			c.JSON(http.StatusOK, gin.H{
-				"status":  StatusFailed,
-				"message": "域名格式校验失败: ",
-			})
+			system.Failed("域名格式校验失败", c)
 			return
 		}
 		if len(bc.SiteName) <= 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"status":  StatusFailed,
-				"message": "网站名称不能为空: ",
-			})
+			system.Failed("网站名称不能为空", c)
 			return
 		}
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"status": StatusOk, "message": fmt.Sprint("参数提交失败:  ", err)})
+		system.Failed(fmt.Sprint("请求参数异常:  ", err), c)
 		return
 	}
 
 	// 保存更新后的配置信息
 	if err := logic.ML.UpdateSiteBasic(bc); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": fmt.Sprint("网站配置更新失败: ", err),
-		})
+		system.Failed(fmt.Sprint("网站配置更新失败:  ", err), c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "更新成功: ",
-	})
-	return
+	system.SuccessOnlyMsg("更新成功", c)
 }
 
 // ResetSiteBasic 重置网站配置信息为初始化状态
 func ResetSiteBasic(c *gin.Context) {
 	// 执行配置初始化方法直接覆盖当前基本配置信息
 	SystemInit.BasicConfigInit()
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "重置成功: ",
-	})
+	system.SuccessOnlyMsg("配置信息重置成功", c)
 }
 
 // ------------------------------------------------------ 参数校验 ------------------------------------------------------
@@ -367,8 +256,4 @@ func validFilmSource(fs system.FilmSource) error {
 	default:
 		return errors.New("资源类型异常, 未知的资源类型")
 	}
-}
-
-func apiValidityCheck() {
-
 }

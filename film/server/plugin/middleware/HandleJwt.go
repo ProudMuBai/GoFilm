@@ -20,7 +20,7 @@ func AuthToken() gin.HandlerFunc {
 		authToken := c.Request.Header.Get("auth-token")
 		// 如果没有登录信息则直接清退
 		if authToken == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"status": "ok", "message": "用户未授权,请先登录."})
+			system.CustomResult(http.StatusUnauthorized, system.SUCCESS, nil, "用户未授权,请先登录", c)
 			c.Abort()
 			return
 		}
@@ -30,20 +30,14 @@ func AuthToken() gin.HandlerFunc {
 		t := system.GetUserTokenById(uc.UserID)
 		// 如果 redis中获取的token为空则登录已过期需重新登录
 		if len(t) <= 0 {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"status":  "ok",
-				"message": "身份验证信息已过期,请重新登录!!!",
-			})
+			system.CustomResult(http.StatusUnauthorized, system.SUCCESS, nil, "身份验证信息已失效,请重新登录!!!", c)
 			c.Abort()
 			return
 		}
 		// 如果redis中存在对应token, 校验authToken是否与redis中的一致
 		if t != authToken {
 			// 如果不一致则证明authToken已经失效或在其他地方登录, 则需要重新登录
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"status":  "ok",
-				"message": "账号在其它设备登录,身份验证信息失效,请重新登录!!!",
-			})
+			system.CustomResult(http.StatusUnauthorized, system.SUCCESS, nil, "账号在其它设备登录,身份验证信息失效,请重新登录!!!", c)
 			c.Abort()
 			return
 		} else if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
@@ -56,7 +50,6 @@ func AuthToken() gin.HandlerFunc {
 			uc, _ = system.ParseToken(newToken)
 			c.Header("new-token", newToken)
 		}
-
 		// 将UserClaims存放到context中
 		c.Set(config.AuthUserClaims, uc)
 		c.Next()

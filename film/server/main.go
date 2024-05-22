@@ -18,7 +18,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	// 初始化mysql
+	// 初始化mysql00000
 	err = db.InitMysql()
 	if err != nil {
 		panic(err)

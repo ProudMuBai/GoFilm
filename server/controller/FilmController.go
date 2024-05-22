@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"server/logic"
 	"server/model/system"
+	"server/plugin/spider"
 	"strconv"
 	"time"
 )
@@ -135,6 +136,7 @@ func FindFilmClass(c *gin.Context) {
 	system.Success(class, "分类信息查找成功", c)
 }
 
+// UpdateFilmClass 更新指定分类的影片数据
 func UpdateFilmClass(c *gin.Context) {
 	// 获取修改后的分类信息
 	var class = system.CategoryTree{}
@@ -151,6 +153,8 @@ func UpdateFilmClass(c *gin.Context) {
 		system.Failed(err.Error(), c)
 		return
 	}
+	// 更新成功后删除首页缓存
+	spider.ClearCache()
 	system.SuccessOnlyMsg("影片分类信息更新成功", c)
 }
 

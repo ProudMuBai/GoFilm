@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
-	"net/http"
 	"server/config"
 	"server/logic"
 	"server/model/system"
@@ -15,33 +14,20 @@ import (
 func Login(c *gin.Context) {
 	var u system.User
 	if err := c.ShouldBindJSON(&u); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "数据格式异常!!!",
-		})
+		system.Failed("登录信息异常!!!", c)
 		return
 	}
 	if len(u.UserName) <= 0 || len(u.Password) <= 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "用户名和密码信息不能为空!!!",
-		})
+		system.Failed("用户名和密码信息不能为空", c)
 		return
 	}
 	token, err := logic.UL.UserLogin(u.UserName, u.Password)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": err.Error(),
-		})
+		system.Failed(err.Error(), c)
 		return
 	}
 	c.Header("new-token", token)
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "登录成功!!!",
-	})
-	return
+	system.SuccessOnlyMsg("登录成功!!!", c)
 }
 
 // Logout 退出登录
@@ -49,29 +35,20 @@ func Logout(c *gin.Context) {
 	// 获取已登录的用户信息
 	v, ok := c.Get(config.AuthUserClaims)
 	if !ok {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "登录信息异常!!!",
-		})
+		system.Failed("请求失败,登录信息获取异常!!!", c)
 		return
 	}
 	// 清除redis中存储的对应token
 	uc, ok := v.(*system.UserClaims)
 	if !ok {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "登录信息异常!!!",
-		})
+		system.Failed("注销失败, 身份信息格式化异常!!!", c)
 		return
 	}
 	err := system.ClearUserToken(uc.UserID)
 	if err != nil {
 		log.Println("user logOut err: ", err)
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "logout success!!!",
-	})
+	system.SuccessOnlyMsg("已退出登录!!!", c)
 }
 
 // UserPasswordChange 修改用户密码
@@ -79,51 +56,33 @@ func UserPasswordChange(c *gin.Context) {
 	// 接收密码修改参数
 	var params map[string]string
 	if err := c.ShouldBindJSON(&params); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "数据格式异常!!!",
-		})
+		system.Failed("参数校验失败!!!", c)
 		return
 	}
 	// 校验参数是否存在空值
 	if params["password"] == "" || params["newPassword"] == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "原密码和新密码不能为空!!!",
-		})
+		system.Failed("密码不能为空!!!", c)
 		return
 	}
 	// 校验新密码是否符合规范
 	if err := util.ValidPwd(params["newPassword"]); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": fmt.Sprint("密码格式校验失败: ", err.Error()),
-		})
+		system.Failed(fmt.Sprint("密码格式校验失败: ", err.Error()), c)
 		return
 	}
 	// 获取已登录的用户信息
 	v, ok := c.Get(config.AuthUserClaims)
 	if !ok {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": "登录信息异常!!!",
-		})
+		system.Failed("操作失败,登录信息异常!!!", c)
 		return
 	}
 	// 从context中获取用户的登录信息
 	uc := v.(*system.UserClaims)
 	if err := logic.UL.ChangePassword(uc.UserName, params["password"], params["newPassword"]); err != nil {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  StatusFailed,
-			"message": fmt.Sprint("密码修改失败: ", err.Error()),
-		})
+		system.Failed(fmt.Sprint("密码修改失败: ", err.Error()), c)
 		return
 	}
 	// 密码修改成功后不主动使token失效, 以免影响体验
-	c.JSON(http.StatusOK, gin.H{
-		"status":  StatusOk,
-		"message": "密码修改成功",
-	})
+	system.SuccessOnlyMsg("密码修改成功", c)
 }
 
 func UserInfo(c *gin.Context) {
