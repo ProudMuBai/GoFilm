@@ -1,31 +1,29 @@
 <template>
   <div class="container" v-if="d.title.name">
     <div class="title">
-      <a :href="`/filmClassify?Pid=${d.title.id}`" >{{ d.title.name }}</a>
+      <router-link :to="{ path: '/filmClassify', query: { Pid: d.title.id } }">{{ d.title.name }}</router-link>
       <span class="line"/>
-      <a :href="`/filmClassifySearch?Pid=${d.title.id}`" class="h_active">{{ `${d.title.name}库` }}</a>
+      <router-link :to="{ path: '/filmClassifySearch', query: { Pid: d.title.id } }" class="h_active">{{ `${d.title.name}库` }}</router-link>
     </div>
     <!--影片分类检索-->
     <div class="t_container">
-      <div class="t_item" v-for="k in d.search.sortList ">
-        <div class="t_title">{{d.search.titles[k]}} <b class="iconfont icon-triangle"/> </div>
+      <div class="t_item" v-for="k in d.search.sortList" :key="k">
+        <div class="t_title">{{ d.search.titles[k] }} <b class="iconfont icon-triangle"/> </div>
         <div class="tag_group">
-          <a href="javascript:void(false)" :class="`tag ${t['Value'] === d.searchParams[k]?'t_active':''}`" v-for="t in d.search.tags[k]" @click="handleTag(k,t['Value'])" >
-            {{t['Name']}}
+          <a href="javascript:void(false)" :class="`tag ${t['Value'] === d.searchParams[k] ? 't_active' : ''}`" v-for="t in d.search.tags[k]" :key="t['Value']" @click="handleTag(k, t['Value'])">
+            {{ t['Name'] }}
           </a>
         </div>
       </div>
     </div>
-
     <!--影片列表展示-->
     <FilmList :col="7" :list="d.list"/>
     <!--分页展示区域-->
-    <div class="pagination_container ">
+    <div class="pagination_container">
       <el-pagination background layout="prev, pager, next"
                      v-model:current-page="d.page.current"
                      @current-change="changeCurrent"
                      :pager-count="5"
-                     :background="true"
                      :page-size="d.page.pageSize"
                      :total="d.page.total"
                      :prev-icon="ArrowLeftBold"
@@ -37,11 +35,11 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, toRefs} from "vue";
-import {useRouter} from "vue-router";
-import {ApiGet} from "../../utils/request";
-import {ElMessage} from "element-plus";
-import {ArrowRightBold, ArrowLeftBold} from '@element-plus/icons-vue'
+import { onMounted, reactive } from "vue";
+import { useRouter } from "vue-router";
+import { ApiGet } from "../../utils/request";
+import { ElMessage } from "element-plus";
+import { ArrowRightBold, ArrowLeftBold } from '@element-plus/icons-vue';
 import FilmList from "../../components/index/FilmList.vue";
 
 // 页面所需数据
@@ -49,14 +47,16 @@ const d = reactive({
   title: {},
   list: [],
   search: {
-    sortList:[],
+    sortList: [],
     titles: [],
     tags: [],
   },
   page: {
     current: 0,
+    pageSize: 10,
+    total: 0,
   },
-  searchParams:{
+  searchParams: {
     Pid: '',
     Category: '',
     Plot: '',
@@ -65,60 +65,49 @@ const d = reactive({
     Year: '',
     Sort: '',
   },
-
-})
+});
 
 // 获取路由参数查询对应数据
-const router = useRouter()
+const router = useRouter();
 
 // 点击分页按钮事件 current-change
 const changeCurrent = (currentVal: number) => {
-  handleParams()
+  handleParams();
 }
 
 // 分类tag点击事件
-const handleTag = (k:string,v:string)=>{
-  // 设置被点击的tag属性值
-  d.searchParams[k as keyof typeof d.searchParams] = v
-  // searchTag改变, 重置 current当前页码
-  d.page.current = 1
-  handleParams()
+const handleTag = (k: string, v: string) => {
+  d.searchParams[k as keyof typeof d.searchParams] = v;
+  d.page.current = 1;
+  handleParams();
 }
-const handleParams = ()=> {
-  let q = ''
-  for (let k in d.searchParams) {
-    let val = d.searchParams[k as keyof typeof d.searchParams]
-    if (val != '') {
-      q += `&${k}=${val}`
-    }
-  }
-  location.href = '/filmClassifySearch?'+q.slice(1)+`&current=${d.page.current}`
+
+const handleParams = () => {
+  let query = { ...d.searchParams, current: d.page.current };
+  router.push({ path: '/filmClassifySearch', query });
 }
 
 // 请求数据
 const getFilmData = () => {
-  let query = router.currentRoute.value.query
-  ApiGet(`/filmClassifySearch`, {...query}).then((resp: any) => {
+  let query = router.currentRoute.value.query;
+  ApiGet('/filmClassifySearch', { ...query }).then((resp: any) => {
     if (resp.code === 0) {
-      d.title = resp.data.title
-      d.list = resp.data.list
-      d.page = resp.data.page
-      d.search = resp.data.search
-      d.searchParams = resp.data.params
-      console.log(d)
+      d.title = resp.data.title;
+      d.list = resp.data.list;
+      d.page = resp.data.page;
+      d.search = resp.data.search;
+      d.searchParams = resp.data.params;
     } else {
-      ElMessage.error({message: "影片搜索结果异常,请稍后刷新重试", duration: 1000})
+      ElMessage.error({ message: "影片搜索结果异常,请稍后刷新重试", duration: 1000 });
     }
-  })
+  });
 }
 
 onMounted(() => {
-  getFilmData()
-})
-
-
-
+  getFilmData();
+});
 </script>
+
 
 
 <style scoped>

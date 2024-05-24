@@ -49,7 +49,7 @@ onMounted(()=>{
 })
 
 watch([data],()=>{
- !data.show && props.remove()
+  !data.show && props.remove()
 })
 </script>
 

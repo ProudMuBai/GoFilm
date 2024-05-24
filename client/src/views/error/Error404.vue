@@ -1,16 +1,6 @@
 <template>
   <div class="container">
-
-    <el-empty v-if="false" style="height: 100%; line-height: 100%; font-size: 20px" :image-size="400"
-              :image="notFoundImg">
-      <template #description>
-        <p style="font-size: 32px;width: 100%;color: #a574b7;margin-bottom: 20px">你好像走错地方了哦!!!</p>
-        <button @click="handleError('home')">主页</button>
-        <button @click="handleError('back')">返回</button>
-      </template>
-    </el-empty>
-
-
+    <!-- 错误提示图片和文本 -->
     <img :src="notFoundImg" alt="404" class="notfound-img"/>
     <p class="warning-txt">你好像走错地方了哦!!!</p>
     <div class="btn-group">
@@ -21,20 +11,21 @@
 </template>
 
 <script setup lang="ts">
-import {useRouter} from "vue-router";
-import notFoundImg from '../../assets/image/404.png'
+import { useRouter } from "vue-router";
+import notFoundImg from '../../assets/image/404.png';
 
-const router = useRouter()
+const router = useRouter();
+
 const handleError = (t: string) => {
   switch (t) {
     case 'home':
-      router.push('/')
-      break
+      router.push('/');
+      break;
     case 'back':
-      router.go(-1)
-      break
+      router.go(-1);
+      break;
   }
-}
+};
 </script>
 
 <style scoped>
@@ -67,27 +58,36 @@ const handleError = (t: string) => {
 .container {
   width: 100vw;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .warning-txt {
   font-size: 32px;
   color: #79bbff;
-  margin: 5px;
+  margin: 20px 0;
 }
 
 .btn-group {
-  margin: 0 auto;
+  display: flex;
+  gap: 15px;
 }
 
 button {
-  margin: 5px 15px;
+  padding: 10px 20px;
   background: rgb(103, 217, 232);
   color: #ffffff;
-  width: 120px;
   border-radius: 36px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 button:hover {
+  background: hotpink;
   border: none;
 }
 </style>
