@@ -2,105 +2,101 @@
   <div class="header">
     <!-- 左侧logo以及搜索 -->
     <div class="nav_left">
-      <!--        <img class="logo" src="/src/assets/logo.png">-->
-      <!--<el-avatar class="logo" :size="45" :src="data.site.logo" alt="GoFilm"/>-->
       <a href="/" class="site">{{ data.site.siteName }}</a>
       <div class="search_group">
-        <input v-model="keyword" @keydown="(e)=>{e.keyCode == 13 && searchFilm()}" placeholder="搜索 动漫,剧集,电影 "
-               class="search"/>
-        <el-button @click="searchFilm" :icon="Search"/>
+        <input v-model="keyword" @keydown="(e) => { e.keyCode === 13 && searchFilm() }" placeholder="搜索 动漫,剧集,电影 " class="search" />
+        <el-button @click="searchFilm" :icon="Search" />
       </div>
     </div>
     <!--右侧顶级分类导航 -->
     <div class="nav_right">
-     <div class="nav_link">
-       <a href="/">首页</a>
-       <template v-for="n in data.nav">
-         <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
-       </template>
-     </div>
-      <div class="history-link hidden-md-and-down" v-on:mouseenter="handleHistory(true)"
-           v-on:mouseleave="handleHistory(false)">
-        <a :href="`/filmClassify?Pid=${nav.variety.id}`">
-          <b style="font-size: 22px;" class="iconfont icon-history"/>
-        </a>
+      <div class="nav_link">
+        <router-link to="/">首页</router-link>
+        <template v-for="n in data.nav">
+          <router-link :to="{ path: '/filmClassify', query: { Pid: n.id } }">{{ n.name }}</router-link>
+        </template>
+      </div>
+      <div class="history-link hidden-md-and-down" @mouseenter="handleHistory(true)" @mouseleave="handleHistory(false)">
+        <router-link :to="{ path: '/filmClassify', query: { Pid: nav.variety.id } }">
+          <b style="font-size: 22px;" class="iconfont icon-history" />
+        </router-link>
         <Transition name="fade-slide" duration="300">
           <div v-if="data.historyFlag" class="dropdown-container">
             <div class="history-h">
-              <b class="iconfont icon-record history-h-icon"/>
+              <b class="iconfont icon-record history-h-icon" />
               <span class="history-h-title">历史观看记录</span>
-              <a v-if="data.historyList.length > 0" class="iconfont icon-clear1 history-del" @click="clearHistory"/>
+              <a v-if="data.historyList.length > 0" class="iconfont icon-clear1 history-del" @click="clearHistory" />
             </div>
             <div v-if="data.historyList.length > 0" class="history-c">
-              <a :href="h.link" class="history-c-item" v-for="h in data.historyList">
-                    <span class="history-c-item-t">{{ h.name }}
-                    </span>
+              <router-link :to="h.link" class="history-c-item" v-for="h in data.historyList">
+                <span class="history-c-item-t">{{ h.name }}</span>
                 <span class="history-c-item-e">{{ h.episode }}</span>
-              </a>
+              </router-link>
             </div>
-            <el-empty style="padding: 10px 0;" v-else description="暂无观看记录"/>
+            <el-empty style="padding: 10px 0;" v-else description="暂无观看记录" />
           </div>
         </Transition>
       </div>
-      <!--        <span style="color:#777; font-weight: bold">|</span>-->
-      <a href="/search" class="hidden-md-and-up">
+      <router-link to="/search" class="hidden-md-and-up">
         <el-icon style="font-size: 18px">
-          <Search/>
+          <Search />
         </el-icon>
-      </a>
+      </router-link>
     </div>
-    <!--弹窗模块,显示按钮对应信息-->
   </div>
 </template>
 
 <script lang="ts" setup>
-import {onMounted, reactive, ref, watch} from "vue";
-import {useRouter} from "vue-router";
-import {Search, CircleClose} from '@element-plus/icons-vue'
-import {ElMessage} from "element-plus";
-import {ApiGet} from "../../utils/request";
-import {cookieUtil, COOKIE_KEY_MAP} from "../../utils/cookie";
+import { onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { Search } from '@element-plus/icons-vue';
+import { ElMessage } from "element-plus";
+import { ApiGet } from "../../utils/request";
+import { cookieUtil, COOKIE_KEY_MAP } from "../../utils/cookie";
+
 // 搜索关键字
-const keyword = ref<string>('')
+const keyword = ref<string>('');
+
 // 弹窗隐藏显示
 const data = reactive({
   historyFlag: false,
   historyList: [{}],
   nav: Array,
   site: Object,
-})
+});
+
 // 加载观看历史记录信息
 const handleHistory = (flag: boolean) => {
-  data.historyFlag = flag
+  data.historyFlag = flag;
   if (flag) {
-    // 获取cookie中的filmHistory
-    let historyMap = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : null
-    let arr = []
+    const historyMap = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : null;
+    const arr = [];
     if (historyMap) {
-      for (let k in historyMap) {
-        arr.push(historyMap[k])
+      for (const k in historyMap) {
+        arr.push(historyMap[k]);
       }
-      arr.sort((item1, item2) => item2.timeStamp - item1.timeStamp)
+      arr.sort((item1, item2) => item2.timeStamp - item1.timeStamp);
     }
-    data.historyList = arr
+    data.historyList = arr;
   }
-}
+};
+
 const clearHistory = () => {
-  cookieUtil.clearCookie(COOKIE_KEY_MAP.FILM_HISTORY)
-  data.historyList = []
-}
+  cookieUtil.clearCookie(COOKIE_KEY_MAP.FILM_HISTORY);
+  data.historyList = [];
+};
 
 // 从父组件获取当前路由对象
-const router = useRouter()
+const router = useRouter();
+
 // 影片搜索
 const searchFilm = () => {
   if (keyword.value.length <= 0) {
-    ElMessage.error({message: "请先输入影片名称关键字再进行搜索", duration: 1500})
-    return
+    ElMessage.error({ message: "请先输入影片名称关键字再进行搜索", duration: 1500 });
+    return;
   }
-  location.href = `/search?search=${keyword.value}`
-  // router.push({path: '/search', query:{search: keyword.value}, replace: true})
-}
+  router.push({ path: '/search', query: { search: keyword.value } });
+};
 
 // 导航栏挂载完毕时发送一次请求拿到对应的分类id数据
 const nav = reactive({
@@ -108,28 +104,29 @@ const nav = reactive({
   film: {},
   tv: {},
   variety: {},
-})
+});
 
 // 获取站点信息
-const getBasicInfo = ()=>{
-  ApiGet(`/config/basic`).then((resp: any) => {
+const getBasicInfo = () => {
+  ApiGet('/config/basic').then((resp: any) => {
     if (resp.code === 0) {
-      data.site = resp.data
+      data.site = resp.data;
     } else {
-      ElMessage.error({message: resp.msg})
+      ElMessage.error({ message: resp.msg });
     }
-  })
-}
+  });
+};
+
 onMounted(() => {
   ApiGet('/navCategory').then((resp: any) => {
     if (resp.code === 0) {
-      data.nav = resp.data
+      data.nav = resp.data;
     } else {
-      ElMessage.error({message: "导航分类信息获取失败", duration: 1000})
+      ElMessage.error({ message: "导航分类信息获取失败", duration: 1000 });
     }
-  })
-  getBasicInfo()
-})
+  });
+  getBasicInfo();
+});
 </script>
 
 
@@ -206,7 +203,7 @@ onMounted(() => {
     font-style: italic;
     font-size: 24px;
     margin-right: 5px;
-    background: linear-gradient(118deg, #e91a90, #c965b3, #988cd7, #00acfd);
+    background: linear-gradient(118deg, rgb(255, 255, 255), #f43131, #ffffff, #ffffff);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

@@ -1,8 +1,8 @@
 <template>
   <div class="container">
     <div class="hidden-sm-and-up banner_wrap" @touchstart="touchS" @touchend="touchE" >
-      <el-carousel  v-model="data.banner.current" ref="wrap" :pause-on-hover="false"   :interval="5000" trigger="hover" height="200px" arrow="never" >
-        <el-carousel-item v-for="item in banners" :key="item"  >
+      <el-carousel  v-model="data.banner.current" ref="wrap" :pause-on-hover="false" :interval="5000" trigger="hover" height="200px" arrow="never">
+        <el-carousel-item v-for="item in banners" :key="item">
           <el-image style="width: 100%; height: 100%;" :src="item.picture" fit="fill"/>
           <p class="carousel-title">{{ item.name }}</p>
         </el-carousel-item>
@@ -25,34 +25,36 @@
     </div>
     <div class="content_item" v-for="item in data.info.content">
       <template v-if="item.nav.show">
-        <el-row class="row-bg  cus_nav" justify="space-between">
+        <el-row class="row-bg cus_nav" justify="space-between">
           <el-col :span="12" class="title">
-                        <span
-                            :class="`iconfont ${item.nav.name.search('电影') != -1?'icon-film':item.nav.name.search('剧') != -1?'icon-tv':item.nav.name.search('动漫')!= -1?'icon-cartoon':'icon-variety'}`"
-                            style="color: #79bbff;font-size: 32px;margin-right: 10px; line-height: 130%"/>
-            <a :href="`/filmClassify?Pid=${item.nav.id}`">{{ item.nav.name }}</a>
+            <span :class="`iconfont ${item.nav.name.search('电影') != -1 ? 'icon-film' : item.nav.name.search('剧') != -1 ? 'icon-tv' : item.nav.name.search('动漫') != -1 ? 'icon-cartoon' : 'icon-variety'}`" style="color: #79bbff; font-size: 32px; margin-right: 10px; line-height: 130%;"/>
+            <router-link :to="{ path: '/filmClassify', query: { Pid: item.nav.id } }">{{ item.nav.name }}</router-link>
           </el-col>
           <el-col :span="12">
             <ul class="nav_ul">
               <template v-for="c in item.nav.children">
-                <li class="nav_category hidden-md-and-down" v-if="c.show"><a
-                    :href="`/filmClassifySearch?Pid=${c.pid}&Category=${c.id}`">{{ c.name }}</a></li>
+                <li class="nav_category hidden-md-and-down" v-if="c.show">
+                  <router-link :to="{ path: '/filmClassifySearch', query: { Pid: c.pid, Category: c.id } }">{{ c.name }}</router-link>
+                </li>
               </template>
-              <li class="nav_category hidden-md-and-down"><a :href="`/filmClassify?Pid=${item.nav.id}`">更多 ></a></li>
+              <li class="nav_category hidden-md-and-down">
+                <router-link :to="{ path: '/filmClassify', query: { Pid: item.nav.id } }">更多 ></router-link>
+              </li>
             </ul>
           </el-col>
         </el-row>
         <el-row class="cus_content">
           <el-col :md="24" :lg="20" :xl="20" class="cus_content">
-            <!--影片列表-->
-            <FilmList v-if="item.movies" :col="6" :list="item.movies.slice(0,12)"/>
+            <FilmList v-if="item.movies" :col="6" :list="item.movies.slice(0, 12)"/>
           </el-col>
           <el-col :md="0" :lg="4" :xl="4" class="hidden-md-and-down content_right">
             <h3 class="hot_title">🔥热播{{ item.nav.name }}</h3>
-            <template v-for="(m,i) in item.hot.slice(0,12)">
+            <template v-for="(m, i) in item.hot.slice(0, 12)">
               <div class="content_right_item">
-                <a :href="`/filmDetail?link=${m.mid}`"><b class="top_item">{{ i + 1 + '.' }}</b>
-                  <span>{{ m.name }}</span></a>
+                <router-link :to="{ path: '/filmDetail', query: { link: m.mid } }">
+                  <b class="top_item">{{ i + 1 + '.' }}</b>
+                  <span>{{ m.name }}</span>
+                </router-link>
               </div>
             </template>
           </el-col>
@@ -62,15 +64,17 @@
   </div>
 </template>
 
+
+
 <script lang="ts" setup>
-// 顶部轮播图
 import 'element-plus/theme-chalk/display.css'
-import {onBeforeMount, reactive, ref} from "vue";
-import {ApiGet} from "../../utils/request";
+import { onBeforeMount, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { ApiGet } from "../../utils/request";
 import FilmList from "../../components/index/FilmList.vue";
-import {ElMessage} from "element-plus";
+import { ElMessage } from "element-plus";
 
-
+const router = useRouter();
 
 // 轮播数据拟态
 let banners = [
@@ -102,53 +106,45 @@ let banners = [
     poster: 'https://img.bfzypic.com/upload/vod/20230424-37/e5c9ec121c2cba230243c333447e818a.jpg',
     picture: 'https://s2.loli.net/2024/02/21/oMAGzSliK2YbhRu.jpg'
   },
-]
+];
 
-// pc 背景图同步响应
 const carousel = (index: number) => {
-  data.banner.current = banners[index]
-}
+  data.banner.current = banners[index];
+};
 
-// 滑动开始
-const wrap = ref<HTMLFormElement>()
-const touchS = (e:any)=>{
-  //记录触摸起始位置
-  data.banner.touch.star = e.changedTouches[0].pageX
-}
+const wrap = ref<HTMLFormElement>();
+const touchS = (e: any) => {
+  data.banner.touch.star = e.changedTouches[0].pageX;
+};
 
-//  滑动结束
-const touchE = (e:any)=>{
-  data.banner.touch.end = e.changedTouches[0].pageX
-  let distance = data.banner.touch.end - data.banner.touch.star
+const touchE = (e: any) => {
+  data.banner.touch.end = e.changedTouches[0].pageX;
+  let distance = data.banner.touch.end - data.banner.touch.star;
   if (distance >= 50) {
-    // let index = data.banner.touch.index - 1
-    // data.banner.touch.index = index >= 0 ? index : banners.length-1
-    wrap.value?.prev()
+    wrap.value?.prev();
   } else if (distance <= -50) {
-    // let index = data.banner.touch.index + 1
-    // data.banner.touch.index = index <= banners.length - 1 ? index : 0
-    wrap.value?.next()
+    wrap.value?.next();
   }
-  // wrap.value?.setActiveItem(data.banner.touch.index)
-}
+};
 
 const data = reactive({
   info: {},
   banner: {
-    current: {name: '', year: 2024, cName: '', poster: '', picture: ''},
-    touch: {index: 0, star: 0, end: 0,}
+    current: { name: '', year: 2024, cName: '', poster: '', picture: '' },
+    touch: { index: 0, star: 0, end: 0 }
   }
-})
+});
+
 onBeforeMount(() => {
-  data.banner.current = banners[0]
+  data.banner.current = banners[0];
   ApiGet('/index').then((resp: any) => {
     if (resp.code == 0) {
-      data.info = resp.data
+      data.info = resp.data;
     } else {
-      ElMessage.error({message: resp.msg})
+      ElMessage.error({ message: resp.msg });
     }
-  })
-})
+  });
+});
 </script>
 
 <style scoped>
@@ -383,7 +379,7 @@ a {
   }
 
   .container {
-/*    padding-top: 660px;*/
+    /*    padding-top: 660px;*/
   }
 
   .banner2 {

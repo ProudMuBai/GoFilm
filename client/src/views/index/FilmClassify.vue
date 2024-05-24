@@ -1,9 +1,9 @@
 <template>
-  <div class="container"  v-if="d.content.news.length > 0">
+  <div class="container" v-if="d.content.news.length > 0">
     <div class="title">
-      <a :href="`/filmClassify?Pid=${d.title.id}`" class="h_active">{{ d.title.name }}</a>
+      <router-link :to="{ path: '/filmClassify', query: { Pid: d.title.id } }" class="h_active">{{ d.title.name }}</router-link>
       <span class="line"/>
-      <a :href="`/filmClassifySearch?Pid=${d.title.id}`">{{ `${d.title.name}库` }}</a>
+      <router-link :to="{ path: '/filmClassifySearch', query: { Pid: d.title.id } }">{{ `${d.title.name}库` }}</router-link>
     </div>
 
     <!--影片列表展示-->
@@ -11,21 +11,21 @@
       <div class="news">
         <div class="c_nav">
           <span class="c_nav_text silver">最新上映</span>
-          <a :href="`/filmClassifySearch?Pid=${d.title.id}&Sort=release_stamp`" class="c_nav_more ">更多<b class="iconfont icon-more"/></a>
+          <router-link :to="{ path: '/filmClassifySearch', query: { Pid: d.title.id, Sort: 'release_stamp' } }" class="c_nav_more">更多<b class="iconfont icon-more"/></router-link>
         </div>
         <FilmList :col="7" :list="d.content.news"/>
       </div>
       <div class="news">
         <div class="c_nav">
           <span class="c_nav_text silver">排行榜</span>
-          <a :href="`/filmClassifySearch?Pid=${d.title.id}&Sort=hits`" class="c_nav_more ">更多<b class="iconfont icon-more"/></a>
+          <router-link :to="{ path: '/filmClassifySearch', query: { Pid: d.title.id, Sort: 'hits' } }" class="c_nav_more">更多<b class="iconfont icon-more"/></router-link>
         </div>
         <FilmList :col="7" :list="d.content.top"/>
       </div>
       <div class="news">
         <div class="c_nav">
           <span class="c_nav_text silver">最近更新</span>
-          <a :href="`/filmClassifySearch?Pid=${d.title.id}&Sort=update_stamp`" class="c_nav_more ">更多<b class="iconfont icon-more"/></a>
+          <router-link :to="{ path: '/filmClassifySearch', query: { Pid: d.title.id, Sort: 'update_stamp' } }" class="c_nav_more">更多<b class="iconfont icon-more"/></router-link>
         </div>
         <FilmList :col="7" :list="d.content.recent"/>
       </div>
@@ -36,12 +36,12 @@
 </template>
 
 <script setup lang="ts">
-import {ApiGet} from "../../utils/request";
-import {ElMessage} from "element-plus";
-import {onMounted, reactive} from "vue";
-import {useRouter} from "vue-router";
+import { ApiGet } from "../../utils/request";
+import { ElMessage } from "element-plus";
+import { onMounted, reactive } from "vue";
+import { useRouter } from "vue-router";
 import FilmList from "../../components/index/FilmList.vue";
-import {Bottom} from "@element-plus/icons-vue";
+import { Bottom } from "@element-plus/icons-vue";
 
 const d = reactive({
   title: {},
@@ -50,26 +50,27 @@ const d = reactive({
     top: [],
     recent: [],
   }
+});
 
-})
+const router = useRouter();
 
-const router = useRouter()
 const getFilmData = () => {
-  let query = router.currentRoute.value.query
-  ApiGet(`/filmClassify`, {Pid: query.Pid}).then((resp: any) => {
-    if (resp.code === 0 ) {
-      d.title = resp.data.title
-      d.content = resp.data.content
+  let query = router.currentRoute.value.query;
+  ApiGet('/filmClassify', { Pid: query.Pid }).then((resp: any) => {
+    if (resp.code === 0) {
+      d.title = resp.data.title;
+      d.content = resp.data.content;
     } else {
-      ElMessage.error({message: resp.msg, duration: 1000})
+      ElMessage.error({ message: resp.msg, duration: 1000 });
     }
-  })
-}
+  });
+};
 
 onMounted(() => {
-  getFilmData()
-})
+  getFilmData();
+});
 </script>
+
 
 <style scoped>
 @import "/src/assets/css/classify.css";

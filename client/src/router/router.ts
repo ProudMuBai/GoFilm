@@ -1,9 +1,6 @@
-import {
-    createRouter,
-    createWebHistory,
-} from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 
-// 1.定义路由组件
+// 路由组件的导入
 import IndexHome from "../views/IndexHome.vue";
 import Home from "../views/index/Home.vue";
 import FilmDetails from "../views/index/FilmDetails.vue";
@@ -15,7 +12,7 @@ import FilmClassify from "../views/index/FilmClassify.vue";
 import ManageIndex from "../views/manage/Index.vue"
 import Login from "../views/Login.vue"
 import ManageHome from "../views/manage/ManageHome.vue";
-import {getToken} from "../utils/token";
+import { getToken } from "../utils/token";
 import CollectManage from "../views/manage/collect/CollectManage.vue";
 import SiteConfig from "../views/manage/system/SiteConfig.vue";
 import CronManage from "../views/manage/cron/CronManage.vue";
@@ -26,65 +23,59 @@ import FileUpload from "../views/manage/file/FileUpload.vue";
 import FilmAdd from "../views/manage/film/FilmAdd.vue";
 import CustomPlay from "../views/index/CustomPlay.vue";
 
-
-// 2. 定义一个路由
+// 定义路由
 const routes = [
     {
         path: '/',
         component: IndexHome,
         redirect: '/index',
         children: [
-            {path: 'index', component: Home},
-            {path: 'filmDetail', component: FilmDetails},
-            {path: 'play', component: Play},
-            {path: 'search', component: SearchFilm},
-            {path: 'filmClassify', component: FilmClassify},
-            {path: 'filmClassifySearch', component: FilmClassifySearch},
-            {path: '/custom/player', component: CustomPlay},
+            { path: 'index', component: Home },
+            { path: 'filmDetail', component: FilmDetails },
+            { path: 'play', component: Play },
+            { path: 'search', component: SearchFilm },
+            { path: 'filmClassify', component: FilmClassify },
+            { path: 'filmClassifySearch', component: FilmClassifySearch },
+            { path: '/custom/player', component: CustomPlay },
         ]
     },
-    {path: '/login', component: Login},
+    { path: '/login', component: Login },
     {
         path: '/manage',
         component: ManageHome,
         redirect: '/manage/index',
         children: [
-            {path: 'index', component: ManageIndex},
-            {path: 'collect/index', component: CollectManage},
-            {path: 'system/webSite', component: SiteConfig},
-            {path: 'cron/index', component: CronManage},
-            {path: 'file/upload', component: FileUpload},
-            {path: 'file/gallery', component: Temp},
-            {path: 'film', component: Film},
-            {path: 'film/class', component: FilmClass},
-            {path: 'film/add', component: FilmAdd},
-            {path: 'film/detail', component: Temp},
-
+            { path: 'index', component: ManageIndex },
+            { path: 'collect/index', component: CollectManage },
+            { path: 'system/webSite', component: SiteConfig },
+            { path: 'cron/index', component: CronManage },
+            { path: 'file/upload', component: FileUpload },
+            { path: 'file/gallery', component: Temp },
+            { path: 'film', component: Film },
+            { path: 'film/class', component: FilmClass },
+            { path: 'film/add', component: FilmAdd },
+            { path: 'film/detail', component: Temp },
         ]
     },
-    {path: `/:pathMatch(.*)*`, component: NotFound},
+    { path: `/:pathMatch(.*)*`, component: NotFound },
 ]
 
 // 创建路由实例并传递 routes配置
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),  // 使用 createWebHashHistory
     routes
-})
+});
 
 // 添加全局前置守卫拦截未登录的跳转
-router.beforeEach((to, from, next) =>{
+router.beforeEach((to, from, next) => {
     // 如果访问的是 /manage 下的路由, 且 token信息为空 则跳转到登录界面
     let matchPath = new RegExp(/^\/manage\//).test(to.path)
     let token = getToken()
-    if ( matchPath && !token ) {
+    if (matchPath && !token) {
         next('/login')
     } else {
         next()
     }
 })
 
-
-
-
-export {router}
-
+export { router }

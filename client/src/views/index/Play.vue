@@ -1,7 +1,6 @@
 <template>
   <div class="player_area" v-show="data.loading">
     <div class="player_p">
-      <!--preload-->
       <video-player @mounted="playerMount" :src="data.options.src" :poster="posterImg" controls
                     @ready="beforePlay"
                     @ended="isAutoPlay"
@@ -14,17 +13,17 @@
     </div>
     <div class="current_play_info">
       <div class="play_info_left">
-        <h3 class="current_play_title"><a
-            :href="`/filmDetail?link=${data.detail.id}`">{{ data.detail.name }}</a>{{ data.current.episode }}</h3>
+        <h3 class="current_play_title">
+          <router-link :to="{ path: '/filmDetail', query: { link: data.detail.id } }">{{ data.detail.name }}</router-link>{{ data.current.episode }}
+        </h3>
         <div class="tags">
-          <a :href="`/filmClassifySearch?Pid=${data.detail.pid}&Category=${data.detail.cid}`" >
+          <router-link :to="{ path: '/filmClassifySearch', query: { Pid: data.detail.pid, Category: data.detail.cid } }">
             <el-icon>
               <Promotion/>
             </el-icon>
-            {{ data.detail.descriptor.cName }}</a>
-          <span>{{
-              data.detail.descriptor.classTag ? data.detail.descriptor.classTag.replaceAll(',', '/') : '未知'
-            }}</span>
+            {{ data.detail.descriptor.cName }}
+          </router-link>
+          <span>{{ data.detail.descriptor.classTag ? data.detail.descriptor.classTag.replaceAll(',', '/') : '未知' }}</span>
           <span class="hidden-sm-and-down">{{ data.detail.descriptor.year }}</span>
           <span class="hidden-sm-and-down">{{ data.detail.descriptor.area }}</span>
         </div>
@@ -36,11 +35,10 @@
            @click="playNext"></a>
       </div>
     </div>
-    <!-- 播放选集   -->
     <div class="play-module">
       <div class="play-module-item">
         <div class="module-heading">
-          <p class=" play-module-title">播放列表</p>
+          <p class="play-module-title">播放列表</p>
           <div class="play-tab-group">
             <a href="javascript:;" :class="`play-tab-item ${data.currentTabId == item.id ? 'tab-active':''}`"
                v-for="item in data.detail.list" @click="changeTab(item.id)">{{ item.name }}</a>
@@ -54,7 +52,6 @@
         </div>
       </div>
     </div>
-    <!--相关推荐-->
     <div class="correlation">
       <RelateList :relateList="data.relate"/>
     </div>
@@ -64,28 +61,18 @@
 <script lang="ts" setup>
 import {
   computed,
-  onBeforeMount, onBeforeUpdate,
+  onBeforeMount,
   reactive,
-  Ref,
-  ref,
-  watchEffect,
-  withDirectives
 } from "vue";
-import {onBeforeRouteUpdate, useRouter} from "vue-router";
-import {ApiGet} from "../../utils/request";
-import {ElMessage} from "element-plus";
+import { useRouter } from "vue-router";
+import { ApiGet } from "../../utils/request";
+import { ElMessage } from "element-plus";
 import RelateList from "../../components/index/RelateList.vue";
-import {Promotion} from "@element-plus/icons-vue";
-import posterImg from '../../assets/image/play.png'
-import {cookieUtil,COOKIE_KEY_MAP} from '../../utils/cookie'
-// 引入视频播放器组件
-import {VideoPlayer} from '@videojs-player/vue'
-import 'video.js/dist/video-js.css'
-
-// 播放源切换事件
-const changeTab = (id: string) => {
-  data.currentTabId = id
-}
+import { Promotion } from "@element-plus/icons-vue";
+import posterImg from '../../assets/image/play.png';
+import { cookieUtil, COOKIE_KEY_MAP } from '../../utils/cookie';
+import { VideoPlayer } from '@videojs-player/vue';
+import 'video.js/dist/video-js.css';
 
 // 播放页所需数据
 const data = reactive({
@@ -125,159 +112,150 @@ const data = reactive({
     },
     list: [],
   },
-  current: {index: 0, episode: '', link: ''},
+  current: { index: 0, episode: '', link: '' },
   currentEpisode: 0,
   relate: [],
   currentTabId: '', // 当前播放源ID
-// @videojs-player 播放属性设置
   autoplay: true,
   options: {
-    title: "", //视频名称
-    src: "", //视频源
+    title: "", // 视频名称
+    src: "", // 视频源
     volume: 0.6, // 音量
     currentTime: 50,
   },
-})
-//
+});
+
 const hasNext = computed(() => {
-  let flag = false
-  data.detail.list.forEach((item:any)=>{
+  let flag = false;
+  data.detail.list.forEach((item: any) => {
     if (data.currentTabId == item.id) {
-      flag = data.current.index != item.linkList.length - 1
+      flag = data.current.index != item.linkList.length - 1;
     }
-  })
-  return flag
-})
+  });
+  return flag;
+});
 
-// 获取路由信息
-const router = useRouter()
+const router = useRouter();
 
+const changeTab = (id: string) => {
+  data.currentTabId = id;
+};
 
-// 点击播集数播放对应影片
 const playChange = (play: { sourceId: string, episodeIndex: number, target: any }) => {
-  data.detail.list.forEach((item:any)=>{
+  data.detail.list.forEach((item: any) => {
     if (item.id == play.sourceId) {
-      let currPlay =item.linkList[play.episodeIndex]
-      data.current = {index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link}
-      data.currentEpisode = play.episodeIndex
-      data.options.src = currPlay.link
-      data.options.title = data.detail.name + "  " + currPlay.episode
-      data.currentTabId =  play.sourceId
+      let currPlay = item.linkList[play.episodeIndex];
+      data.current = { index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link };
+      data.currentEpisode = play.episodeIndex;
+      data.options.src = currPlay.link;
+      data.options.title = `${data.detail.name} ${currPlay.episode}`;
+      data.currentTabId = play.sourceId;
     }
-  })
-}
+  });
+};
 
-// player相关事件
 const handlePlay = (e: any) => {
-  e.preventDefault()
+  e.preventDefault();
   switch (e.keyCode) {
     case 32:
       if (e.target.paused) {
-        e.target.play()
+        e.target.play();
       } else {
-        e.target.pause()
+        e.target.pause();
       }
-      break
+      break;
     case 37:
-      e.target.currentTime = e.target.currentTime - 5 < 0 ? 0 : e.target.currentTime - 5
-      break
+      e.target.currentTime = e.target.currentTime - 5 < 0 ? 0 : e.target.currentTime - 5;
+      break;
     case 39:
-      e.target.currentTime = e.target.currentTime + 5 > e.target.duration ? e.target.duration : e.target.currentTime + 5
-      break
+      e.target.currentTime = e.target.currentTime + 5 > e.target.duration ? e.target.duration : e.target.currentTime + 5;
+      break;
     case 38:
-      data.options.volume = data.options.volume + 0.05 > 1 ? 1 : data.options.volume + 0.05
-      break
+      data.options.volume = data.options.volume + 0.05 > 1 ? 1 : data.options.volume + 0.05;
+      break;
     case 40:
-      data.options.volume = data.options.volume - 0.05 < 0 ? 0 : data.options.volume - 0.05
-      break
+      data.options.volume = data.options.volume - 0.05 < 0 ? 0 : data.options.volume - 0.05;
+      break;
   }
-}
-// 播放结束后是否自动播放下一集
+};
+
 const isAutoPlay = () => {
   if (!data.autoplay) {
-    return
+    return;
   }
- playNext()
-}
-// 点击下一集按钮
+  playNext();
+};
+
 const playNext = () => {
-  // 如果不存在下一集信息则直接返回
   if (!hasNext.value) {
-    return
+    return;
   }
-  playChange({sourceId: data.currentTabId, episodeIndex: data.current.index + 1, target: ''})
+  playChange({ sourceId: data.currentTabId, episodeIndex: data.current.index + 1, target: '' });
   if (data.autoplay) {
     setTimeout(() => {
-      document.getElementsByTagName("video")[0].play()
-    }, 1000)
+      document.getElementsByTagName("video")[0].play();
+    }, 1000);
   }
-}
-// 主动触发快捷键
+};
+
 const triggerKeyMap = (keyCode: number) => {
-  let player = document.getElementsByTagName("video")[0]
-  player.focus()
+  let player = document.getElementsByTagName("video")[0];
+  player.focus();
   const event = document.createEvent('HTMLEvents');
   event.initEvent('keydown', true, false);
   event.keyCode = keyCode; // 设置键码
-  player.dispatchEvent(event)
-}
+  player.dispatchEvent(event);
+};
+
 const handleBtn = (e: any) => {
-  let btns = document.getElementsByClassName('vjs-button')
+  let btns = document.getElementsByClassName('vjs-button');
   for (let el of btns) {
     el.addEventListener('keydown', function (t: any) {
-      t.preventDefault()
-      triggerKeyMap(t.keyCode)
-    })
+      t.preventDefault();
+      triggerKeyMap(t.keyCode);
+    });
+  }
+};
+
+const playerMount = (e: any) => {
+  handleBtn(e);
+};
+
+const beforePlay = (e: any) => {
+  let currentTime = router.currentRoute.value.query.currentTime;
+  currentTime && e.target.player.currentTime(currentTime);
+};
+const saveFilmHistory = () => {
+  if (data.options.src.length > 0) {
+    let player = document.getElementsByTagName("video")[0];
+    let historys = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {};
+    let link = `#/play?id=${data.detail.id}&source=${data.currentPlayFrom}&episode=${data.currentEpisode}&currentTime=${player.currentTime}`;
+    historys[data.detail.id] = { name: data.detail.name, link: link, episode: data.current.episode, timeStamp: (new Date()).valueOf() };
+    cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(historys));
   }
 }
-// player 加载完成事件
-const playerMount = (e:any) =>{
-  // 处理功能按钮相关事件
-  handleBtn(e)
-}
-// player 准备就绪事件
-const beforePlay = (e:any)=>{
-  // 从router参数中获取时间信息
-  let currentTime = router.currentRoute.value.query.currentTime
-  currentTime && e.target.player.currentTime(currentTime)
-}
 
-
-
-//影片信息加入本地的观看历史中, 先获取cookie,已存在则追加,否则添加
-const saveFilmHisroy = ()=>{
-  if (data.options.src.length >0) {
-    let player = document.getElementsByTagName("video")[0]
-    let historys = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
-    let link = `/play?id=${data.detail.id}&source=${data.currentPlayFrom}&episode=${data.currentEpisode}&currentTime=${player.currentTime}`
-    historys[data.detail.id] = { name:data.detail.name, link: link, episode: data.current.episode, timeStamp: (new Date()).valueOf()}
-    cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(historys))
-  }}
-
-// 在浏览器关闭前或页面刷新前将当前影片的观看信息存入历史记录中
-window.addEventListener('beforeunload',saveFilmHisroy)
-
-
-// 初始化页面数据
+window.addEventListener('beforeunload', saveFilmHistory);
 onBeforeMount(() => {
-  let query = router.currentRoute.value.query
-  ApiGet(`/filmPlayInfo`, {id: query.id, playFrom: query.source, episode: query.episode}).then((resp: any) => {
+  let query = router.currentRoute.value.query;
+  ApiGet(`/filmPlayInfo`, { id: query.id, playFrom: query.source, episode: query.episode }).then((resp: any) => {
     if (resp.code === 0) {
-      data.detail = resp.data.detail
-      data.current = {index: resp.data.currentEpisode, ...resp.data.current}
+      data.detail = resp.data.detail;
+      data.current = { index: resp.data.currentEpisode, ...resp.data.current };
       // data.currentPlayFrom = resp.data.currentPlayFrom
-      data.currentEpisode = resp.data.currentEpisode
-      data.relate = resp.data.relate
+      data.currentEpisode = resp.data.currentEpisode;
+      data.relate = resp.data.relate;
       // 设置当前的视频播放url
-      data.options.src = data.current.link
+      data.options.src = data.current.link;
       // 设置当前播放源ID信息
-      data.currentTabId = resp.data.currentPlayFrom
-      data.loading = true
+      data.currentTabId = resp.data.currentPlayFrom;
+      data.loading = true;
     } else {
-      ElMessage.error({message: resp.msg})
+      ElMessage.error({ message: resp.msg });
     }
-  })
-})
+  });
+});
+
 </script>
 
 <style scoped>
