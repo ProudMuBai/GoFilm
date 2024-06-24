@@ -1,7 +1,8 @@
 <template>
   <el-container>
     <el-header>
-      <Header/>
+      <!--<Header/>-->
+      <NewHeader />
     </el-header>
     <el-main>
       <router-view></router-view>
@@ -15,6 +16,9 @@
 <script setup lang="ts">
 import Header from "../components/index/Header.vue";
 import Footer from "../components/index/Footer.vue";
+import NewHeader from "../components/index/NewHeader.vue";
+
+
 </script>
 
 

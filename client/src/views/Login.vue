@@ -37,7 +37,7 @@ const data = reactive({
 const router = useRouter()
 const login = ()=>{
   ApiPost('/login', {userName: data.userName, password: data.password}).then((resp:any)=>{
-    if (resp.code == 0) {
+    if (resp.code === 0) {
       router.push('/manage/index')
     } else {
       ElMessage.error({message: resp.msg})

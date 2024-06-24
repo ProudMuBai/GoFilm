@@ -57,7 +57,7 @@
 </template>
 
 
-<script setup lang="ts">
+<script setup lang="ts"  >
 import {ArrowDown} from "@element-plus/icons-vue";
 import {inject, onMounted, reactive} from "vue";
 import {ApiGet, ApiPost} from "../../utils/request";

@@ -7,30 +7,32 @@ import {ElementPlusResolver} from "unplugin-vue-components/resolvers";
 
 export default defineConfig({
     // 本地测试环境
-    server: {
-        host: '0.0.0.0',
-        port: 3600,
-        proxy: {
-            "/api": {
-                target: `http://127.0.0.1:3601`,
-                changeOrigin: true, // 允许跨域
-                rewrite: path => path.replace(/^\/api/, '')
-            }
-        },
-    },
-
-    // nginx发布构建时使用此配置
     // server: {
-    //     host: 'localhost',
+    //     host: '0.0.0.0',
     //     port: 3600,
     //     proxy: {
     //         "/api": {
-    //             target: `http://localhost`,
+    //             // target: `http://127.0.0.1:3601`,
+    //             target: `http://1.94.30.26:3601`,
+    //             // target: `http://[2408:8266:701:2271:5fc5:85b8:ac18:562e]:3601`,
     //             changeOrigin: true, // 允许跨域
-    //             rewrite: path => path.replace(/^\/api/,'')
+    //             rewrite: path => path.replace(/^\/api/, '')
     //         }
     //     },
     // },
+
+    // nginx发布构建时使用此配置
+    server: {
+        host: 'localhost',
+        port: 3600,
+        proxy: {
+            "/api": {
+                target: `http://localhost`,
+                changeOrigin: true, // 允许跨域
+                rewrite: path => path.replace(/^\/api/,'')
+            }
+        },
+    },
 
     plugins: [
         vue(),
