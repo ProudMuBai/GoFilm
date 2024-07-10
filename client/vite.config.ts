@@ -12,9 +12,8 @@ export default defineConfig({
     //     port: 3600,
     //     proxy: {
     //         "/api": {
-    //             // target: `http://127.0.0.1:3601`,
-    //             target: `http://1.94.30.26:3601`,
-    //             // target: `http://[2408:8266:701:2271:5fc5:85b8:ac18:562e]:3601`,
+    //             target: `http://127.0.0.1:3601`,
+    //             // target: `http://1.94.30.26:3601`,
     //             changeOrigin: true, // 允许跨域
     //             rewrite: path => path.replace(/^\/api/, '')
     //         }

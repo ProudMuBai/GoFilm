@@ -90,7 +90,8 @@
         </el-table-column>
         <el-table-column prop="remarks" align="center" label="更新状态">
           <template #default="scope">
-            <el-tag :type="scope.row.remarks == '已完结' ?'success':''" disable-transitions>{{scope.row.remarks }}</el-tag>
+            <el-tag v-if="scope.row.remarks == '已完结'" type="success" disable-transitions>{{scope.row.remarks }}</el-tag>
+            <el-tag v-else disable-transitions>{{scope.row.remarks }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column sortable prop="updateStamp" align="center" label="更新时间">
@@ -102,7 +103,7 @@
           <template #default="scope">
             <el-button type="success" :icon="Aim" @click="" plain circle/>
             <el-button type="primary" :icon="Edit" @click="" plain circle/>
-            <el-button type="danger" :icon="Delete" @click="" plain circle/>
+            <el-button type="danger" :icon="Delete" @click="delFilm(scope.row.ID)" plain circle/>
           </template>
         </el-table-column>
       </el-table>
@@ -178,11 +179,12 @@ const changeClass = (value: any) => {
   }
 }
 
-
+// 生成序列号
 const serialNum = (index: number) => {
   return (data.page.current - 1) * data.page.pageSize + index + 1
 }
 
+// 搜索满足条件的影片
 const searchFilm = ()=>{
   let p = data.params
   // 时间选择器参数处理 如果 dateGroup 不为空 则追加时间范围参数
@@ -197,6 +199,7 @@ const searchFilm = ()=>{
 
 }
 
+// 获取影片分页信息
 const getFilmPage = () => {
   let {current, pageSize} = data.page
   let params = data.params
@@ -227,6 +230,19 @@ const getFilmPage = () => {
 onMounted(() => {
   getFilmPage()
 })
+
+// 删除影片信息
+const delFilm = (id:number) =>{
+  console.log(id)
+  ApiGet( `/manage/film/search/del`, {id: id}).then((resp: any) => {
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
+      getFilmPage()
+    } else {
+      ElMessage.error({message: resp.msg})
+    }
+  })
+}
 
 </script>
 

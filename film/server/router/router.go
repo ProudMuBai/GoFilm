@@ -84,6 +84,7 @@ func SetupRouter() *gin.Engine {
 		{
 			filmRoute.POST(`/add`, controller.FilmAdd)
 			filmRoute.GET(`/search/list`, controller.FilmSearchPage)
+			filmRoute.GET(`/search/del`, controller.FilmDelete)
 
 			filmRoute.GET(`/class/tree`, controller.FilmClassTree)
 			filmRoute.GET(`/class/find`, controller.FindFilmClass)

@@ -15,7 +15,7 @@
     "axios": "^1.3.4",
     "element-plus": "^2.4.4",
     "video.js": "^8.0.4",
-    "vue": "^3.2.47"
+    "vue": "^3.4.31"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.1.0",

@@ -12,7 +12,8 @@
       </el-table-column>
       <el-table-column prop="show" align="center" label="是否展示">
         <template #default="scope">
-          <el-switch  v-model="scope.row.show" inline-prompt active-text="展示" @change="changeClassState(scope.row.id, scope.row.show)" inactive-text="隐藏"/>
+          <el-switch v-if="scope.row.pid == 0"  v-model="scope.row.show" inline-prompt active-text="展示" inactive-text="隐藏" @change="changeClassState(scope.row.id, scope.row.show)" />
+          <el-switch v-else v-model="scope.row.show" inline-prompt active-text="屏蔽" inactive-text="恢复" @change="changeClassState(scope.row.id, scope.row.show)" />
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center">
@@ -54,15 +55,24 @@
 </template>
 
 <script setup lang="ts">
-import { Delete, Edit,RefreshLeft,} from "@element-plus/icons-vue";
+import {Delete, Edit, RefreshLeft, Warning,} from "@element-plus/icons-vue";
 import {onMounted, reactive} from "vue";
 import {ApiGet, ApiPost} from "../../../utils/request";
-import {ElMessage} from "element-plus";
+import {ElMessage,ElMessageBox} from "element-plus";
 
 // table数据
 const data = reactive({
   classTree: []
 })
+
+//
+const confirmShield = (id:any)=>{
+  ElMessageBox.confirm('Are you sure to close this dialog?').then(() => {
+        console.log(id)
+      }).catch(() => {
+        // catch error
+      })
+}
 
 // dialog 弹窗数据
 const dialog = reactive({
@@ -120,6 +130,7 @@ const changeClassState = (id:string, show: number)=>{
     }
   })
 }
+
 // 对话框关闭时重置表单数据为初始值
 const cancelDialog = ()=>{
   dialog.editForm = {id: -99, pid: -99, name:'', show: true, children:[]}

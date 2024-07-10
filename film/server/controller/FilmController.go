@@ -104,6 +104,27 @@ func FilmAdd(c *gin.Context) {
 	system.SuccessOnlyMsg("影片信息添加成功", c)
 }
 
+// FilmDelete 删除影片检索信息, 逻辑删除
+func FilmDelete(c *gin.Context) {
+	// 获取影片ID
+	idStr := c.DefaultQuery("id", "")
+	if idStr == "" {
+		system.Failed("删除失败,缺少ID参数", c)
+		return
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		system.Failed("删除失败,参数类型异常", c)
+		return
+	}
+	// 通过ID删除对应影片检索信息
+	if err = logic.FL.DelFilm(id); err != nil {
+		system.Failed(fmt.Sprintln("删除失败: ", err.Error()), c)
+		return
+	}
+	system.SuccessOnlyMsg("影片删除成功", c)
+}
+
 //----------------------------------------------------影片分类处理----------------------------------------------------
 
 // FilmClassTree 影片分类树数据

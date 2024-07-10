@@ -19,10 +19,10 @@ var FL *FilmLogic
 
 //----------------------------------------------------影片管理业务逻辑----------------------------------------------------
 
+// GetFilmPage 获取影片检索信息分页数据
 func (fl *FilmLogic) GetFilmPage(s system.SearchVo) []system.SearchInfo {
 	// 获取影片检索信息分页数据
 	sl := system.GetSearchPage(s)
-	//
 	return sl
 }
 
@@ -70,6 +70,17 @@ func (fl *FilmLogic) SaveFilmDetail(fd system.FilmDetailVo) error {
 	return system.SaveDetail(detail)
 }
 
+// DelFilm 删除分类影片
+func (fl *FilmLogic) DelFilm(id int64) error {
+	// 通过id查询对应影片信息是否存在
+	s := system.GetSearchInfoById(id)
+	if s == nil {
+		return errors.New("影片信息不存在")
+	}
+	// 通过id删除对应影片信息
+	return system.DelFilmSearch(id)
+}
+
 //----------------------------------------------------影片分类业务逻辑----------------------------------------------------
 
 // GetFilmClassTree 获取影片分类信息
@@ -78,6 +89,7 @@ func (fl *FilmLogic) GetFilmClassTree() system.CategoryTree {
 	return system.GetCategoryTree()
 }
 
+// GetFilmClassById 通过ID获取影片分类信息
 func (fl *FilmLogic) GetFilmClassById(id int64) *system.CategoryTree {
 	tree := system.GetCategoryTree()
 	for _, c := range tree.Children {
@@ -119,6 +131,18 @@ func (fl *FilmLogic) UpdateClass(class system.CategoryTree) error {
 				if subC.Id == class.Id {
 					if class.Name != "" {
 						subC.Name = class.Name
+					}
+					// 如果所属分类为二级分类且show属性进行了变化
+					if class.Show {
+						// 如果show为ture则将其分类下的影片信息进行恢复
+						if err := system.RecoverFilmSearch(class.Id); err != nil {
+							return err
+						}
+					} else {
+						// 如果show为false则将其分类下的影片信息进行屏蔽
+						if err := system.ShieldFilmSearch(class.Id); err != nil {
+							return err
+						}
 					}
 					subC.Show = class.Show
 					if err := system.SaveCategoryTree(&tree); err != nil {

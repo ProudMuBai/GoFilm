@@ -2,7 +2,7 @@
   <el-container>
     <el-header>
       <!--<Header/>-->
-      <NewHeader />
+      <Header />
     </el-header>
     <el-main>
       <router-view></router-view>

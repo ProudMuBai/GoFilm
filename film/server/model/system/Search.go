@@ -694,6 +694,7 @@ func GetMovieListBySort(t int, pid int64, page *Page) []MovieBasicInfo {
 
 // ================================= Manage 管理后台 =================================
 
+// GetSearchPage 获取影片检索分页数据
 func GetSearchPage(s SearchVo) []SearchInfo {
 	// 构建 query查询条件
 	query := db.Mdb.Model(&SearchInfo{})
@@ -760,6 +761,46 @@ func GetSearchOptions(pid int64) map[string]interface{} {
 		}
 	}
 	return tagMap
+}
+
+// GetSearchInfoById 查询id对应的检索信息
+func GetSearchInfoById(id int64) *SearchInfo {
+	s := SearchInfo{}
+	if err := db.Mdb.First(&s, id).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	return &s
+}
+
+// DelFilmSearch 删除影片检索信息, (不影响后续更新, 逻辑删除)
+func DelFilmSearch(id int64) error {
+	// 通过检索id对影片检索信息进行删除
+	if err := db.Mdb.Delete(&SearchInfo{}, id).Error; err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+// ShieldFilmSearch 删除所属分类下的所有影片检索信息
+func ShieldFilmSearch(cid int64) error {
+	// 通过检索id对影片检索信息进行删除
+	if err := db.Mdb.Where("cid = ?", cid).Delete(&SearchInfo{}).Error; err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
+// RecoverFilmSearch 恢复所属分类下的影片检索信息状态
+func RecoverFilmSearch(cid int64) error {
+	// 通过检索id对影片检索信息进行删除
+	if err := db.Mdb.Model(&SearchInfo{}).Unscoped().Where("cid = ?", cid).Update("deleted_at", nil).Error; err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }
 
 // ================================= 接口数据缓存 =================================
