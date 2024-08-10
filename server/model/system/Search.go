@@ -437,10 +437,10 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 // GetHotMovieByPid  获取指定类别的热门影片
 func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
 	// 返回分页参数
-	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
-	page.Total = int(count)
-	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	//var count int64
+	//db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
+	//page.Total = int(count)
+	//page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
 	// 当前时间偏移一个月
@@ -513,7 +513,8 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 		sql = fmt.Sprintf(`%s class_tag like "%%%s%%"`, sql, search.ClassTag)
 	}
 	// 除名称外的相似影片使用随机排序
-	sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
+	//sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
+	sql = fmt.Sprintf("%s limit %d,%d)", sql, page.Current, page.PageSize)
 	// 条件拼接完成后加上limit参数
 	sql = fmt.Sprintf("(%s)  limit %d,%d", sql, page.Current, page.PageSize)
 	// 执行sql
