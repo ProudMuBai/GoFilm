@@ -399,7 +399,7 @@ func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid", pid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid", pid).Order("update_stamp DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -421,7 +421,7 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("update_stamp DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -462,7 +462,7 @@ func SearchFilmKeyword(keyword string, page *Page) []SearchInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 2. 获取满足条件的数据
 	db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).
-		Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Order("year DESC, update_stamp DESC").Find(&searchList)
+		Where("name LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Or("sub_title LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Order("year DESC, update_stamp DESC").Find(&searchList)
 	return searchList
 }
 
@@ -677,13 +677,13 @@ func GetMovieListBySort(t int, pid int64, page *Page) []MovieBasicInfo {
 	switch t {
 	case 0:
 		// 最新上映 (上映时间)
-		qw.Order("year DESC, release_stamp DESC")
+		qw.Order("release_stamp DESC")
 	case 1:
 		// 排行榜 (暂定为热度排行)
-		qw.Order("year DESC, hits DESC")
+		qw.Order("hits DESC")
 	case 2:
 		// 最近更新 (更新时间)
-		qw.Order("year DESC, update_stamp DESC")
+		qw.Order("update_stamp DESC")
 	}
 	if err := qw.Find(&sl).Error; err != nil {
 		log.Println(err)
