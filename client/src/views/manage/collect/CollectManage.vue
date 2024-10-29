@@ -67,7 +67,8 @@
     <div class="cus_util">
       <el-button color="#9b49e7" :icon="CirclePlus" @click="dialogV.addV = true">添加采集站</el-button>
       <el-button color="#d942bf" @click="openBatchCollect" :icon="Promotion">一键采集</el-button>
-      <el-button type="danger" :icon="BellFilled">ReZero</el-button>
+      <el-button type="danger" :icon="DeleteFilled" @click="dialogV.clear = true" >RemoveAll</el-button>
+      <el-button type="primary" :icon="BellFilled" @click="dialogV.reCollect = true" >AutoCollect</el-button>
     </div>
     <!--站点添加弹窗-->
     <el-dialog v-model="dialogV.addV" title="添加采集站点">
@@ -191,6 +192,36 @@
       </span>
       </template>
     </el-dialog>
+
+    <!--影片删除提示弹窗-->
+    <el-dialog v-model="dialogV.clear" title="是否清除所有影视数据 ?" width="500">
+      <el-form :model="form">
+        <el-form-item label="确认密码" >
+          <el-input v-model="data.password" type="password" placeholder="请输入账户密码并开确认执行" autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogV.clear = false">取消</el-button>
+          <el-button type="primary" @click="clearFilms">确认执行</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!--Re0 从零开始的自动全量采集-->
+    <el-dialog v-model="dialogV.reCollect" title="是否清除影片数据并重新采集 ?" width="500">
+      <el-form :model="form">
+        <el-form-item label="确认密码" >
+          <el-input v-model="data.password" type="password" placeholder="请输入账户密码并开确认执行" autocomplete="off" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogV.reCollect = false">取消</el-button>
+          <el-button type="primary" @click="reCollectFilm">确认执行</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -200,7 +231,7 @@
 import {onMounted, reactive} from "vue";
 import {ApiGet, ApiPost} from "../../../utils/request";
 import {ElMessage} from "element-plus";
-import {Delete, Edit, SwitchButton, CirclePlus, Promotion, BellFilled} from "@element-plus/icons-vue";
+import {Delete, Edit, SwitchButton, CirclePlus, Promotion, BellFilled, DeleteFilled} from "@element-plus/icons-vue";
 
 const data = reactive({
   siteList: [],
@@ -208,13 +239,16 @@ const data = reactive({
     {time: 24, label: '采集今日'},
     {time: 24 * 7, label: '采集本周'},
     {time: -1, label: '采集全部'},
-  ]
+  ],
+  password: '',
 })
 
 const dialogV = reactive({
   addV: false,
   editV: false,
   batchV:false,
+  clear: false,
+  reCollect: false,
 })
 
 interface FilmSource {
@@ -271,9 +305,6 @@ const startTask = (row:any)=>{
   })
 }
 
-
-
-
 // 弹窗图片同步开关限制
 const restrict = (t:number)=>{
   // t 弹窗类型 0 - add | 1 - edit
@@ -327,7 +358,6 @@ const openEditDialog = (id:string)=>{
   dialogV.editV = true
 }
 
-
 // switch 开关
 const changeSourceState = (s:any)=>{
   ApiPost(`/manage/collect/change`, {id:s.id, state: s.state, syncPictures: s.syncPictures}).then((resp: any) => {
@@ -373,6 +403,7 @@ const cancelDialog = ()=>{
   form.add = {name: '', uri: '', resultModel: 0, grade: 1, collectType: 0, syncPictures: false, state: false, interval: 0}
 }
 
+// 获取采集列表信息
 const getCollectList = ()=>{
   ApiGet(`/manage/collect/list`).then((resp: any) => {
     if (resp.code === 0) {
@@ -402,6 +433,41 @@ const getCollectList = ()=>{
     }
   })
 }
+
+// 清除影片信息
+const clearFilms = ()=>{
+  if (data.password.length <= 0) {
+    ElMessage.error({message: '操作失败, 密钥信息缺失'})
+    return
+  }
+  ApiGet(`/manage/spider/clear`, {password: data.password}).then((resp:any)=>{
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
+    } else {
+      ElMessage.error({message: resp.msg})
+    }
+    dialogV.clear = false
+    data.password = ''
+  })
+}
+
+// 从零开始重新采集
+const reCollectFilm = ()=>{
+  if (data.password.length <= 0) {
+    ElMessage.error({message: '操作失败, 密钥信息缺失'})
+    return
+  }
+  ApiGet(`/manage/spider/zero`, {password: data.password}).then((resp:any)=>{
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
+    } else {
+      ElMessage.error({message: resp.msg})
+    }
+    dialogV.reCollect = false
+    data.password = ''
+  })
+}
+
 onMounted(() => {
   getCollectList()
 })
@@ -409,8 +475,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.container {
-}
+
 
 .cus_util {
   display: flex;

@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div v-if="false" class="hidden-sm-and-up banner_wrap" @touchstart="touchS" @touchend="touchE" >
+    <div v-if="true" class="hidden-sm-and-up banner_wrap" @touchstart="touchS" @touchend="touchE" >
       <el-carousel  v-model="data.banner.current" ref="wrap" :pause-on-hover="false"   :interval="5000" trigger="hover" height="200px" arrow="never" >
         <el-carousel-item v-for="item in banners" :key="item"  >
           <el-image style="width: 100%; height: 100%;" :src="item.picture" fit="fill"/>
@@ -8,7 +8,7 @@
         </el-carousel-item>
       </el-carousel>
     </div>
-    <div v-if="false" class="banner hidden-sm-and-down"
+    <div v-if="true" class="banner hidden-sm-and-down"
          :style="{background:`url(${data.banner.current.picture})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover'}">
       <div class="preview">
         <el-carousel @change="carousel" :interval="5000" height="240px" arrow="always">

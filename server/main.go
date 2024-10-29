@@ -32,6 +32,7 @@ func start() {
 
 	// 启动前先执行数据库内容的初始化工作
 	DefaultDataInit()
+	SystemInit.BannersInit()
 	// 开启路由监听
 	r := router.SetupRouter()
 	_ = r.Run(fmt.Sprintf(":%s", config.ListenerPort))

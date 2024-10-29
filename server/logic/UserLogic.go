@@ -57,10 +57,19 @@ func (ul *UserLogic) ChangePassword(account, password, newPassword string) error
 	return nil
 }
 
+// GetUserInfo 获取用户基本信息
 func (ul *UserLogic) GetUserInfo(id uint) system.UserInfoVo {
 	// 通过用户ID查询对应的用户信息
 	u := system.GetUserById(id)
 	// 去除user信息中的不必要信息
 	var vo = system.UserInfoVo{Id: u.ID, UserName: u.UserName, Email: u.Email, Gender: u.Gender, NickName: u.NickName, Avatar: u.Avatar, Status: u.Status}
 	return vo
+}
+
+// VerifyUserPassword 校验密码
+func (ul *UserLogic) VerifyUserPassword(id uint, password string) bool {
+	// 获取当前登录的用户全部信息
+	u := system.GetUserById(id)
+	// 校验密码是否正确
+	return util.PasswordEncrypt(password, u.Salt) == u.Password
 }

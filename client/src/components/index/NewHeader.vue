@@ -50,8 +50,8 @@
       </a>
 
       <!-- wrap 导航-->
-      <a @click="visible = true" class="iconfont icon-caidan" style="font-size: 26px"/>
-      <el-drawer v-model="visible" append-to-body :show-close="false" size="45%" class="warp-drawer">
+      <a @click="handleDrawer" class="iconfont icon-caidan" style="font-size: 26px"/>
+      <el-drawer v-model="visible" append-to-body :show-close="false" size="45%"  class="warp-drawer" @closed="handleDrawer" >
         <template #header="{ close, titleId, titleClass }">
           <h2 class="menu-title" :id="titleId" :class="titleClass">{{ data.site.siteName }}</h2>
         </template>
@@ -62,7 +62,6 @@
           </template>
         </div>
       </el-drawer>
-
     </div>
     <!--弹窗模块,显示按钮对应信息-->
   </div>
@@ -77,6 +76,15 @@ import {ApiGet} from "../../utils/request";
 import {cookieUtil, COOKIE_KEY_MAP} from "../../utils/cookie";
 
 const visible = ref(false)
+
+const handleDrawer = ()=>{
+  visible.value = !visible.value
+  if(visible.value) {
+    document.body.style.position = 'fixed'
+  } else {
+    document.body.style.position = ''
+  }
+}
 
 
 // 搜索关键字
@@ -160,9 +168,12 @@ onMounted(() => {
   .el-drawer__body {
     --el-drawer-padding-primary: 20px;
   }
-
+  .el-overlay {
+    max-height: 100vh;
+  }
   .warp-drawer {
     background-color: var(--bg-dark) !important;
+    max-height: 100vh;
   }
 
   .el-drawer__header {

@@ -16,18 +16,22 @@ func (ml *ManageLogic) GetFilmSourceList() []system.FilmSource {
 	return system.GetCollectSourceList()
 }
 
+// GetFilmSource 获取ID对应的采集源信息
 func (ml *ManageLogic) GetFilmSource(id string) *system.FilmSource {
 	return system.FindCollectSourceById(id)
 }
 
+// UpdateFilmSource 更新采集源信息
 func (ml *ManageLogic) UpdateFilmSource(s system.FilmSource) error {
 	return system.UpdateCollectSource(s)
 }
 
+// SaveFilmSource  保存采集源信息
 func (ml *ManageLogic) SaveFilmSource(s system.FilmSource) error {
 	return system.AddCollectSource(s)
 }
 
+// DelFilmSource  删除采集源信息
 func (ml *ManageLogic) DelFilmSource(id string) error {
 	// 先查找是否存在对应ID的站点信息
 	s := system.FindCollectSourceById(id)
@@ -50,4 +54,14 @@ func (ml *ManageLogic) GetSiteBasicConfig() system.BasicConfig {
 // UpdateSiteBasic 更新网站配置信息
 func (ml *ManageLogic) UpdateSiteBasic(c system.BasicConfig) error {
 	return system.SaveSiteBasic(c)
+}
+
+// GetBanners 获取轮播组件信息
+func (ml *ManageLogic) GetBanners() system.Banners {
+	return system.GetBanners()
+}
+
+// SaveBanners 保存轮播信息
+func (ml *ManageLogic) SaveBanners(bl system.Banners) error {
+	return system.SaveBanners(bl)
 }

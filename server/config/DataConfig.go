@@ -23,8 +23,8 @@ const (
 // -------------------------redis key-----------------------------------
 const (
 	// CategoryTreeKey 分类树 key
-	CategoryTreeKey     = "CategoryTree"
-	CategoryTreeExpired = time.Hour * 24 * 90
+	CategoryTreeKey = "CategoryTree"
+	FilmExpired     = time.Hour * 24 * 365 * 10
 	// MovieListInfoKey movies分类列表 key
 	MovieListInfoKey = "MovieList:Cid%d"
 
@@ -62,6 +62,8 @@ const (
 	ManageConfigExpired = time.Hour * 24 * 365 * 10
 	// SiteConfigBasic 网站参数配置
 	SiteConfigBasic = "SystemConfig:SiteConfig:Basic"
+	// BannersKey 轮播组件key 你
+	BannersKey = "SystemConfig:Banners"
 
 	// FilmCrontabKey 定时任务列表信息
 	FilmCrontabKey = "Cron:Task:Film"

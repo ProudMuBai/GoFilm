@@ -14,7 +14,7 @@
             <span>网站管理</span>
           </template>
           <el-menu-item index="/manage/system/webSite">站点管理</el-menu-item>
-          <!--<el-menu-item index="">预留配置</el-menu-item>-->
+          <el-menu-item index="/manage/system/banners">海报管理</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/manage/collect">
           <template #title>
