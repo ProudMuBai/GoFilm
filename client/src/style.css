@@ -163,6 +163,11 @@ button:focus-visible {
     --el-text-color-primary:  #5e1e99b8;
 }
 
+.el-input-number .el-input__inner {
+    --el-input-text-color: #999999;
+    --el-text-color-regular: #999999;
+}
+
 .el-dialog__header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     margin-right: 0 !important;
@@ -179,7 +184,16 @@ button:focus-visible {
 }
 
 
-
+/*表格底部工具栏*/
+.cus_util {
+    display: flex;
+    padding: 10px 8px;
+    border-left: 2px solid #9b49e733;
+    border-right: 2px solid #9b49e733;
+    border-bottom: 2px solid #9b49e733;
+    background: #ffffff;
+    justify-content: end;
+}
 
 
 

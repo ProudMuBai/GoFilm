@@ -7,6 +7,7 @@ import (
 	"server/config"
 	"server/model/system"
 	"server/plugin/db"
+	"server/plugin/spider"
 	"strings"
 )
 
@@ -52,9 +53,17 @@ func (i *IndexLogic) IndexPage() map[string]interface{} {
 		list = append(list, item)
 	}
 	Info["content"] = list
+	// 3. 获取首页轮播数据
+	Info["banners"] = system.GetBanners()
 	// 不存在首页数据缓存时将查询数据缓存到redis中
 	system.DataCache(config.IndexCacheKey, Info)
 	return Info
+}
+
+// ClearIndexCache 删除首页数据缓存
+func (i *IndexLogic) ClearIndexCache() {
+	// 更新成功后删除首页缓存
+	spider.ClearCache()
 }
 
 // GetFilmDetail 影片详情信息页面处理

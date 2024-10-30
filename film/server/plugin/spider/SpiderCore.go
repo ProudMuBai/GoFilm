@@ -113,6 +113,25 @@ func (jc *JsonCollect) GetFilmDetail(r util.RequestInfo) (list []system.MovieDet
 	return
 }
 
+// CustomSearch 自定义搜索, 通过特定的搜索参数获取满足条件的影片数据
+func (jc *JsonCollect) CustomSearch(r util.RequestInfo) {
+	// 设置固定参数 ac 请求类型 pg 页数
+	if len(r.Params.Get("ac")) <= 0 {
+		r.Params.Set("ac", "detail")
+	}
+	r.Params.Set("pg", "1")
+	// 设置搜索参数 wd (影片名模糊搜索)
+}
+
+// GetSingleFilm 获取单一影片信息
+func (jc *JsonCollect) GetSingleFilm(r util.RequestInfo, ids string) {
+	// 设置固定参数 ac 请求类型 pg 页数
+	r.Params.Set("ac", "detail")
+	r.Params.Set("pg", "1")
+	r.Params.Set("ids", ids)
+	//
+}
+
 // ------------------------------------------------- XML Collect -------------------------------------------------
 
 // XmlCollect 处理返回值为XML格式的采集数据

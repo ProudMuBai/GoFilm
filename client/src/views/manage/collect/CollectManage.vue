@@ -197,7 +197,7 @@
     <el-dialog v-model="dialogV.clear" title="是否清除所有影视数据 ?" width="500">
       <el-form :model="form">
         <el-form-item label="确认密码" >
-          <el-input v-model="data.password" type="password" placeholder="请输入账户密码并开确认执行" autocomplete="off" />
+          <el-input v-model="data.password" type="password" placeholder="请输入账户密码并开确认执行" autocomplete="off" show-password />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -212,7 +212,7 @@
     <el-dialog v-model="dialogV.reCollect" title="是否清除影片数据并重新采集 ?" width="500">
       <el-form :model="form">
         <el-form-item label="确认密码" >
-          <el-input v-model="data.password" type="password" placeholder="请输入账户密码并开确认执行" autocomplete="off" />
+          <el-input v-model="data.password" type="password" placeholder="请输入账户密码并开确认执行" autocomplete="off" show-password />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -477,14 +477,6 @@ onMounted(() => {
 <style scoped>
 
 
-.cus_util {
-  display: flex;
-  padding: 10px 8px;
-  border-left: 2px solid #9b49e733;
-  border-right: 2px solid #9b49e733;
-  border-bottom: 2px solid #9b49e733;
-  background: #ffffff;
-  justify-content: end;
-}
+
 
 </style>

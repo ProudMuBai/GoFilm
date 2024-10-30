@@ -1,19 +1,19 @@
 <template>
   <div class="container">
-    <div v-if="true" class="hidden-sm-and-up banner_wrap" @touchstart="touchS" @touchend="touchE" >
-      <el-carousel  v-model="data.banner.current" ref="wrap" :pause-on-hover="false"   :interval="5000" trigger="hover" height="200px" arrow="never" >
-        <el-carousel-item v-for="item in banners" :key="item"  >
-          <el-image style="width: 100%; height: 100%;" :src="item.picture" fit="fill"/>
+    <div v-if="true" class="hidden-sm-and-up banner_wrap" @touchstart="touchS" @touchend="touchE" @click="skipLink" >
+      <el-carousel  v-model="data.banner.current" ref="wrap" :pause-on-hover="false"   :interval="5000" trigger="hover" height="200px" arrow="never" @change="carousel" >
+        <el-carousel-item v-for="item in data.info.banners" :key="item"  >
+          <el-image style="width: 100%; height: 100%;" :src="item.poster" fit="fill"/>
           <p class="carousel-title">{{ item.name }}</p>
         </el-carousel-item>
       </el-carousel>
     </div>
     <div v-if="true" class="banner hidden-sm-and-down"
-         :style="{background:`url(${data.banner.current.picture})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover'}">
+         :style="{background:`url(${data.banner.current.poster})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover'}" @click="skipLink">
       <div class="preview">
         <el-carousel @change="carousel" :interval="5000" height="240px" arrow="always">
-          <el-carousel-item v-for="item in banners" :key="item">
-            <el-image style="width: 60%; height: 80%;border-radius: 5px;" :src="item.poster" fit="contain"/>
+          <el-carousel-item v-for="item in data.info.banners" :key="item.id">
+            <el-image style="width: 60%; height: 80%;border-radius: 5px;" :src="item.picture" fit="contain"/>
             <div class="carousel-tags">
               <span>{{ item.year }}</span>
               <span>{{ item.cName }}</span>
@@ -69,8 +69,16 @@ import {onBeforeMount, reactive, ref} from "vue";
 import {ApiGet} from "../../utils/request";
 import FilmList from "../../components/index/FilmList.vue";
 import {ElMessage} from "element-plus";
+import {useRouter} from "vue-router";
 
-
+const data = reactive({
+  info: {},
+  banner: {
+    current: {},
+    touch: {index: 0, star: 0, end: 0,}
+  }
+})
+const router = useRouter()
 
 // 轮播数据拟态
 let banners = [
@@ -106,7 +114,12 @@ let banners = [
 
 // pc 背景图同步响应
 const carousel = (index: number) => {
-  data.banner.current = banners[index]
+  data.banner.current = data.info.banners[index]
+}
+const skipLink = ()=>{
+  if (data.banner.current.mid) {
+    router.push(`/filmDetail?link=`+data.banner.current.mid)
+  }
 }
 
 // 滑动开始
@@ -132,18 +145,11 @@ const touchE = (e:any)=>{
   // wrap.value?.setActiveItem(data.banner.touch.index)
 }
 
-const data = reactive({
-  info: {},
-  banner: {
-    current: {name: '', year: 2024, cName: '', poster: '', picture: ''},
-    touch: {index: 0, star: 0, end: 0,}
-  }
-})
 onBeforeMount(() => {
-  data.banner.current = banners[0]
   ApiGet('/index').then((resp: any) => {
     if (resp.code == 0) {
       data.info = resp.data
+      data.banner.current = data.info.banners[0]
     } else {
       ElMessage.error({message: resp.msg})
     }

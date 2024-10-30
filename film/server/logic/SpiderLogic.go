@@ -38,6 +38,11 @@ func (sl *SpiderLogic) AutoCollect(time int) {
 	go spider.AutoCollect(time)
 }
 
+// ClearFilms 删除采集的数据信息
+func (sl *SpiderLogic) ClearFilms() {
+	go spider.ClearSpider()
+}
+
 // ZeroCollect 数据清除从零开始采集
 func (sl *SpiderLogic) ZeroCollect(time int) {
 	go spider.StarZero(time)

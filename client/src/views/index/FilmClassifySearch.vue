@@ -105,7 +105,6 @@ const getFilmData = () => {
       d.page = resp.data.page
       d.search = resp.data.search
       d.searchParams = resp.data.params
-      console.log(d)
     } else {
       ElMessage.error({message: "影片搜索结果异常,请稍后刷新重试", duration: 1000})
     }

@@ -65,14 +65,6 @@ const data = reactive({
   classTree: []
 })
 
-//
-const confirmShield = (id:any)=>{
-  ElMessageBox.confirm('Are you sure to close this dialog?').then(() => {
-        console.log(id)
-      }).catch(() => {
-        // catch error
-      })
-}
 
 // dialog 弹窗数据
 const dialog = reactive({

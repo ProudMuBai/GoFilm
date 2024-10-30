@@ -155,7 +155,6 @@ const addTask = ()=>{
 }
 
 const updateTask = ()=>{
-  console.log(form.edit)
   ApiPost(`/manage/cron/update`, {id: form.edit.id, ids: form.edit.ids, time: form.edit.time, state: form.edit.state, remark: form.edit.remark}).then((resp:any)=>{
     if (resp.code === 0) {
       ElMessage.success({message: resp.msg})

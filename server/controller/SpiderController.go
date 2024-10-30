@@ -103,6 +103,22 @@ func CoverFilmClass(c *gin.Context) {
 	system.SuccessOnlyMsg("影视分类信息重置成功, 请稍等片刻后刷新页面", c)
 }
 
+// DirectedSpider 采集指定的影片
+func DirectedSpider(c *gin.Context) {
+
+}
+
+// SingleUpdateSpider 单一影片更新采集
+func SingleUpdateSpider(c *gin.Context) {
+	// 获取影片对应的唯一标识
+	id := c.Query("id")
+	if id == "" {
+		system.Failed("参数异常, 资源站标识不能为空", c)
+		return
+	}
+	// 通过ID对指定影片进行同步更新
+}
+
 // 校验密码有效性
 func verifyPassword(c *gin.Context, password string) bool {
 	// 获取已登录的用户信息

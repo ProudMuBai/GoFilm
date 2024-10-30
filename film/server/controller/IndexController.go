@@ -162,3 +162,10 @@ func FilmClassify(c *gin.Context) {
 		"content": logic.IL.GetFilmClassify(pid, &page),
 	}, "分类影片信息获取成功", c)
 }
+
+// IndexCacheDel 删除首页缓存数据
+func IndexCacheDel(c *gin.Context) {
+	// 删除首页缓存
+	logic.IL.ClearIndexCache()
+	system.SuccessOnlyMsg("首页缓存数据已清除!!!", c)
+}

@@ -88,7 +88,6 @@ const searchMovie = ()=>{
 // 执行搜索请求
 const refreshPage = (keyword: any, current: any) => {
     ApiGet('/searchFilm', {keyword: keyword, current: current}).then((resp: any) => {
-      console.log(resp)
       if (resp.code == 0) {
         data.list = resp.data.list
         data.page = resp.data.page

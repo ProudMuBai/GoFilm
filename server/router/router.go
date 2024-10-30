@@ -17,6 +17,7 @@ func SetupRouter() *gin.Engine {
 	r.Static(config.FilmPictureUrlPath, config.FilmPictureUploadDir)
 
 	r.GET(`/index`, controller.Index)
+	r.GET(`/cache/del`, controller.IndexCacheDel)
 	r.GET(`/config/basic`, controller.SiteBasicConfig)
 	r.GET(`/navCategory`, controller.CategoriesInfo)
 	r.GET(`/filmDetail`, controller.FilmDetail)
@@ -49,7 +50,7 @@ func SetupRouter() *gin.Engine {
 			banner.GET(`/list`, controller.BannerList)
 			banner.GET(`/find`, controller.BannerFind)
 			banner.POST(`/add`, controller.BannerAdd)
-			banner.GET(`/update`, controller.BannerUpdate)
+			banner.POST(`/update`, controller.BannerUpdate)
 			banner.GET(`/del`, controller.BannerDel)
 		}
 

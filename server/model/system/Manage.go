@@ -21,7 +21,8 @@ type BasicConfig struct {
 
 // Banner 首页横幅信息
 type Banner struct {
-	Id      int64  `json:"id"`      // 绑定所属影片Id
+	Id      string `json:"id"`      // 唯一标识
+	Mid     int64  `json:"mid"`     // 绑定所属影片Id
 	Name    string `json:"name"`    // 影片名称
 	Year    int64  `json:"year"`    // 上映年份
 	CName   string `json:"cName"`   // 分类名称

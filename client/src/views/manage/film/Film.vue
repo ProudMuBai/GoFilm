@@ -162,7 +162,6 @@ const changeClass = (value: any) => {
       // 匹配成功则设置对应的options参数
       if (t) {
         data.options.Plot = t['Plot']
-        console.log(data.options.Plot)
         data.options.Area = t['Area']
         data.options.Language =  t['Language']
       } else {
@@ -233,7 +232,6 @@ onMounted(() => {
 
 // 删除影片信息
 const delFilm = (id:number) =>{
-  console.log(id)
   ApiGet( `/manage/film/search/del`, {id: id}).then((resp: any) => {
     if (resp.code === 0) {
       ElMessage.success({message: resp.msg})

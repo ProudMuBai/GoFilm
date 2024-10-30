@@ -17,6 +17,7 @@ func SetupRouter() *gin.Engine {
 	r.Static(config.FilmPictureUrlPath, config.FilmPictureUploadDir)
 
 	r.GET(`/index`, controller.Index)
+	r.GET(`/cache/del`, controller.IndexCacheDel)
 	r.GET(`/config/basic`, controller.SiteBasicConfig)
 	r.GET(`/navCategory`, controller.CategoriesInfo)
 	r.GET(`/filmDetail`, controller.FilmDetail)
@@ -34,14 +35,26 @@ func SetupRouter() *gin.Engine {
 	manageRoute.Use(middleware.AuthToken())
 	{
 		manageRoute.GET(`/index`, controller.ManageIndex)
+
 		// 系统相关
 		sysConfig := manageRoute.Group(`/config`)
 		{
-			sysConfig.GET("/basic", controller.SiteBasicConfig)
-			sysConfig.POST("/basic/update", controller.UpdateSiteBasic)
-			sysConfig.GET("/basic/reset", controller.ResetSiteBasic)
+			sysConfig.GET(`/basic`, controller.SiteBasicConfig)
+			sysConfig.POST(`/basic/update`, controller.UpdateSiteBasic)
+			sysConfig.GET(`/basic/reset`, controller.ResetSiteBasic)
 		}
 
+		// 轮播相关
+		banner := manageRoute.Group(`banner`)
+		{
+			banner.GET(`/list`, controller.BannerList)
+			banner.GET(`/find`, controller.BannerFind)
+			banner.POST(`/add`, controller.BannerAdd)
+			banner.POST(`/update`, controller.BannerUpdate)
+			banner.GET(`/del`, controller.BannerDel)
+		}
+
+		// 用户相关
 		userRoute := manageRoute.Group(`/user`)
 		{
 			userRoute.GET(`/info`, controller.UserInfo)
@@ -77,6 +90,7 @@ func SetupRouter() *gin.Engine {
 		{
 			spiderRoute.POST(`/start`, controller.StarSpider)
 			spiderRoute.GET(`/zero`, controller.SpiderReset)
+			spiderRoute.GET(`/clear`, controller.ClearAllFilm)
 			spiderRoute.GET(`/class/cover`, controller.CoverFilmClass)
 		}
 		// filmManage 影视管理

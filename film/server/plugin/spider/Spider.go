@@ -229,6 +229,11 @@ func AutoCollect(h int) {
 	}
 }
 
+// ClearSpider  删除已采集的影片信息
+func ClearSpider() {
+	system.FilmZero()
+}
+
 // StarZero 情况站点内所有影片信息
 func StarZero(h int) {
 	// 首先清除影视信息

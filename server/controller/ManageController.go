@@ -9,7 +9,6 @@ import (
 	"server/plugin/SystemInit"
 	"server/plugin/common/util"
 	"server/plugin/spider"
-	"strconv"
 )
 
 func ManageIndex(c *gin.Context) {
@@ -246,14 +245,9 @@ func BannerList(c *gin.Context) {
 
 // BannerFind 返回ID对应的横幅信息
 func BannerFind(c *gin.Context) {
-	idStr := c.Query("id")
-	if idStr == "" {
+	id := c.Query("id")
+	if id == "" {
 		system.Failed("Banner信息获取失败, ID信息异常", c)
-		return
-	}
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		system.Failed("删除失败,参数类型异常", c)
 		return
 	}
 	bl := logic.ML.GetBanners()
@@ -273,7 +267,13 @@ func BannerAdd(c *gin.Context) {
 		system.Failed("Banner参数提交异常", c)
 		return
 	}
+	// 为新增的banner生成Id
+	b.Id = util.GenerateSalt()
 	bl := logic.ML.GetBanners()
+	if len(bl) > 6 {
+		system.Failed("Banners最大阈值为6, 无法添加新的banner信息", c)
+		return
+	}
 	bl = append(bl, b)
 	if err := logic.ML.SaveBanners(bl); err != nil {
 		system.Failed(fmt.Sprintln("Banners信息添加失败,", err), c)
@@ -307,14 +307,9 @@ func BannerUpdate(c *gin.Context) {
 
 // BannerDel 删除海报数据
 func BannerDel(c *gin.Context) {
-	idStr := c.Query("id")
-	if idStr == "" {
+	id := c.Query("id")
+	if id == "" {
 		system.Failed("Banner信息获取失败, ID信息异常", c)
-		return
-	}
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		system.Failed("删除失败,参数类型异常", c)
 		return
 	}
 	bl := logic.ML.GetBanners()

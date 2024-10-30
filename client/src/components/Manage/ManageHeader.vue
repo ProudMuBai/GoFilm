@@ -90,7 +90,6 @@ const form = reactive({
 // 校验密码一致性
 const regex = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[$@$!%*?&])[A-Za-z\\d$@$!%*?&]{8,12}$`
 const validateNewPwd = (rule: any, value: any, callback: any) => {
-  console.log(value)
   if (value === '') {
     callback(new Error('新密码不能为空'))
   } else if (!value.match(regex)) {

@@ -399,7 +399,7 @@ func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid", pid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid", pid).Order("update_stamp DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -421,7 +421,7 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("year DESC, update_stamp DESC").Find(&s).Error; err != nil {
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("update_stamp DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -437,10 +437,10 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 // GetHotMovieByPid  获取指定类别的热门影片
 func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
 	// 返回分页参数
-	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
-	page.Total = int(count)
-	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	//var count int64
+	//db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
+	//page.Total = int(count)
+	//page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 进行具体的信息查询
 	var s []SearchInfo
 	// 当前时间偏移一个月
@@ -462,7 +462,7 @@ func SearchFilmKeyword(keyword string, page *Page) []SearchInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 2. 获取满足条件的数据
 	db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).
-		Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Order("year DESC, update_stamp DESC").Find(&searchList)
+		Where("name LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Or("sub_title LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Order("year DESC, update_stamp DESC").Find(&searchList)
 	return searchList
 }
 
@@ -513,7 +513,8 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 		sql = fmt.Sprintf(`%s class_tag like "%%%s%%"`, sql, search.ClassTag)
 	}
 	// 除名称外的相似影片使用随机排序
-	sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
+	//sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
+	sql = fmt.Sprintf("%s limit %d,%d)", sql, page.Current, page.PageSize)
 	// 条件拼接完成后加上limit参数
 	sql = fmt.Sprintf("(%s)  limit %d,%d", sql, page.Current, page.PageSize)
 	// 执行sql
@@ -676,13 +677,13 @@ func GetMovieListBySort(t int, pid int64, page *Page) []MovieBasicInfo {
 	switch t {
 	case 0:
 		// 最新上映 (上映时间)
-		qw.Order("year DESC, release_stamp DESC")
+		qw.Order("release_stamp DESC")
 	case 1:
 		// 排行榜 (暂定为热度排行)
-		qw.Order("year DESC, hits DESC")
+		qw.Order("hits DESC")
 	case 2:
 		// 最近更新 (更新时间)
-		qw.Order("year DESC, update_stamp DESC")
+		qw.Order("update_stamp DESC")
 	}
 	if err := qw.Find(&sl).Error; err != nil {
 		log.Println(err)

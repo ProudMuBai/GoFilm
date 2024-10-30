@@ -1,8 +1,8 @@
 <template>
   <el-container>
     <el-header>
-      <!--<Header/>-->
-      <NewHeader />
+      <Header/>
+      <!--<NewHeader />-->
     </el-header>
     <el-main>
       <router-view></router-view>

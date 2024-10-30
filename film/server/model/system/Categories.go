@@ -26,7 +26,7 @@ type CategoryTree struct {
 // SaveCategoryTree 保存影片分类信息
 func SaveCategoryTree(tree *CategoryTree) error {
 	data, _ := json.Marshal(tree)
-	return db.Rdb.Set(db.Cxt, config.CategoryTreeKey, data, config.CategoryTreeExpired).Err()
+	return db.Rdb.Set(db.Cxt, config.CategoryTreeKey, data, config.FilmExpired).Err()
 }
 
 // GetCategoryTree 获取影片分类信息

@@ -123,6 +123,15 @@ func (jc *JsonCollect) CustomSearch(r util.RequestInfo) {
 	// 设置搜索参数 wd (影片名模糊搜索)
 }
 
+// GetSingleFilm 获取单一影片信息
+func (jc *JsonCollect) GetSingleFilm(r util.RequestInfo, ids string) {
+	// 设置固定参数 ac 请求类型 pg 页数
+	r.Params.Set("ac", "detail")
+	r.Params.Set("pg", "1")
+	r.Params.Set("ids", ids)
+	//
+}
+
 // ------------------------------------------------- XML Collect -------------------------------------------------
 
 // XmlCollect 处理返回值为XML格式的采集数据

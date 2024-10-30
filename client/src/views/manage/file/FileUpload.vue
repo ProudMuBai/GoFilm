@@ -49,8 +49,6 @@ const data = reactive({
   imgList:[""]
 })
 const customUpload = (options:any)=>{
-  console.log(options)
-  console.log(options.file)
   let file = options.file
   let formData = new FormData();
   formData.append("file", file)

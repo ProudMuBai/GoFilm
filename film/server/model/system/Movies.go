@@ -99,7 +99,7 @@ func SaveDetails(list []MovieDetail) (err error) {
 		data, _ := json.Marshal(detail)
 		// 1. 原使用Zset存储, 但是不便于单个检索 db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Cid%d", config.MovieDetailKey, detail.Cid), redis.Z{Score: float64(detail.Id), Member: member}).Err()
 		// 改为普通 k v 存储, k-> id关键字, v json序列化的结果
-		err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.CategoryTreeExpired).Err()
+		err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.FilmExpired).Err()
 		// 2. 同步保存简略信息到redis中
 		SaveMovieBasicInfo(detail)
 		// 3. 保存 Search tag redis中
@@ -121,7 +121,7 @@ func SaveDetail(detail MovieDetail) (err error) {
 	// 序列化影片详情信息
 	data, _ := json.Marshal(detail)
 	// 保存影片信息到Redis
-	err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.CategoryTreeExpired).Err()
+	err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.FilmExpired).Err()
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func SaveMovieBasicInfo(detail MovieDetail) {
 		Year:     detail.Year,
 	}
 	data, _ := json.Marshal(basicInfo)
-	_ = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieBasicInfoKey, detail.Cid, detail.Id), data, config.CategoryTreeExpired).Err()
+	_ = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieBasicInfoKey, detail.Cid, detail.Id), data, config.FilmExpired).Err()
 }
 
 // SaveSitePlayList 仅保存播放url列表信息到当前站点
