@@ -126,7 +126,7 @@ func CollectCategory(s *system.FilmSource) {
 	}
 }
 
-// 影视详情采集
+// collectFilm 影视详情采集 (单一源分页全采集)
 func collectFilm(s *system.FilmSource, h, pg int) {
 	// 生成请求参数
 	r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
@@ -147,6 +147,41 @@ func collectFilm(s *system.FilmSource, h, pg int) {
 	case system.MasterCollect:
 		// 主站点 	保存完整影片详情信息到 redis
 		if err = system.SaveDetails(list); err != nil {
+			log.Println("SaveDetails Error: ", err)
+		}
+		// 如果主站点开启了图片同步, 则将图片url以及对应的mid存入ZSet集合中
+		if s.SyncPictures {
+			if err = system.SaveVirtualPic(conver.ConvertVirtualPicture(list)); err != nil {
+				log.Println("SaveVirtualPic Error: ", err)
+			}
+		}
+	case system.SlaveCollect:
+		// 附属站点	仅保存影片播放信息到redis
+		if err = system.SaveSitePlayList(s.Id, list); err != nil {
+			log.Println("SaveDetails Error: ", err)
+		}
+	}
+}
+
+// collectFilmById 采集指定ID的影片信息
+func collectFilmById(ids string, s *system.FilmSource) {
+	// 生成请求参数
+	r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
+	// 设置分页页数
+	r.Params.Set("pg", "1")
+	// 设置影片IDS参数信息
+	r.Params.Set("ids", ids)
+	// 执行采集方法 获取影片详情list
+	list, err := spiderCore.GetFilmDetail(r)
+	if err != nil || len(list) <= 0 {
+		log.Println("GetMovieDetail Error: ", err)
+		return
+	}
+	// 通过采集站 Grade 类型, 执行不同的存储逻辑
+	switch s.Grade {
+	case system.MasterCollect:
+		// 主站点 	保存完整影片详情信息到 redis 和 mysql 中
+		if err = system.SaveDetail(list[0]); err != nil {
 			log.Println("SaveDetails Error: ", err)
 		}
 		// 如果主站点开启了图片同步, 则将图片url以及对应的mid存入ZSet集合中
@@ -191,7 +226,7 @@ func ConcurrentPageSpider(capacity int, s *system.FilmSource, h int, collectFunc
 			}
 		}()
 	}
-	for i := 0; i < config.MAXGoroutine; i++ {
+	for i := 0; i < GoroutineNum; i++ {
 		<-waitCh
 	}
 }
@@ -229,7 +264,7 @@ func AutoCollect(h int) {
 	}
 }
 
-// ClearSpider  删除已采集的影片信息
+// ClearSpider  删除所有已采集的影片信息
 func ClearSpider() {
 	system.FilmZero()
 }
@@ -240,6 +275,20 @@ func StarZero(h int) {
 	system.FilmZero()
 	// 开启自动采集
 	AutoCollect(h)
+}
+
+// CollectSingleFilm 通过影片唯一ID获取影片信息
+func CollectSingleFilm(ids string) {
+	// 获取采集站列表信息
+	fl := system.GetCollectSourceList()
+	// 循环遍历所有采集站信息
+	for _, f := range fl {
+		// 目前仅对主站点进行处理
+		if f.Grade == system.MasterCollect && f.State {
+			collectFilmById(ids, &f)
+			return
+		}
+	}
 }
 
 // ======================================================= 公共方法  =======================================================

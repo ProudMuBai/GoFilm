@@ -91,6 +91,7 @@ func SetupRouter() *gin.Engine {
 			spiderRoute.POST(`/start`, controller.StarSpider)
 			spiderRoute.GET(`/zero`, controller.SpiderReset)
 			spiderRoute.GET(`/clear`, controller.ClearAllFilm)
+			spiderRoute.GET(`/update/single`, controller.SingleUpdateSpider)
 			spiderRoute.GET(`/class/cover`, controller.CoverFilmClass)
 		}
 		// filmManage 影视管理

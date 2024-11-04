@@ -111,12 +111,14 @@ func DirectedSpider(c *gin.Context) {
 // SingleUpdateSpider 单一影片更新采集
 func SingleUpdateSpider(c *gin.Context) {
 	// 获取影片对应的唯一标识
-	id := c.Query("id")
-	if id == "" {
-		system.Failed("参数异常, 资源站标识不能为空", c)
+	ids := c.Query("ids")
+	if ids == "" {
+		system.Failed("参数异常, 资源标识ID信息缺失", c)
 		return
 	}
 	// 通过ID对指定影片进行同步更新
+	logic.SL.SyncCollect(ids)
+	system.SuccessOnlyMsg("影片更新任务已成功开启!!!", c)
 }
 
 // 校验密码有效性

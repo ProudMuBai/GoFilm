@@ -5,7 +5,7 @@
     </div>-->
     <div class="content">
       <el-upload v-model:file-list="data.photoWall" action="#" list-type="picture-card"
-          :on-remove="handleRemove" :http-request="customUpload">
+          :http-request="customUpload">
         <template #file="{ file }">
             <el-image class="el-upload-list__item-thumbnail" style="width: 100%;height: 100%" :src="file.link"  fit="cover" />
             <span class="el-upload-list__item-actions">
@@ -112,7 +112,7 @@ const handlePictureCardPreview  = (currentFile:any) => {
   padding: 10px 10px;
 }
 :deep(.el-upload-list__item ) {
-  margin: 10px auto!important;
+  margin: 10px 10px!important;
 }
 :deep(.el-upload--picture-card){
   margin: 10px auto;

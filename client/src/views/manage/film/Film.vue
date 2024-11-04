@@ -90,8 +90,8 @@
         </el-table-column>
         <el-table-column prop="remarks" align="center" label="更新状态">
           <template #default="scope">
-            <el-tag v-if="scope.row.remarks == '已完结'" type="success" disable-transitions>{{scope.row.remarks }}</el-tag>
-            <el-tag v-else disable-transitions>{{scope.row.remarks }}</el-tag>
+            <el-tag v-if="(scope.row.remarks+'').indexOf('更新') != -1"  type="warning" >{{scope.row.remarks }}</el-tag>
+            <el-tag v-else type="success" >{{scope.row.remarks }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column sortable prop="updateStamp" align="center" label="更新时间">
@@ -99,9 +99,10 @@
             <el-tag type="success" disable-transitions>{{fmt.dateFormat(scope.row.updateStamp) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center">
+        <el-table-column label="操作" align="center" min-width="100px">
           <template #default="scope">
             <el-button type="success" :icon="Aim" @click="" plain circle/>
+            <el-button type="success" :icon="RefreshRight" @click="UpdateFilm(scope.row.mid)" plain circle/>
             <el-button type="primary" :icon="Edit" @click="" plain circle/>
             <el-button type="danger" :icon="Delete" @click="delFilm(scope.row.ID)" plain circle/>
           </template>
@@ -119,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import {Delete, Edit, Aim, Search, Calendar} from "@element-plus/icons-vue";
+import {Delete, Edit, Aim, Search, Calendar, RefreshRight} from "@element-plus/icons-vue";
 import {onMounted, reactive} from "vue";
 import {ApiGet} from "../../../utils/request";
 import {ElMessage} from "element-plus";
@@ -196,6 +197,18 @@ const searchFilm = ()=>{
   }
   getFilmPage()
 
+}
+
+// 更新影片信息
+const UpdateFilm = (id:number)=>{
+  let ids = id + ''
+  ApiGet(`/manage/spider/update/single`, {ids: id}).then((resp: any) => {
+    if (resp.code === 0) {
+      ElMessage.success({message: resp.msg})
+    } else {
+      ElMessage.error({message: resp.msg})
+    }
+  })
 }
 
 // 获取影片分页信息
