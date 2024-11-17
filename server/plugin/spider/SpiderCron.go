@@ -7,7 +7,6 @@ import (
 	"log"
 	"server/config"
 	"server/model/system"
-	"time"
 )
 
 var (
@@ -69,8 +68,8 @@ func RemoveCron(id cron.EntryID) {
 
 // GetEntryById 返回定时任务的相关时间信息
 func GetEntryById(id cron.EntryID) cron.Entry {
-	log.Printf("%+v\n", CronCollect.Entries())
-	log.Println("", CronCollect.Entry(id).Next.Format(time.DateTime))
+	//log.Printf("CronInfo: %+v\n", CronCollect.Entries())
+	//log.Println("Corn Next Execute Time:", CronCollect.Entry(id).Next.Format(time.DateTime))
 	return CronCollect.Entry(id)
 }
 

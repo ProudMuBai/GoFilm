@@ -48,11 +48,13 @@ func (cl *CronLogic) AddFilmCrontab(cv system.FilmCronVo) error {
 
 // GetFilmCrontab 获取所有定时任务信息
 func (cl *CronLogic) GetFilmCrontab() []system.CronTaskVo {
+	// 获取东八区上海时区
+	cst := time.FixedZone("UTC", 8*3600)
 	var l []system.CronTaskVo
 	tl := system.GetAllFilmTask()
 	for _, t := range tl {
 		e := spider.GetEntryById(t.Cid)
-		taskVo := system.CronTaskVo{FilmCollectTask: t, PreV: e.Prev.Format(time.DateTime), Next: e.Next.Format(time.DateTime)}
+		taskVo := system.CronTaskVo{FilmCollectTask: t, PreV: e.Prev.In(cst).Format(time.DateTime), Next: e.Next.In(cst).Format(time.DateTime)}
 		l = append(l, taskVo)
 	}
 	return l
