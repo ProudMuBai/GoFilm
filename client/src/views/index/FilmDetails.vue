@@ -101,6 +101,7 @@ import {ApiGet} from "../../utils/request";
 import {ElMessage} from 'element-plus'
 import {Promotion, CaretRight} from "@element-plus/icons-vue";
 import RelateList from "../../components/index/RelateList.vue";
+import {useSeoMeta} from "@vueuse/head";
 // 获取路由对象
 const router = useRouter()
 const data = reactive({
@@ -202,6 +203,17 @@ onBeforeMount(() => {
         message: resp.msg,
       })
     }
+  }).then(() => {
+    const titleName = `《${data.detail.name}》在线观看-迅雷下载-${data.detail.descriptor.classTag} `
+    const keywords = `${data.detail.name},${data.detail.descriptor.classTag},${data.detail.descriptor.area},${data.detail.descriptor.actor},${data.detail.descriptor.director}`
+    // 页面加载完成后，将当前影片信息存入store
+    //useTitleHelper(titleName)
+    useSeoMeta({
+          title: titleName,
+          description: data.detail.descriptor.blurb,
+          keywords: keywords
+        }
+    )
   })
 
 })
