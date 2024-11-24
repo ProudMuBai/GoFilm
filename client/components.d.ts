@@ -55,6 +55,7 @@ declare module '@vue/runtime-core' {
     FilmList: typeof import('./src/components/index/FilmList.vue')['default']
     Footer: typeof import('./src/components/index/Footer.vue')['default']
     Header: typeof import('./src/components/index/Header.vue')['default']
+    History: typeof import('./src/components/index/History.vue')['default']
     ImageViewer: typeof import('./src/components/Global/ImageViewer.vue')['default']
     Loading: typeof import('./src/components/Loading/Loading.vue')['default']
     ManageHeader: typeof import('./src/components/Manage/ManageHeader.vue')['default']

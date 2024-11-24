@@ -48,6 +48,10 @@ provide('global', {isMobile: isMobile})
   top: 0;
 }
 
+:deep(.el-footer) {
+  --el-footer-padding: 0 0;
+}
+
 
 @media (min-width: 768px) {
   .el-main {

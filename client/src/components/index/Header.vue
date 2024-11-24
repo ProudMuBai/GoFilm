@@ -49,20 +49,14 @@
         </el-icon>
       </a>
 
-      <!--Mobile  bottom Btn Group-->
-      <div v-if="global.isMobile" class="nav-bottom" >
-        <a href=""></a>
-        <a href=""></a>
-        <a href=""></a>
-        <a href=""></a>
-      </div>
+
     </div>
     <!--弹窗模块,显示按钮对应信息-->
   </div>
 </template>
 
 <script lang="ts" setup>
-import {inject, onMounted, reactive, ref, watch} from "vue";
+import { onMounted, reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {Search, CircleClose} from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
@@ -78,8 +72,7 @@ const data = reactive({
   nav: Array,
   site: Object,
 })
-// 获取全局状态对象
-const global = inject('global')
+
 
 // 加载观看历史记录信息
 const handleHistory = (flag: boolean) => {

@@ -49,7 +49,15 @@
         <div class="play-list">
           <div class="play-list-item" v-show="data.currentTabId == item.id" v-for="item in data.detail.list">
             <a :class="`play-link ${v.link == data.current.link?'play-link-active':''}`" v-for="(v,i) in item.linkList"
-               href="javascript:;" @click="playChange({sourceId: item.id, episodeIndex: i, target: this})">{{ v.episode }}</a>
+               href="javascript:;" @click="playChange({sourceId: item.id, episodeIndex: i, target: this})">{{ v.episode }}
+              <div class="loading-wave" v-if="v.link == data.current.link" >
+                <div class="loading-bar"></div>
+                <div class="loading-bar"></div>
+                <div class="loading-bar"></div>
+                <div class="loading-bar"></div>
+              </div>
+              <div class="loading-wave" v-else></div>
+            </a>
           </div>
         </div>
       </div>
@@ -539,3 +547,8 @@ onBeforeMount(() => {
   }
 }
 </style>
+
+
+
+
+

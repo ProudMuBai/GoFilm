@@ -82,7 +82,6 @@
             <a class="play-link" v-for="(v,i) in item.linkList" href="javascript:;"
                @click="play({source: item.id, episode: i})">{{ v.episode }}</a>
           </div>
-
         </div>
       </div>
     </div>
@@ -401,3 +400,4 @@ onBeforeMount(() => {
 }
 
 </style>
+
