@@ -16,8 +16,15 @@
 <script setup lang="ts">
 import Header from "../components/index/Header.vue";
 import Footer from "../components/index/Footer.vue";
-import NewHeader from "../components/index/NewHeader.vue";
+import {provide} from "vue";
+// import NewHeader from "../components/index/NewHeader.vue";
 
+
+// 在全局注入一个当前是pc还是wrap的状态
+const userAgent = navigator.userAgent.toLowerCase()
+let isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent)
+// 传递一个全局状态对象
+provide('global', {isMobile: isMobile})
 
 </script>
 

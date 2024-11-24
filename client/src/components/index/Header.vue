@@ -48,18 +48,27 @@
           <Search/>
         </el-icon>
       </a>
+
+      <!--Mobile  bottom Btn Group-->
+      <div v-if="global.isMobile" class="nav-bottom" >
+        <a href=""></a>
+        <a href=""></a>
+        <a href=""></a>
+        <a href=""></a>
+      </div>
     </div>
     <!--弹窗模块,显示按钮对应信息-->
   </div>
 </template>
 
 <script lang="ts" setup>
-import {onMounted, reactive, ref, watch} from "vue";
+import {inject, onMounted, reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {Search, CircleClose} from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
 import {ApiGet} from "../../utils/request";
 import {cookieUtil, COOKIE_KEY_MAP} from "../../utils/cookie";
+
 // 搜索关键字
 const keyword = ref<string>('')
 // 弹窗隐藏显示
@@ -69,6 +78,9 @@ const data = reactive({
   nav: Array,
   site: Object,
 })
+// 获取全局状态对象
+const global = inject('global')
+
 // 加载观看历史记录信息
 const handleHistory = (flag: boolean) => {
   data.historyFlag = flag
@@ -130,7 +142,12 @@ onMounted(() => {
   })
   getBasicInfo()
 })
+
+
+
 </script>
+
+
 
 
 <!--移动端适配-->
