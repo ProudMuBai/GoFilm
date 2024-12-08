@@ -71,6 +71,13 @@ type FilmSource struct {
 	Interval     int                `json:"interval"`     // 采集时间间隔 单位/ms
 }
 
+// FailureCollect 失败采集记录信息机构体
+type FailureCollect struct {
+	Id         string `json:"id"`         // 采集站唯一ID
+	Time       int    `json:"time"`       // 采集时长
+	PageNumber int64  `json:"pageNumber"` // 页码
+}
+
 // SaveCollectSourceList 保存采集站Api列表
 func SaveCollectSourceList(list []FilmSource) error {
 	var zl []redis.Z
