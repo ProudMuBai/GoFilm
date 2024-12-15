@@ -102,6 +102,7 @@ func (i *IndexLogic) GetCategoryInfo() gin.H {
 	return nav
 }
 
+// GetNavCategory 获取导航分类信息
 func (i *IndexLogic) GetNavCategory() []*system.Category {
 	// 1.获取所有分类信息
 	tree := system.GetCategoryTree()

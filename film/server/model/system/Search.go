@@ -485,9 +485,9 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	// 如果处理后的影片名称依旧没有改变 且具有一定长度 则截取部分内容作为搜索条件
 	if len(name) == len(search.Name) && len(name) > 10 {
 		// 中文字符需截取3的倍数,否则可能乱码
-		name = name[:int(math.Ceil(float64(len(name)/5))*3)]
+		name = name[:int(math.Ceil(float64(len(name))/5)*3)]
 	}
-	sql = fmt.Sprintf(`select * from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d union`, search.TableName(), name, search.Cid)
+	sql = fmt.Sprintf(`select * from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
 	// 执行后续匹配内容, 匹配结果过少,减少过滤条件
 	//sql = fmt.Sprintf(`%s select * from %s where cid=%d AND area="%s" AND language="%s" AND`, sql, search.TableName(), search.Cid, search.Area, search.Language)
 
@@ -514,7 +514,7 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	}
 	// 除名称外的相似影片使用随机排序
 	//sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
-	sql = fmt.Sprintf("%s limit %d,%d)", sql, page.Current, page.PageSize)
+	sql = fmt.Sprintf("%s AND search.deleted_at IS NULL limit %d,%d)", sql, page.Current, page.PageSize)
 	// 条件拼接完成后加上limit参数
 	sql = fmt.Sprintf("(%s)  limit %d,%d", sql, page.Current, page.PageSize)
 	// 执行sql
