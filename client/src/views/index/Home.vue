@@ -34,8 +34,8 @@
           </el-col>
           <el-col :span="12">
             <ul class="nav_ul">
-              <template v-for="c in item.nav.children">
-                <li class="nav_category hidden-md-and-down" v-if="c.show"><a
+              <template v-for="(c,i) in item.nav.children">
+                <li class="nav_category hidden-md-and-down" v-if="c.show && i < 6"><a
                     :href="`/filmClassifySearch?Pid=${c.pid}&Category=${c.id}`">{{ c.name }}</a></li>
               </template>
               <li class="nav_category hidden-md-and-down"><a :href="`/filmClassify?Pid=${item.nav.id}`">更多 ></a></li>
@@ -80,37 +80,7 @@ const data = reactive({
 })
 const router = useRouter()
 
-// 轮播数据拟态
-let banners = [
-  {
-    name: '樱花庄的宠物女孩',
-    year: 2012,
-    cName: '动漫',
-    poster: 'https://img.bfzypic.com/upload/vod/20230424-43/06e79232a4650aea00f7476356a49847.jpg',
-    picture: 'https://s2.loli.net/2024/02/21/Wt1QDhabdEI7HcL.jpg'
-  },
-  {
-    name: '从零开始的异世界生活',
-    year: 2016,
-    cName: '动漫',
-    poster: 'https://img.bfzypic.com/upload/vod/20230424-29/82e3aec3f43103fa1b7e5a0e7f7c3806.jpg',
-    picture: 'https://s2.loli.net/2024/02/21/UkpdhIRO12fsy6C.jpg'
-  },
-  {
-    name: '五等分的新娘',
-    year: 2020,
-    cName: '动漫',
-    poster: 'https://img.bfzypic.com/upload/vod/20230424-38/dfff403cfd9a5b7d6eed8b4f1b3dedb1.jpg',
-    picture: 'https://s2.loli.net/2024/02/21/wXJr59Zuv4tcKNp.jpg'
-  },
-  {
-    name: '我的青春恋爱物语果然有问题',
-    year: 2018,
-    cName: '动漫',
-    poster: 'https://img.bfzypic.com/upload/vod/20230424-37/e5c9ec121c2cba230243c333447e818a.jpg',
-    picture: 'https://s2.loli.net/2024/02/21/oMAGzSliK2YbhRu.jpg'
-  },
-]
+
 
 // pc 背景图同步响应
 const carousel = (index: number) => {

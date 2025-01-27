@@ -1,8 +1,8 @@
 <template>
-  <div class="c_content" v-if="d.list" >
+  <div class="c_content" v-if="d.list">
     <template v-if="d.list.length > 0">
-      <div class="item" v-for="item in d.list" :style="{width: `calc(${d.width-1}%)`}">
-        <div v-if="item.id != -99">
+      <div class="item film-card" v-for="item in d.list" :style="{width: `calc(${d.width-1}%)`}">
+        <div v-if="item.id != -99 && global.isMobile" class="hidden-md-and-up">
           <a :href="`/filmDetail?link=${item.id}`" class="default_image link_content">
             <div class="tag_group">
               <span class="cus_tag ">{{ item.year ? item.year.slice(0, 4) : '未知' }}</span>
@@ -15,6 +15,30 @@
           <a :href="`/filmDetail?link=${item.id}`" class="content_text_tag">{{ item.name.split("[")[0] }}</a>
           <span class="cus_remark hidden-md-and-down">{{ item.remarks }}</span>
         </div>
+
+        <div v-if="!global.isMobile"  class="film-card-inner">
+          <div class="film-card-front">
+            <a :href="`/filmDetail?link=${item.id}`" class="default_image link_content">
+              <div class="tag_group">
+                <span class="cus_tag ">{{ item.year ? item.year.slice(0, 4) : '未知' }}</span>
+                <span class="cus_tag ">{{ item.cName }}</span>
+                <span class="cus_tag ">{{ item.area.split(',')[0] }}</span>
+              </div>
+              <span class="cus_remark hidden-md-and-up">{{ item.remarks }}</span>
+              <img :src="item.picture" :alt="item.name?.split('[')[0]" @error="handleImg">
+            </a>
+          </div>
+          <div class="film-card-back">
+            <p class="card-title" >{{item.name}}</p>
+            <p v-show="item.blurb != ''" class="card-blurb">{{ item.blurb }}</p>
+            <p v-show="item.blurb == ''" class="card-blurb"> 暂无简介 </p>
+            <el-button class="card-detail" :icon="Discount" color="#626aef" plain round onclick="goDetail(item.id)" >详情</el-button>
+          </div>
+        </div>
+        <a v-if="!global.isMobile" :href="`/filmDetail?link=${item.id}`" class="content_text_tag hidden-sm-and-down">{{ item.name.split("[")[0] }}</a>
+
+
+
       </div>
     </template>
     <el-empty v-if="d.list.length <= 0" style="padding: 10px 0;margin: 0 auto" description="暂无相关数据"/>
@@ -22,7 +46,8 @@
 </template>
 
 <script setup lang="ts">
-import {defineProps, onMounted, reactive, watch, watchEffect} from 'vue'
+import {defineProps, inject, reactive, watchEffect} from 'vue'
+import {Discount} from "@element-plus/icons-vue";
 
 const props = defineProps({
   list: Array,
@@ -34,9 +59,14 @@ const d = reactive({
   width: 0,
 })
 
+const global = inject('global')
 // 图片加载失败事件
 const handleImg = (e: Event) => {
   e.target.style.display = "none"
+}
+
+const goDetail = (id:number) =>{
+  location.href = `/filmDetail?link=${id}`
 }
 
 // 监听父组件传递的参数的变化
@@ -158,18 +188,17 @@ watchEffect(() => {
     justify-content: space-between;
   }
 
-  .c_content .item {
+  .item {
     margin-bottom: 20px;
     box-sizing: border-box;
   }
 
-  .item .link_content {
-    border-radius: 5px;
-    padding-top: 125%;
+  .link_content {
+    /*    padding-top: 125%;*/
     background-size: cover;
     width: 100%;
     display: flex;
-    position: relative;
+    /*    position: relative;*/
     margin-bottom: 5px;
   }
 
@@ -216,7 +245,6 @@ watchEffect(() => {
     padding: 2px 10px 2px 2px !important;
     text-align: left;
     text-overflow: ellipsis;
-
     white-space: nowrap;
     overflow: hidden;
   }
@@ -229,5 +257,76 @@ watchEffect(() => {
     color: #999999;
     text-align: left;
   }
+}
+</style>
+
+
+<style>
+.film-card {
+
+  background-color: transparent;
+  width: 100%;
+  perspective: 1000px;
+  font-family: sans-serif;
+}
+
+
+.film-card-inner {
+
+  padding-top: 125%;
+  position: relative;
+  width: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.film-card:hover .film-card-inner {
+  transform: rotateY(180deg);
+}
+
+.film-card-front, .film-card-back {
+  border-radius: 5px;
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  background: linear-gradient(#fff2, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 25px rgba(0, 0, 0, 0.25);
+}
+.film-card-back {
+  transform: rotateY(180deg);
+
+}
+
+
+
+.card-title, .card-actor {
+  margin: 0 auto;
+  font-size: 14px ;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-blurb {
+  margin-bottom: 30px;
+  display: -webkit-box;
+  -webkit-line-clamp: 5; /* 限制显示的行数 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.card-detail {
+  position: absolute;
+  width: 60%;
+  left: 20%;
+  bottom: 5px;
 }
 </style>

@@ -71,6 +71,9 @@ const (
 	DefaultUpdateSpec = "0 */20 * * * ?"
 	// DefaultUpdateTime 每次采集最近 3 小时内更新的影片
 	DefaultUpdateTime = 3
+
+	// FailureCollectKey 失败采集记录key
+	FailureCollectKey = "CollectRecord:Fail:%d"
 )
 
 // -------------------------Web API相关redis key-----------------------------------
