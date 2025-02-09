@@ -1,9 +1,7 @@
-
-
 const fmt = {
-    dateFormat( dateStamp:number, format:string='YYYY-mm-dd HH:MM:SS') {
+    dateFormat(dateStamp: number, format: string = 'YYYY-mm-dd HH:MM:SS') {
         // 根据时间戳生成当前时间, 单位 毫秒
-        let date = new Date(dateStamp*1000)
+        let date = new Date(dateStamp)
         const opt = {
             "Y+": date.getFullYear().toString(),        // 年
             "m+": (date.getMonth() + 1).toString(),     // 月
@@ -18,10 +16,20 @@ const fmt = {
             let r = new RegExp("(" + k + ")").exec(format);
             // 如果有匹配成功项
             if (r) {
-                format = format.replace(r[1], (r[1].length == 1) ? (opt[k as keyof typeof  opt]) : (opt[k as keyof typeof  opt].padStart(r[1].length, "0")))
+                format = format.replace(r[1], (r[1].length == 1) ? (opt[k as keyof typeof opt]) : (opt[k as keyof typeof opt].padStart(r[1].length, "0")))
             }
         }
         return format;
+    },
+    secondToTime(seconds: number) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        let timeStr = ''
+        timeStr = hours < 10 ? `0${hours}` : `${hours}`;
+        timeStr += minutes < 10 ? `:0${minutes}` : `:${minutes}`;
+        timeStr += remainingSeconds < 10 ? `:0${remainingSeconds}` : `:${remainingSeconds}`;
+        return timeStr;
     }
 }
 

@@ -96,7 +96,7 @@
         </el-table-column>
         <el-table-column sortable prop="updateStamp" align="center" label="更新时间">
           <template #default="scope">
-            <el-tag type="success" disable-transitions>{{fmt.dateFormat(scope.row.updateStamp) }}</el-tag>
+            <el-tag type="success" disable-transitions>{{fmt.dateFormat(scope.row.updateStamp*1000)}}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" min-width="100px">

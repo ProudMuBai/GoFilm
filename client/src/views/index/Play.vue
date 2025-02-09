@@ -17,7 +17,7 @@
         <h3 class="current_play_title"><a
             :href="`/filmDetail?link=${data.detail.id}`">{{ data.detail.name }}</a>{{ data.current.episode }}</h3>
         <div class="tags">
-          <a :href="`/filmClassifySearch?Pid=${data.detail.pid}&Category=${data.detail.cid}`" >
+          <a :href="`/filmClassifySearch?Pid=${data.detail.pid}&Category=${data.detail.cid}`">
             <el-icon>
               <Promotion/>
             </el-icon>
@@ -49,8 +49,10 @@
         <div class="play-list">
           <div class="play-list-item" v-show="data.currentTabId == item.id" v-for="item in data.detail.list">
             <a :class="`play-link ${v.link == data.current.link?'play-link-active':''}`" v-for="(v,i) in item.linkList"
-               href="javascript:;" @click="playChange({sourceId: item.id, episodeIndex: i, target: this})">{{ v.episode }}
-              <div class="loading-wave" v-if="v.link == data.current.link" >
+               href="javascript:;" @click="playChange({sourceId: item.id, episodeIndex: i, target: this})">{{
+                v.episode
+              }}
+              <div class="loading-wave" v-if="v.link == data.current.link">
                 <div class="loading-bar"></div>
                 <div class="loading-bar"></div>
                 <div class="loading-bar"></div>
@@ -71,7 +73,7 @@
 
 <script lang="ts" setup>
 import {
-  computed,
+  computed, inject,
   onBeforeMount, onBeforeUpdate,
   reactive,
   Ref,
@@ -85,10 +87,11 @@ import {ElMessage} from "element-plus";
 import RelateList from "../../components/index/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
 import posterImg from '../../assets/image/play.png'
-import {cookieUtil,COOKIE_KEY_MAP} from '../../utils/cookie'
+import {cookieUtil, COOKIE_KEY_MAP} from '../../utils/cookie'
 // 引入视频播放器组件
 import {VideoPlayer} from '@videojs-player/vue'
 import 'video.js/dist/video-js.css'
+import {fmt} from "../../utils/format";
 
 // 播放源切换事件
 const changeTab = (id: string) => {
@@ -134,7 +137,6 @@ const data = reactive({
     list: [],
   },
   current: {index: 0, episode: '', link: ''},
-  currentEpisode: 0,
   relate: [],
   currentTabId: '', // 当前播放源ID
 // @videojs-player 播放属性设置
@@ -149,7 +151,7 @@ const data = reactive({
 //
 const hasNext = computed(() => {
   let flag = false
-  data.detail.list.forEach((item:any)=>{
+  data.detail.list.forEach((item: any) => {
     if (data.currentTabId == item.id) {
       flag = data.current.index != item.linkList.length - 1
     }
@@ -159,18 +161,17 @@ const hasNext = computed(() => {
 
 // 获取路由信息
 const router = useRouter()
-
+const global = inject<any>('global')
 
 // 点击播集数播放对应影片
 const playChange = (play: { sourceId: string, episodeIndex: number, target: any }) => {
-  data.detail.list.forEach((item:any)=>{
+  data.detail.list.forEach((item: any) => {
     if (item.id == play.sourceId) {
-      let currPlay =item.linkList[play.episodeIndex]
+      let currPlay = item.linkList[play.episodeIndex]
       data.current = {index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link}
-      data.currentEpisode = play.episodeIndex
       data.options.src = currPlay.link
       data.options.title = data.detail.name + "  " + currPlay.episode
-      data.currentTabId =  play.sourceId
+      data.currentTabId = play.sourceId
     }
   })
 }
@@ -205,7 +206,7 @@ const isAutoPlay = () => {
   if (!data.autoplay) {
     return
   }
- playNext()
+  playNext()
 }
 // 点击下一集按钮
 const playNext = () => {
@@ -239,31 +240,51 @@ const handleBtn = (e: any) => {
   }
 }
 // player 加载完成事件
-const playerMount = (e:any) =>{
+const playerMount = (e: any) => {
   // 处理功能按钮相关事件
   handleBtn(e)
 }
 // player 准备就绪事件
-const beforePlay = (e:any)=>{
+const beforePlay = (e: any) => {
   // 从router参数中获取时间信息
   let currentTime = router.currentRoute.value.query.currentTime
   currentTime && e.target.player.currentTime(currentTime)
 }
 
 
-
 //影片信息加入本地的观看历史中, 先获取cookie,已存在则追加,否则添加
-const saveFilmHisroy = ()=>{
-  if (data.options.src.length >0) {
+const saveFilmHisroy = () => {
+  if (data.options.src.length > 0) {
+    // 处理播放历史要记录的影片相关信息
     let player = document.getElementsByTagName("video")[0]
-    let historys = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
-    let link = `/play?id=${data.detail.id}&source=${data.currentPlayFrom}&episode=${data.currentEpisode}&currentTime=${player.currentTime}`
-    historys[data.detail.id] = { name:data.detail.name, link: link, episode: data.current.episode, timeStamp: (new Date()).valueOf()}
+    let historys = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
+    let link = `/play?id=${data.detail.id}&source=${data.currentTabId}&episode=${data.current.index}&currentTime=${player.currentTime}`
+    let timeStamp = new Date().getTime()
+    let time = fmt.dateFormat(timeStamp)
+    let progress = `${fmt.secondToTime(player.currentTime)} / ${fmt.secondToTime(player.duration)}`
+        historys[data.detail.id] = {
+          id: data.detail.id,
+          name: data.detail.name,
+          picture: data.detail.picture,
+          episode: data.current.episode,
+          time: time,
+          timeStamp: timeStamp,
+          source: data.currentTabId,
+          link: link,
+          currentTime: player.currentTime,
+          duration: player.duration,
+          progress: progress,
+          devices: global.isMobile
+        }
+    // 处理播放时长
+
+
     cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(historys))
-  }}
+  }
+}
 
 // 在浏览器关闭前或页面刷新前将当前影片的观看信息存入历史记录中
-window.addEventListener('beforeunload',saveFilmHisroy)
+window.addEventListener('beforeunload', saveFilmHisroy)
 
 
 // 初始化页面数据
@@ -273,8 +294,6 @@ onBeforeMount(() => {
     if (resp.code === 0) {
       data.detail = resp.data.detail
       data.current = {index: resp.data.currentEpisode, ...resp.data.current}
-      // data.currentPlayFrom = resp.data.currentPlayFrom
-      data.currentEpisode = resp.data.currentEpisode
       data.relate = resp.data.relate
       // 设置当前的视频播放url
       data.options.src = data.current.link
@@ -386,7 +405,6 @@ onBeforeMount(() => {
 .p_r_active {
   color: #FFBB5C;
 }
-
 
 
 /* 播放区域*/
@@ -541,6 +559,7 @@ onBeforeMount(() => {
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
   }
+
   .play_info_right a:active {
     color: #FFBB5C;
     background: rgb(0, 0, 0, 0.2);

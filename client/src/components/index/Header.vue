@@ -13,12 +13,12 @@
     </div>
     <!--右侧顶级分类导航 -->
     <div class="nav_right">
-     <div class="nav_link">
-       <a href="/">首页</a>
-       <template v-for="n in data.nav">
-         <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
-       </template>
-     </div>
+      <div class="nav_link">
+        <a href="/">首页</a>
+        <template v-for="n in data.nav">
+          <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
+        </template>
+      </div>
       <div class="history-link hidden-md-and-down" v-on:mouseenter="handleHistory(true)"
            v-on:mouseleave="handleHistory(false)">
         <a :href="`/filmClassify?Pid=${nav.variety.id}`">
@@ -33,8 +33,7 @@
             </div>
             <div v-if="data.historyList.length > 0" class="history-c">
               <a :href="h.link" class="history-c-item" v-for="h in data.historyList">
-                    <span class="history-c-item-t">{{ h.name }}
-                    </span>
+                <span class="history-c-item-t">{{ h.name }}</span>
                 <span class="history-c-item-e">{{ h.episode }}</span>
               </a>
             </div>
@@ -56,7 +55,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref, watch} from "vue";
+import {onMounted, reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {Search, CircleClose} from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
@@ -116,7 +115,7 @@ const nav = reactive({
 })
 
 // 获取站点信息
-const getBasicInfo = ()=>{
+const getBasicInfo = () => {
   ApiGet(`/config/basic`).then((resp: any) => {
     if (resp.code === 0) {
       data.site = resp.data
@@ -137,10 +136,7 @@ onMounted(() => {
 })
 
 
-
 </script>
-
-
 
 
 <!--移动端适配-->
@@ -153,6 +149,7 @@ onMounted(() => {
     justify-content: space-between;
     height: 40px;
   }
+
   .nav_link {
     display: flex;
     justify-content: space-between;
@@ -160,6 +157,7 @@ onMounted(() => {
     width: 90%;
     overflow-y: scroll;
   }
+
   .nav_link a {
     white-space: nowrap;
     color: #ffffff;
@@ -168,6 +166,7 @@ onMounted(() => {
     line-height: 40px;
 
   }
+
   .nav_right .hidden-md-and-up {
     color: #ffffff;
     flex-basis: calc(19% - 5px);
@@ -269,7 +268,7 @@ onMounted(() => {
     flex-direction: row;
   }
 
-  .nav_right  a {
+  .nav_right a {
     min-width: 60px;
     height: 40px;
     line-height: 40px;
@@ -289,7 +288,6 @@ onMounted(() => {
   }
 
   /*history preview*/
-
   /*element-plus empty state color style*/
   :deep(.el-empty) {
     --el-empty-fill-color-1: rgba(155, 73, 231, 0.72);

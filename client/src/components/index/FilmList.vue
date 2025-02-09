@@ -18,7 +18,7 @@
 
         <div v-if="!global.isMobile"  class="film-card-inner">
           <div class="film-card-front">
-            <a :href="`/filmDetail?link=${item.id}`" class="default_image link_content">
+            <a :href="`/filmDetail?link=${item.id}`" class="link_content">
               <div class="tag_group">
                 <span class="cus_tag ">{{ item.year ? item.year.slice(0, 4) : '未知' }}</span>
                 <span class="cus_tag ">{{ item.cName }}</span>
@@ -28,16 +28,14 @@
               <img :src="item.picture" :alt="item.name?.split('[')[0]" @error="handleImg">
             </a>
           </div>
-          <div class="film-card-back">
+          <div class="film-card-back" @click="toDetail(item.id)">
             <p class="card-title" >{{item.name}}</p>
             <p v-show="item.blurb != ''" class="card-blurb">{{ item.blurb }}</p>
             <p v-show="item.blurb == ''" class="card-blurb"> 暂无简介 </p>
-            <el-button class="card-detail" :icon="Discount" color="#626aef" plain round onclick="goDetail(item.id)" >详情</el-button>
+            <el-button class="card-detail" :icon="Discount" color="#626aef" plain round @click="toDetail(item.id)" >详情</el-button>
           </div>
         </div>
         <a v-if="!global.isMobile" :href="`/filmDetail?link=${item.id}`" class="content_text_tag hidden-sm-and-down">{{ item.name.split("[")[0] }}</a>
-
-
 
       </div>
     </template>
@@ -46,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+
 import {defineProps, inject, reactive, watchEffect} from 'vue'
 import {Discount} from "@element-plus/icons-vue";
 
@@ -65,7 +64,7 @@ const handleImg = (e: Event) => {
   e.target.style.display = "none"
 }
 
-const goDetail = (id:number) =>{
+const toDetail = (id:any) =>{
   location.href = `/filmDetail?link=${id}`
 }
 
@@ -94,7 +93,7 @@ watchEffect(() => {
 
 <style scoped>
 .default_image {
-  background: url("/src/assets/image/404.png");
+  background: url("/src/assets/image/404.png") no-repeat;
   background-size: cover;
 }
 
@@ -261,7 +260,7 @@ watchEffect(() => {
 </style>
 
 
-<style>
+<style scoped>
 .film-card {
 
   background-color: transparent;
@@ -269,7 +268,6 @@ watchEffect(() => {
   perspective: 1000px;
   font-family: sans-serif;
 }
-
 
 .film-card-inner {
 
@@ -296,18 +294,26 @@ watchEffect(() => {
   height: 100%;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  background: linear-gradient(#fff2, transparent);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/*  border: 1px solid rgba(255, 255, 255, 0.1);*/
   box-shadow: 0 25px 25px rgba(0, 0, 0, 0.25);
 }
-.film-card-back {
-  transform: rotateY(180deg);
 
+.film-card-front {
+  border: none;
+  background: url("/src/assets/image/404.png") no-repeat;
+  background-size: cover;
 }
 
+.film-card-back {
+  cursor: pointer;
+  transform: rotateY(180deg);
+  padding: 0 5px;
+  background: linear-gradient(#fff2, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-
-.card-title, .card-actor {
+.card-title {
+  max-width: 70%;
   margin: 0 auto;
   font-size: 14px ;
   overflow: hidden;

@@ -13,9 +13,17 @@
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
 
-    /*公共颜色*/
-    --bg-light: #ffffff;
+    /*字体样式*/
+    --text-font-title: 16px;
+    --text-font-title-md: 15px;
+    --text-font-content: 12px;
+    --text-title-color: #FBA518;
+    --text-content-color: #9499a0;
 
+    /*公共颜色*/
+
+
+    --bg-light: #ffffff;
 
     --bg-dark: #21252b;
 
