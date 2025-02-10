@@ -6,7 +6,7 @@
       <a href="javascript:void(0)"><b class="iconfont icon-gengxin"/>更新</a>
       <a href="/history"><b class="iconfont icon-lishi"/>历史</a>
       <a href="javascript:void(0)"><b class="iconfont icon-shoucang2"/>收藏</a>
-      <a href="/manage"><b class="iconfont icon-ziyuan-copy"/>我的</a>
+      <a href="javascript:void(0)"><b class="iconfont icon-ziyuan-copy"/>我的</a>
     </div>
     <p>本站所有内容均来自互联网分享站点所提供的公开引用资源，未提供资源上传、存储服务。</p>
   </div>
