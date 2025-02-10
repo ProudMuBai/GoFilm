@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div v-if="true" class="hidden-sm-and-up banner_wrap" @touchstart="touchS" @touchend="touchE" @click="skipLink" >
+    <div v-if="global.isMobile" class=" banner_wrap" @touchstart="touchS" @touchend="touchE" @click="skipLink" >
       <el-carousel  v-model="data.banner.current" ref="wrap" :pause-on-hover="false"   :interval="5000" trigger="hover" height="200px" arrow="never" @change="carousel" >
         <el-carousel-item v-for="item in data.info.banners" :key="item"  >
           <el-image style="width: 100%; height: 100%;" :src="item.poster" fit="fill"/>
@@ -8,7 +8,7 @@
         </el-carousel-item>
       </el-carousel>
     </div>
-    <div v-if="true" class="banner hidden-sm-and-down"
+    <div v-if="!global.isMobile" class="banner"
          :style="{background:`url(${data.banner.current.poster})`, backgroundRepeat: 'no-repeat', backgroundSize: 'cover'}" @click="skipLink">
       <div class="preview">
         <el-carousel @change="carousel" :interval="5000" height="240px" arrow="always">
@@ -33,12 +33,12 @@
             <a :href="`/filmClassify?Pid=${item.nav.id}`">{{ item.nav.name }}</a>
           </el-col>
           <el-col :span="12">
-            <ul class="nav_ul">
+            <ul v-if="!global.isMobile" class="nav_ul">
               <template v-for="(c,i) in item.nav.children">
-                <li class="nav_category hidden-md-and-down" v-if="c.show && i < 6"><a
+                <li class="nav_category" v-if="c.show && i < 6"><a
                     :href="`/filmClassifySearch?Pid=${c.pid}&Category=${c.id}`">{{ c.name }}</a></li>
               </template>
-              <li class="nav_category hidden-md-and-down"><a :href="`/filmClassify?Pid=${item.nav.id}`">更多 ></a></li>
+              <li class="nav_category"><a :href="`/filmClassify?Pid=${item.nav.id}`">更多 ></a></li>
             </ul>
           </el-col>
         </el-row>
@@ -47,7 +47,7 @@
             <!--影片列表-->
             <FilmList v-if="item.movies" :col="6" :list="item.movies.slice(0,12)"/>
           </el-col>
-          <el-col :md="0" :lg="4" :xl="4" class="hidden-md-and-down content_right">
+          <el-col v-if="!global.isMobile" :md="0" :lg="4" :xl="4" class="content_right hidden-sm-and-down">
             <h3 class="hot_title">🔥热播{{ item.nav.name }}</h3>
             <template v-for="(m,i) in item.hot.slice(0,12)">
               <div class="content_right_item">
@@ -65,7 +65,7 @@
 <script lang="ts" setup>
 // 顶部轮播图
 import 'element-plus/theme-chalk/display.css'
-import {onBeforeMount, reactive, ref} from "vue";
+import {inject, onBeforeMount, reactive, ref} from "vue";
 import {ApiGet} from "../../utils/request";
 import FilmList from "../../components/index/FilmList.vue";
 import {ElMessage} from "element-plus";
@@ -79,8 +79,7 @@ const data = reactive({
   }
 })
 const router = useRouter()
-
-
+const global = inject<any>('global')
 
 // pc 背景图同步响应
 const carousel = (index: number) => {

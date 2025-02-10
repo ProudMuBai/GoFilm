@@ -22,7 +22,7 @@ import {provide} from "vue";
 
 // 在全局注入一个当前是pc还是wrap的状态
 const userAgent = navigator.userAgent.toLowerCase()
-let isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent)
+let isMobile = /Mobile|Tablet|Android|iPhone|iPad|iPod|BlackBerry|webOS|Windows Phone|SymbianOS|IEMobile|Opera Mini/i.test(userAgent)
 // 传递一个全局状态对象
 provide('global', {isMobile: isMobile})
 

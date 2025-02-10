@@ -212,6 +212,7 @@ onBeforeMount(() => {
 <style scoped>
 @media (max-width: 768px) {
   .title_mt {
+    width: 100%;
     padding: 0 3px;
     display: flex;
     flex-direction: row;
@@ -220,16 +221,15 @@ onBeforeMount(() => {
   }
 
   .picture_mt {
-    width: 100%;
-    height: 180px;
+    max-height: 180px;
+    min-width: 30%;
     margin-right: 12px;
-    border-radius: 8px;
+    border-radius: 5px;
     background-size: cover;
-    flex: 1;
   }
 
   .title_mt_right {
-    flex: 1.5;
+    flex: 1;
     text-align: left;
   }
 
@@ -290,15 +290,16 @@ onBeforeMount(() => {
 
 .title {
   width: 100%;
-  border-radius: 10px;
-  background: #2e2e2e;
+  background: linear-gradient(#fff2, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
   padding: 5px 30px 30px 30px;
   position: relative;
 }
 
 .title > h2 {
   text-align: left;
-  color: #888888;
+  color: var(--text-content-color-light);
 }
 
 .picture {
@@ -324,10 +325,11 @@ onBeforeMount(() => {
 .tags > li {
   padding: 6px 10px;
   border-radius: 5px;
-  background: rgba(66, 66, 66);
+  background: linear-gradient(#ffffff14, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   margin: 0 8px;
   font-size: 12px;
-  color: #888888;
+  color: var(--text-content-color-light);
 }
 
 .tags > .t_c {
@@ -344,6 +346,7 @@ onBeforeMount(() => {
   font-size: 14px;
   margin: 20px 0;
   max-width: 60%;
+  color: var(--text-content-color-light);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -353,7 +356,7 @@ onBeforeMount(() => {
 .title p span {
   font-size: 15px;
   font-weight: bold;
-  color: #888888;
+  color: var(--text-content-color-light);
   margin-right: 5px;
 }
 

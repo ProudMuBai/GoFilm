@@ -66,7 +66,9 @@
     display: flex;
     white-space: nowrap;
     padding: 5px 5px 0;
-    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: none;
+    background: rgba(255,255,255,0.1);
     border-radius: 8px 8px 0 0;
 }
 .play-tab-item{
@@ -80,15 +82,16 @@
 }
 
 .tab-active{
-    background: #2e2e2e;
+    background: linear-gradient(#00000015, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     font-weight: 700;
     color: orange;
 }
 
 .play-list{
-    background: #2e2e2e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(#ffffff14, transparent);
     padding: 20px;
-
 }
 .play-list-item{
     overflow-y: auto;
@@ -97,7 +100,7 @@
 }
 .play-link{
     padding: 6px 3px 0 3px;
-    border: 1px solid rgba(255,255,255,0.28);
+    border: 1px solid rgba(255,255,255,0.25);
     border-radius: 8px;
     margin: 5px;
     text-align: center;

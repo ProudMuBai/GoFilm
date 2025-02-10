@@ -257,12 +257,13 @@ const saveFilmHisroy = () => {
   if (data.options.src.length > 0) {
     // 处理播放历史要记录的影片相关信息
     let player = document.getElementsByTagName("video")[0]
-    let historys = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
+    let history = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
     let link = `/play?id=${data.detail.id}&source=${data.currentTabId}&episode=${data.current.index}&currentTime=${player.currentTime}`
+    // 处理播放时长
     let timeStamp = new Date().getTime()
     let time = fmt.dateFormat(timeStamp)
     let progress = `${fmt.secondToTime(player.currentTime)} / ${fmt.secondToTime(player.duration)}`
-        historys[data.detail.id] = {
+    history[data.detail.id] = {
           id: data.detail.id,
           name: data.detail.name,
           picture: data.detail.picture,
@@ -276,10 +277,8 @@ const saveFilmHisroy = () => {
           progress: progress,
           devices: global.isMobile
         }
-    // 处理播放时长
-
-
-    cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(historys))
+    // 将历史记录添加到cookie中
+    cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(history))
   }
 }
 
@@ -421,7 +420,8 @@ onBeforeMount(() => {
 
   .tags a {
     padding: 5px 10px;
-    background-color: rgba(155, 73, 231, 0.72);
+/*    background-color: rgba(155, 73, 231, 0.72);*/
+    background: linear-gradient( #9B49E7B8, #9B49E799);
     color: #c4c2c2;
     font-size: 13px;
     border-radius: 6px;
@@ -430,7 +430,9 @@ onBeforeMount(() => {
 
   .tags span {
     padding: 6px 12px;
-    background-color: #404042;
+    /*background-color: #404042;*/
+    background: linear-gradient(#fff2, #ffffff1a);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #b5b2b2;
     border-radius: 5px;
     margin: 0 8px;
@@ -511,7 +513,7 @@ onBeforeMount(() => {
   .tags a {
     padding: 5px 10px;
     color: #c4c2c2;
-    background-color: rgba(155, 73, 231, 0.72);
+    background: linear-gradient( #9B49E7B8, #9B49E799);
     font-size: 13px;
     border-radius: 6px;
     margin-right: 3px;
@@ -531,7 +533,7 @@ onBeforeMount(() => {
 
   .tags span {
     padding: 6px 10px;
-    background-color: #404042;
+    background: linear-gradient(#fff2, #ffffff1a);
     color: #b5b2b2;
     border-radius: 5px;
     margin: 0 3px;

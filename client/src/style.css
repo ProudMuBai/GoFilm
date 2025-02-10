@@ -4,7 +4,7 @@
     font-weight: 400;
 
     color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
+    color: rgba(255, 255, 255, 0.35);
     background-color: #242424;
 
     font-synthesis: none;
@@ -19,6 +19,7 @@
     --text-font-content: 12px;
     --text-title-color: #FBA518;
     --text-content-color: #9499a0;
+    --text-content-color-light: rgba(255, 255, 255, 0.6);
 
     /*公共颜色*/
 
