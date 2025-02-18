@@ -9,7 +9,6 @@ import (
 	"server/config"
 	"server/plugin/common/util"
 	"server/plugin/db"
-	"time"
 )
 
 /*
@@ -70,16 +69,6 @@ type FilmSource struct {
 	CollectType  ResourceType       `json:"collectType"`  // 采集资源类型
 	State        bool               `json:"state"`        // 是否启用
 	Interval     int                `json:"interval"`     // 采集时间间隔 单位/ms
-}
-
-// FailureCollect 失败采集记录信息机构体
-type FailureCollect struct {
-	Id          string       `json:"id"`          // 采集站唯一ID
-	CollectType ResourceType `json:"collectType"` // 采集类型
-	PageNumber  int64        `json:"pageNumber"`  // 页码
-	//Hour        int64        `json:"hour"`        // 采集参数 h 时长
-	Cause string `json:"cause"` // 失败原因
-	Time  int    `json:"time"`  // 采集失败时的时间
 }
 
 // SaveCollectSourceList 保存采集站Api列表
@@ -185,23 +174,4 @@ func ExistCollectSourceList() bool {
 	}
 	return true
 
-}
-
-// CollectFailRecord 记录采集失败的相关参数信息
-func CollectFailRecord(fc FailureCollect) error {
-	// 将fc序列化为json格式进行存储
-	m, _ := json.Marshal(fc)
-	// 获取当前的时间戳作为set集合的Score
-	z := redis.Z{Score: float64(time.Now().Unix()), Member: m}
-	return db.Rdb.ZAdd(db.Cxt, config.FailureCollectKey, z).Err()
-}
-
-// GetCollectFailList 从失败采集记录中读取一部分记录
-func GetCollectFailList() []FailureCollect {
-	// 获取多条记录, 降低读取频率 or 多次单条读取
-
-	// 一次获取多条记录, 再次执行失败则重新进行记录
-
-	// 读取单条记录, 成功执行则进行记录清除, 否则对其进行保留
-	return nil
 }

@@ -139,6 +139,9 @@ func collectFilm(s *system.FilmSource, h, pg int) {
 	// 执行采集方法 获取影片详情list
 	list, err := spiderCore.GetFilmDetail(r)
 	if err != nil || len(list) <= 0 {
+		// 添加采集失败记录
+		fr := system.FailureRecord{OriginId: s.Id, Uri: s.Uri, CollectType: system.CollectVideo, PageNumber: pg, Hour: h, Cause: err.Error(), Status: 1}
+		system.SaveFailureRecord(fr)
 		log.Println("GetMovieDetail Error: ", err)
 		return
 	}

@@ -77,8 +77,8 @@ onMounted(() => {
 .c_nav {
   display: flex;
   justify-content: space-between;
-
   padding: 6px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .c_nav_text {
@@ -87,8 +87,14 @@ onMounted(() => {
 }
 
 .c_nav_more {
-  background: #25252b;
-  border-radius: 8px;
+  border-radius: 5px;
+  background: linear-gradient(#ffffff15, #ffffff1a);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.c_nav_more:hover {
+  color: var(--active--text-color);
+  background-color: var(--active--bg-color);
 }
 
 .content > div {

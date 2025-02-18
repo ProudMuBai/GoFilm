@@ -112,7 +112,7 @@ func SaveSearchTag(search SearchInfo) {
 	// 获取redis中的searchMap
 	key := fmt.Sprintf(config.SearchTitle, search.Pid)
 	searchMap := db.Rdb.HGetAll(db.Cxt, key).Val()
-	// 是否存储对应分类的map, 如果不存在则缓存一份
+	// 是否存在对应分类的map, 如果不存在则缓存一份
 	if len(searchMap) == 0 {
 		searchMap = make(map[string]string)
 		searchMap["Category"] = "类型"

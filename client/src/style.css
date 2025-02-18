@@ -25,9 +25,10 @@
 
 
     --bg-light: #ffffff;
-
     --bg-dark: #21252b;
 
+    --active--text-color: #ffb22cd6;
+    --active--bg-color: #ffb22c0d;
 
     --text-color-primary: #ffffff;
     --content-text-color: #888888;
