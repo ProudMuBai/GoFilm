@@ -51,7 +51,7 @@
           table-layout="auto" max-height="calc(68vh - 20px)"
           row-key="id"
           :row-class-name="'cus-tr'">
-        <el-table-column type="index" min-width="50px" align="left" label="序号">
+        <el-table-column type="index" min-width="40px" align="left" label="序号">
           <template #default="scope">
             <span style="color: #8b40ff">{{ serialNum(scope.$index) }}</span>
           </template>

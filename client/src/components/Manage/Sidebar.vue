@@ -22,6 +22,7 @@
             <span>采集管理</span>
           </template>
           <el-menu-item index="/manage/collect/index">影视采集</el-menu-item>
+          <el-menu-item index="/manage/collect/record">失效记录</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/manage/cron">
           <template #title>

@@ -27,6 +27,7 @@ import FilmAdd from "../views/manage/film/FilmAdd.vue";
 import CustomPlay from "../views/index/CustomPlay.vue";
 import Banners from "../views/manage/system/Banners.vue";
 import FilmHistory from "../views/index/FilmHistory.vue";
+import FailureRecord from "../views/manage/collect/FailureRecord.vue";
 
 
 // 2. 定义一个路由
@@ -54,6 +55,7 @@ const routes = [
         children: [
             {path: 'index', component: ManageIndex},
             {path: 'collect/index', component: CollectManage},
+            {path: 'collect/record', component: FailureRecord},
             {path: 'system/webSite', component: SiteConfig},
             {path: 'system/banners', component: Banners},
             {path: 'cron/index', component: CronManage},

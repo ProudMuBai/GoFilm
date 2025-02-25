@@ -93,7 +93,7 @@ func (jc *JsonCollect) GetFilmDetail(r util.RequestInfo) (list []system.MovieDet
 	//details := system.DetailListInfo{}
 	// 如果返回数据为空则直接结束本次循环
 	if len(r.Resp) <= 0 {
-		err = errors.New("response is empty")
+		err = errors.New(r.Err)
 		return
 	}
 	// 序列化详情数据

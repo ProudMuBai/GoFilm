@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/url"
 	"server/config"
 	"server/model/collect"
@@ -140,7 +141,7 @@ func collectFilm(s *system.FilmSource, h, pg int) {
 	list, err := spiderCore.GetFilmDetail(r)
 	if err != nil || len(list) <= 0 {
 		// 添加采集失败记录
-		fr := system.FailureRecord{OriginId: s.Id, Uri: s.Uri, CollectType: system.CollectVideo, PageNumber: pg, Hour: h, Cause: err.Error(), Status: 1}
+		fr := system.FailureRecord{OriginId: s.Id, OriginName: s.Name, Uri: s.Uri, CollectType: system.CollectVideo, PageNumber: pg, Hour: h, Cause: fmt.Sprintln(err), Status: 1}
 		system.SaveFailureRecord(fr)
 		log.Println("GetMovieDetail Error: ", err)
 		return
@@ -292,6 +293,33 @@ func CollectSingleFilm(ids string) {
 			return
 		}
 	}
+}
+
+// ======================================================= 采集拓展内容  =======================================================
+
+// SingleRecoverSpider 二次采集
+func SingleRecoverSpider(fr *system.FailureRecord) {
+	// 通过采集时长范围执行不同的采集方式
+	switch {
+	case fr.Hour > 168 && fr.Hour < 360:
+		// 将此记录之后的所有同类采集记录变更为已重试
+		system.ChangeRecord(fr, 0)
+		// 如果采集的内容是 7~15 天之内更新的内容,则采集此记录之后的所有更新内容
+		// 获取采集参数h, 采集时长变更为 原采集时长 + 采集记录距现在的时长
+		h := fr.Hour + int(math.Ceil(time.Since(fr.CreatedAt).Hours()))
+		// 对当前所有已启用的站点 更新最新 h 小时的内容
+		AutoCollect(h)
+	case fr.Hour < 0, fr.Hour > 4320:
+		// 将此记录状态修改为已重试
+		system.ChangeRecord(fr, 0)
+		// 如果采集的是 最近180天内更新的内容 或全部内容, 则只对当前一条记录进行二次采集
+		s := system.FindCollectSourceById(fr.OriginId)
+		collectFilm(s, fr.Hour, fr.PageNumber)
+	default:
+		// 其余范围,暂不处理
+		break
+	}
+
 }
 
 // ======================================================= 公共方法  =======================================================

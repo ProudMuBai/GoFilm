@@ -26,6 +26,7 @@ type RequestInfo struct {
 	Params url.Values  `json:"param"`  // 请求参数
 	Header http.Header `json:"header"` // 请求头数据
 	Resp   []byte      `json:"resp"`   // 响应结果数据
+	Err    string      `json:"err"`    // 错误信息
 }
 
 // RefererUrl 记录上次请求的url
@@ -95,6 +96,7 @@ func ApiGet(r *RequestInfo) {
 	// 处理请求参数
 	err := Client.Visit(fmt.Sprintf("%s?%s", r.Uri, r.Params.Encode()))
 	if err != nil {
+		r.Err = err.Error()
 		log.Println("获取数据失败: ", err)
 	}
 }

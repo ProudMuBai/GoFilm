@@ -109,7 +109,16 @@ type PlayLinkVo struct {
 	LinkList []MovieUrlInfo `json:"linkList"`
 }
 
+// MovieDetailVo 影片详情数据, 播放源合并版
 type MovieDetailVo struct {
 	MovieDetail
 	List []PlayLinkVo `json:"list"`
+}
+
+type RecordRequestVo struct {
+	OriginId    string `json:"originId"`    // 源站点ID
+	CollectType int    `json:"collectType"` // 采集类型
+	Hour        int    `json:"hour"`        // 采集时长
+	Status      int    `json:"status"`      // 状态
+	Paging      *Page  `json:"paging"`      // 分页参数
 }

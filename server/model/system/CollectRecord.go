@@ -11,6 +11,7 @@ import (
 type FailureRecord struct {
 	gorm.Model
 	OriginId    string       `json:"originId"`    // 采集站唯一ID
+	OriginName  string       `json:"originName"`  // 采集站唯一ID
 	Uri         string       `json:"uri"`         // 采集源链接
 	CollectType ResourceType `json:"collectType"` // 采集类型
 	PageNumber  int          `json:"pageNumber"`  // 页码
@@ -43,14 +44,27 @@ func SaveFailureRecord(fl FailureRecord) {
 }
 
 // FailureRecordList 获取所有的采集失效记录
-func FailureRecordList(page *Page) []FailureRecord {
-	var count int64
-	db.Mdb.Model(&FailureRecord{}).Count(&count)
-	page.Total = int(count)
-	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+func FailureRecordList(vo RecordRequestVo) []FailureRecord {
+	// 通过RecordRequestVo,生成查询条件
+	qw := db.Mdb.Model(&FailureRecord{})
+	if vo.OriginId != "" {
+		qw.Where("origin_id = ?", vo.OriginId)
+	}
+	//if vo.CollectType >= 0 {
+	//	qw.Where("collect_type = ?", vo.CollectType)
+	//}
+	//if vo.Hour != 0 {
+	//	qw.Where("hour = ?", vo.Hour)
+	//}
+	//if vo.Status >= 0 {
+	//	qw.Where("status = ?", vo.Status)
+	//}
+
+	// 获取分页数据
+	GetPage(qw, vo.Paging)
 	// 获取分页查询的数据
 	var list []FailureRecord
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&list).Error; err != nil {
+	if err := qw.Limit(vo.Paging.PageSize).Offset((vo.Paging.Current - 1) * vo.Paging.PageSize).Order("updated_at DESC").Find(&list).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -62,8 +76,21 @@ func FindRecordById(id uint) *FailureRecord {
 	var fr FailureRecord
 	fr.ID = id
 	// 通过ID查询对应的数据
-	db.Mdb.First(fr)
+	db.Mdb.First(&fr)
 	return &fr
+}
+
+// ChangeRecord 修改已完成二次采集的记录状态
+func ChangeRecord(fr *FailureRecord, status int) {
+	switch {
+	case fr.Hour > 168 && fr.Hour < 360:
+		db.Mdb.Model(&FailureRecord{}).Where("hour > 168 AND hour < 360 AND created_at >= ?", fr.CreatedAt).Update("status", status)
+	case fr.Hour < 0, fr.Hour > 4320:
+		db.Mdb.Model(&FailureRecord{}).Where("id = ?", fr.ID).Update("status", status)
+	default:
+		// 其余范围,暂不处理
+		break
+	}
 }
 
 // RetryRecord 修改重试采集成功的记录

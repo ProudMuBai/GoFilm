@@ -72,6 +72,9 @@ func SetupRouter() *gin.Engine {
 			//collect.GET(`/star`, controller.CollectFilm)
 			collect.GET(`/del`, controller.FilmSourceDel)
 			collect.GET(`/options`, controller.GetNormalFilmSource)
+
+			collect.GET(`/record/list`, controller.FailureRecordList)
+			collect.GET(`/record/retry`, controller.CollectRecover)
 		}
 
 		// 定时任务相关
