@@ -319,6 +319,39 @@ func SingleRecoverSpider(fr *system.FailureRecord) {
 		// 其余范围,暂不处理
 		break
 	}
+}
+
+// FullRecoverSpider 扫描记录表中的失败记录, 并进行处理 (用于定时任务定期处理失败采集)
+func FullRecoverSpider() {
+	/*
+		获取待处理的记录数据
+		1. 采集时长 > 168h (一周,7天)  状态-1 待处理, | 只获取满足条件的最早的待处理记录
+		2. 采集时长 > 4320h (半年,180天)  状态-1 待处理, | 获取满足条件的所有数据
+	*/
+	list := system.PendingRecord()
+
+	// 遍历记录信息切片, 针对不同时长进行不同处理
+	for _, fr := range list {
+		switch {
+		case fr.Hour > 0 && fr.Hour < 4320:
+			// 将此记录之后的所有同类采集记录变更为已重试
+			system.ChangeRecord(&fr, 0)
+			// 如果采集的内容是 7~15 天之内更新的内容,则采集此记录之后的所有更新内容
+			// 获取采集参数h, 采集时长变更为 原采集时长 + 采集记录距现在的时长
+			h := fr.Hour + int(math.Ceil(time.Since(fr.CreatedAt).Hours()))
+			// 对当前所有已启用的站点 更新最新 h 小时的内容
+			AutoCollect(h)
+		case fr.Hour < 0, fr.Hour > 4320:
+			// 将此记录状态修改为已重试
+			system.ChangeRecord(&fr, 0)
+			// 如果采集的是 最近180天内更新的内容 或全部内容, 则只对当前一条记录进行二次采集
+			s := system.FindCollectSourceById(fr.OriginId)
+			collectFilm(s, fr.Hour, fr.PageNumber)
+		default:
+			// 其余范围,暂不处理
+			break
+		}
+	}
 
 }
 

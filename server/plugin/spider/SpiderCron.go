@@ -60,6 +60,19 @@ func AddAutoUpdateCron(id, spec string) (cron.EntryID, error) {
 	})
 }
 
+// AddFilmRecoverCron 失败采集记录处理
+func AddFilmRecoverCron(spec string) (cron.EntryID, error) {
+	// 校验 spec 表达式的有效性
+	if err := ValidSpec(spec); err != nil {
+		return -99, errors.New(fmt.Sprint("定时任务添加失败,Cron表达式校验失败: ", err.Error()))
+	}
+	return CronCollect.AddFunc(spec, func() {
+		// 执行失败采集记录恢复
+		FullRecoverSpider()
+		log.Println("执行一次失败采集恢复任务")
+	})
+}
+
 // RemoveCron 删除定时任务
 func RemoveCron(id cron.EntryID) {
 	// 通过定时任务EntryID移出对应的定时任务

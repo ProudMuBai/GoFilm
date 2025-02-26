@@ -80,6 +80,19 @@ func FindRecordById(id uint) *FailureRecord {
 	return &fr
 }
 
+// PendingRecord 查询所有待处理的记录信息
+func PendingRecord() []FailureRecord {
+	var list []FailureRecord
+	// 1. 获取 hour > 4320 || hour < 0  && status = 1 的影片信息
+	db.Mdb.Where("(hour > 4320 OR hour < 0) AND status = 1").Find(&list)
+	// 2. 获取 hour > 0 && hour < 4320 && status = 1 的影片信息(只获取最早的一条记录)
+	var fr FailureRecord
+	db.Mdb.Where("hour > 0 AND hour < 4320 AND status = 1").Order("hour DESC, created_at ASC").First(&fr)
+	// 3. 将 fr 添加到 list中
+	list = append(list, fr)
+	return list
+}
+
 // ChangeRecord 修改已完成二次采集的记录状态
 func ChangeRecord(fr *FailureRecord, status int) {
 	switch {

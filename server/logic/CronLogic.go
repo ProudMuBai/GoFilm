@@ -40,6 +40,14 @@ func (cl *CronLogic) AddFilmCrontab(cv system.FilmCronVo) error {
 		}
 		// 将定时任务Id记录到Task中
 		task.Cid = cid
+	case 2:
+		cid, err := spider.AddFilmRecoverCron(task.Spec)
+		// 如果任务添加失败则直接返回错误信息
+		if err != nil {
+			return errors.New(fmt.Sprint("影视更新定时任务添加失败: ", err.Error()))
+		}
+		// 将定时任务Id记录到Task中
+		task.Cid = cid
 	}
 	// 如果没有异常则将当前定时任务信息记录到redis中
 	system.SaveFilmTask(task)

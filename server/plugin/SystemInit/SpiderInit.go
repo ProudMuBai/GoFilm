@@ -65,16 +65,28 @@ func CollectCrontabInit() {
 				}
 				// 将定时任务Id记录到Task中
 				task.Cid = cid
+			case 2:
+				cid, err := spider.AddFilmRecoverCron(task.Spec)
+				// 如果任务添加失败则直接返回错误信息
+				if err != nil {
+					log.Println("自动清理失败采集记录定时任务添加失败: ", err.Error())
+					continue
+				}
+				// 将定时任务Id记录到Task中
+				task.Cid = cid
 			}
 			system.UpdateFilmTask(task)
 		}
 	} else {
-		// 如果系统中不存在任何定时任务信息, 则添加默认的定时任务
-		// 1. 添加一条默认任务, 定时更新所有已启用站点的影片信息
-		// 生成任务信息
+		/*
+			如果系统中不存在任何定时任务信息, 则添加默认的定时任务
+			1. 添加一条默认任务, 定时更新所有已启用站点的影片信息
+			2.  添加一条默认任务, 定时处理采集失败的记录
+			3.生成任务信息
+		*/
 		task := system.FilmCollectTask{Id: util.GenerateSalt(), Time: config.DefaultUpdateTime, Spec: config.DefaultUpdateSpec,
 			Model: 0, State: false, Remark: "每20分钟执行一次已启用站点数据的自动更新"}
-		// 添加一条定时任务
+		// 添加一条定时任务-影片定时更新
 		cid, err := spider.AddAutoUpdateCron(task.Id, task.Spec)
 		// 如果任务添加失败则直接返回错误信息
 		if err != nil {
@@ -85,6 +97,21 @@ func CollectCrontabInit() {
 		task.Cid = cid
 		// 如果没有异常则将当前定时任务信息记录到redis中
 		system.SaveFilmTask(task)
+
+		// 添加一条定时任务-定期处理失败请求
+		recoverTask := system.FilmCollectTask{Id: util.GenerateSalt(), Time: 0, Spec: config.EveryWeekSpec,
+			Model: 2, State: false, Remark: "每周日凌晨4点清理一次采集失败的采集记录"}
+		// 添加一条定时任务-影片定时更新
+		cid, err = spider.AddFilmRecoverCron(recoverTask.Spec)
+		// 如果任务添加失败则直接返回错误信息
+		if err != nil {
+			log.Println("失败采集恢复定时任务添加失败: ", err.Error())
+			return
+		}
+		// 将定时任务Id记录到Task中
+		recoverTask.Cid = cid
+		// 如果没有异常则将当前定时任务信息记录到redis中
+		system.SaveFilmTask(recoverTask)
 	}
 
 	// 完成初始化后启动 Cron

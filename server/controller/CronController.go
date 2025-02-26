@@ -140,7 +140,7 @@ func validTaskInfo(t system.FilmCollectTask) error {
 
 // 任务添加参数校验
 func validTaskAddVo(vo system.FilmCronVo) error {
-	if vo.Model != 0 && vo.Model != 1 {
+	if vo.Model != 0 && vo.Model != 1 && vo.Model != 2 {
 		return errors.New("参数校验失败, 未定义的任务类型")
 	}
 	if vo.Time == 0 {

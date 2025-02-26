@@ -69,6 +69,8 @@ const (
 	FilmCrontabKey = "Cron:Task:Film"
 	// DefaultUpdateSpec 每20分钟执行一次
 	DefaultUpdateSpec = "0 */20 * * * ?"
+	// EveryWeekSpec 每周日凌晨4点更新一次
+	EveryWeekSpec = "0 0 4 * * 7"
 	// DefaultUpdateTime 每次采集最近 3 小时内更新的影片
 	DefaultUpdateTime = 3
 )
