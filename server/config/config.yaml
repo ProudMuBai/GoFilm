@@ -1,0 +1,16 @@
+database:
+  driver: mysql
+  host: localhost
+  port: 3306
+  username: gofilm
+  password: 123456
+  dbname: gofilm
+  charset: utf8mb4
+
+redis:
+  host: localhost
+  port: 6379
+  username: root
+  password: redis_664fYf
+  db: 0
+  pool_size: 10
