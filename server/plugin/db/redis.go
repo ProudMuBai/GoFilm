@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"server/config"
 	"time"
@@ -17,11 +18,16 @@ var Cxt = context.Background()
 func InitRedisConn() error {
 
 	Rdb = redis.NewClient(&redis.Options{
-		Addr:        config.RedisAddr,
-		Password:    config.RedisPassword,
-		DB:          config.RedisDBNo,
-		PoolSize:    10,               // 最大连接数
-		DialTimeout: time.Second * 10, // 超时时间
+		//Addr:        config.RedisAddr,
+		//Password:    config.RedisPassword,
+		//DB:          config.RedisDBNo,
+		//PoolSize:    10,               // 最大连接数
+		//DialTimeout: time.Second * 10, // 超时时间
+		Addr:        fmt.Sprintf("%s:%d", config.Config.Redis.Host, config.Config.Redis.Port),
+		Password:    config.Config.Redis.Password,
+		DB:          config.Config.Redis.Db,
+		PoolSize:    config.Config.Redis.PoolSize, // 最大连接数
+		DialTimeout: time.Second * 10,             // 超时时间
 	})
 	// 测试连接是否正常
 	_, err := Rdb.Ping(Cxt).Result()

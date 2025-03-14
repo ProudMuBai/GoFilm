@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -11,9 +12,17 @@ import (
 var Mdb *gorm.DB
 
 func InitMysql() (err error) {
+	dsn := fmt.Sprintf("%s:%s@(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
+		config.Config.Database.Username,
+		config.Config.Database.Password,
+		config.Config.Database.Host,
+		config.Config.Database.Port,
+		config.Config.Database.DBName,
+		config.Config.Database.Charset,
+	)
 	// client 相关属性设置
 	Mdb, err = gorm.Open(mysql.New(mysql.Config{
-		DSN:                       config.MysqlDsn,
+		DSN:                       dsn,
 		DefaultStringSize:         255,   //string类型字段默认长度
 		DisableDatetimePrecision:  true,  // 禁用 datetime 精度
 		DontSupportRenameIndex:    true,  // 重命名索引时采用删除并新建的方式
