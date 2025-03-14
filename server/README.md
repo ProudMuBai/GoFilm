@@ -40,7 +40,8 @@ gorm.io/driver/mysql v1.4.7
 
 ```text
 server                          
-├─ config                       
+├─ config         
+│  ├─ Config.go                 
 │  └─ DataConfig.go             
 ├─ controller                   
 │  ├─ IndexController.go        
@@ -84,7 +85,7 @@ server
 
 ### 本地运行
 
-1.  修改 /server/plugin/db 目录下的 mysql.go 和 redis.go 中的连接地址和用户名密码
+1.  修改 /config/config.yaml 中的 mysql和 redis 中的连接地址和用户名密码
 2. 在 server 目录下执行 `go run main.go`
 
 
