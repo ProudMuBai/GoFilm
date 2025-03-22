@@ -1,5 +1,7 @@
 package system
 
+import "time"
+
 // SearchTagsVO 搜索标签请求参数
 type SearchTagsVO struct {
 	Pid      int64  `json:"pid"`
@@ -33,6 +35,12 @@ type FilmTaskOptions struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
+
+type Option struct {
+	Name  string `json:"name"`
+	Value any    `json:"value"`
+}
+type OptionGroup map[string][]Option
 
 // CollectParams 数据采集所需要的参数
 type CollectParams struct {
@@ -116,9 +124,11 @@ type MovieDetailVo struct {
 }
 
 type RecordRequestVo struct {
-	OriginId    string `json:"originId"`    // 源站点ID
-	CollectType int    `json:"collectType"` // 采集类型
-	Hour        int    `json:"hour"`        // 采集时长
-	Status      int    `json:"status"`      // 状态
-	Paging      *Page  `json:"paging"`      // 分页参数
+	OriginId    string    `json:"originId"`    // 源站点ID
+	CollectType int       `json:"collectType"` // 采集类型
+	Hour        int       `json:"hour"`        // 采集时长
+	Status      int       `json:"status"`      // 状态
+	BeginTime   time.Time `json:"beginTime"`   // 起始时间
+	EndTime     time.Time `json:"endTime"`     // 结束时间
+	Paging      *Page     `json:"paging"`      // 分页参数
 }

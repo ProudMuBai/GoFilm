@@ -73,19 +73,19 @@ func FilmZero() {
 	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "OriginalResource*").Val()...)
 	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "Search*").Val()...)
 	// 删除mysql中留存的检索表
-	var s *SearchInfo
+	var s SearchInfo
 	//db.Mdb.Exec(fmt.Sprintf(`drop table if exists %s`, s.TableName()))
 	// 截断数据表 truncate table users
 	if ExistSearchTable() {
-		db.Mdb.Exec(fmt.Sprintf(`TRUNCATE table %s`, s.TableName()))
+		db.Mdb.Exec(fmt.Sprintf("TRUNCATE table %s", s.TableName()))
 	}
 }
 
 // ResetSearchTable 重置Search表
 func ResetSearchTable() {
 	// 删除 Search 表
-	var s *SearchInfo
-	db.Mdb.Exec(fmt.Sprintf(`drop table if exists %s`, s.TableName()))
+	var s SearchInfo
+	db.Mdb.Exec(fmt.Sprintf("drop table if exists %s", s.TableName()))
 	// 重新创建 Search 表
 	CreateSearchTable()
 }
@@ -230,6 +230,7 @@ func CreateSearchTable() {
 	}
 }
 
+// ExistSearchTable 是否存在Search Table
 func ExistSearchTable() bool {
 	// 1. 判断表中是否存在当前表
 	return db.Mdb.Migrator().HasTable(&SearchInfo{})
@@ -237,7 +238,7 @@ func ExistSearchTable() bool {
 
 // AddSearchIndex search表中数据保存完毕后 将常用字段添加索引提高查询效率
 func AddSearchIndex() {
-	var s *SearchInfo
+	var s SearchInfo
 	tableName := s.TableName()
 	// 添加索引
 	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
@@ -331,8 +332,8 @@ func ExistSearchInfo(mid int64) bool {
 
 // TunCateSearchTable 截断SearchInfo数据表
 func TunCateSearchTable() {
-	var searchInfo *SearchInfo
-	err := db.Mdb.Exec(fmt.Sprint("TRUNCATE TABLE ", searchInfo.TableName())).Error
+	var searchInfo SearchInfo
+	err := db.Mdb.Exec(fmt.Sprintf("TRUNCATE TABLE %s", searchInfo.TableName())).Error
 	if err != nil {
 		log.Println("TRUNCATE TABLE Error: ", err)
 	}

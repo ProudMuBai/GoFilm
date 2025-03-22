@@ -81,7 +81,7 @@ func CollectCrontabInit() {
 		/*
 			如果系统中不存在任何定时任务信息, 则添加默认的定时任务
 			1. 添加一条默认任务, 定时更新所有已启用站点的影片信息
-			2.  添加一条默认任务, 定时处理采集失败的记录
+			2. 添加一条默认任务, 定时处理采集失败的记录
 			3.生成任务信息
 		*/
 		task := system.FilmCollectTask{Id: util.GenerateSalt(), Time: config.DefaultUpdateTime, Spec: config.DefaultUpdateSpec,

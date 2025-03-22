@@ -11,7 +11,7 @@
       <el-table-column prop="remark" label="任务描述" />
       <el-table-column prop="model" align="center" label="任务类型">
         <template #default="scope">
-          <el-tag disable-transitions>{{ scope.row.model == 0 ? '自动更新':'自定义任务'}}</el-tag>
+          <el-tag disable-transitions>{{ scope.row.model == 0 ? '自动更新':scope.row.model == 0 ?'自定义任务':'采集重试'}}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="state" align="center" label="是否启用">
@@ -58,6 +58,9 @@
             <el-tooltip class="box-item" effect="dark" content="只执行指定站点的采集任务" placement="top">
               <el-radio :label="1">自定义更新</el-radio>
             </el-tooltip>
+             <el-tooltip class="box-item" effect="dark" content="失败采集重试处理" placement="top">
+              <el-radio :label="2">采集重试</el-radio>
+            </el-tooltip>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.add.model == 1"  label="资源绑定">
@@ -65,7 +68,7 @@
             <el-option v-for="item in form.options" :key="item.id" :label="item.name" :value="item.id"/>
           </el-select>
         </el-form-item>
-        <el-form-item label="采集时长">
+        <el-form-item v-if="form.add.model != 2" label="采集时长">
           <el-tooltip class="box-item" effect="dark" content="采集最近x小时更新的影片,负数则默认采集所有资源" placement="top">
             <el-input-number v-model="form.add.time" :step="1" step-strictly />
           </el-tooltip>
@@ -94,14 +97,14 @@
           <el-tag  disable-transitions>{{ form.edit.spec }}</el-tag>
         </el-form-item>
         <el-form-item label="任务类型">
-          <el-tag  disable-transitions>{{ form.edit.model == 0?'自动更新':'自定义更新' }}</el-tag>
+          <el-tag  disable-transitions>{{ form.edit.model == 0?'自动更新':form.edit.model == 1?'自定义更新':'采集重试' }}</el-tag>
         </el-form-item>
         <el-form-item v-if="form.edit.model == 1"  label="资源绑定">
           <el-select v-model="form.edit.ids" multiple collapse-tags collapse-tags-tooltip placeholder="Select" style="width: 240px">
             <el-option v-for="item in form.options" :key="item.id" :label="item.name" :value="item.id"/>
           </el-select>
         </el-form-item>
-        <el-form-item label="采集时长">
+        <el-form-item v-if="form.edit.model != 2" label="采集时长">
           <el-tooltip class="box-item" effect="dark" content="采集最近x小时更新的影片,负数则默认采集所有资源" placement="top">
             <el-input-number v-model="form.edit.time" :step="1" step-strictly />
           </el-tooltip>

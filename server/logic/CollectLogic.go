@@ -56,6 +56,21 @@ func (cl *CollectLogic) GetRecordList(params system.RecordRequestVo) []system.Fa
 	return system.FailureRecordList(params)
 }
 
+// GetRecordOptions 获取采集记录筛选参数
+func (cl *CollectLogic) GetRecordOptions() system.OptionGroup {
+	var options = make(system.OptionGroup)
+	// 获取筛选参数, 采集源(ID:name) | 采集类型 | 状态
+	options["collectType"] = []system.Option{{"全部", -1}, {"影片详情", 0}, {"文章", 1}, {"演员", 2}, {"角色", 3}, {"网站", 4}}
+	options["status"] = []system.Option{{"全部", -1}, {"待重试", 1}, {"已处理", 0}}
+	// 获取全部采集站
+	var originOptions = []system.Option{{"全部", ""}}
+	for _, v := range system.GetCollectSourceList() {
+		originOptions = append(originOptions, system.Option{Name: v.Name, Value: v.Id})
+	}
+	options["origin"] = originOptions
+	return options
+}
+
 // CollectRecover 恢复采集
 func (cl *CollectLogic) CollectRecover(id int) error {
 	// 通过ID获取完整的失败记录信息
@@ -68,4 +83,24 @@ func (cl *CollectLogic) CollectRecover(id int) error {
 	go spider.SingleRecoverSpider(fr)
 
 	return nil
+}
+
+// RecoverAll 恢复重新对所有失效记录进行重新采集处理
+func (cl *CollectLogic) RecoverAll() {
+	// 是否进行身份验证, 暂定无需处理
+
+	// 对数据表中的所有待处理记录进行恢复采集
+	go spider.FullRecoverSpider()
+}
+
+// ClearDoneRecord 清除已处理完成的记录信息	(将记录表中已经完成处理的记录删除)
+func (cl *CollectLogic) ClearDoneRecord() {
+	//  <逻辑删除 or 真实删除> 为避免ID中断暂定逻辑删除
+	system.DelDoneRecord()
+}
+
+// ClearAllRecord 清除所有记录信息	(直接对记录表直接进行截断处理)
+func (cl *CollectLogic) ClearAllRecord() {
+	// 重置记录表状态, 删除所有数据并将自增ID归零
+	system.TruncateRecordTable()
 }

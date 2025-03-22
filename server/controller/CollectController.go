@@ -7,6 +7,7 @@ import (
 	"server/model/system"
 	"server/plugin/spider"
 	"strconv"
+	"time"
 )
 
 // ------------------------------------------------------ 影视采集 ------------------------------------------------------
@@ -199,9 +200,29 @@ func FailureRecordList(c *gin.Context) {
 	var err error
 	// 获取筛选条件
 	params.OriginId = c.DefaultQuery("originId", "")
-	params.CollectType, err = strconv.Atoi(c.DefaultQuery("collectType", "-1"))
+	//params.CollectType, err = strconv.Atoi(c.DefaultQuery("collectType", "-1"))
 	params.Hour, err = strconv.Atoi(c.DefaultQuery("hour", "0"))
 	params.Status, err = strconv.Atoi(c.DefaultQuery("status", "-1"))
+
+	// 处理时间参数
+	begin := c.DefaultQuery("beginTime", "")
+	if begin != "" {
+		beginTime, e := time.ParseInLocation(time.DateTime, begin, time.Local)
+		if e != nil {
+			system.Failed("影片分页数据获取失败, 请求参数异常", c)
+			return
+		}
+		params.BeginTime = beginTime
+	}
+	end := c.DefaultQuery("endTime", "")
+	if end != "" {
+		endTime, e := time.ParseInLocation(time.DateTime, end, time.Local)
+		if e != nil {
+			system.Failed("影片分页数据获取失败, 请求参数异常", c)
+			return
+		}
+		params.EndTime = endTime
+	}
 
 	// 分页参数
 	params.Paging.Current, err = strconv.Atoi(c.DefaultQuery("current", "1"))
@@ -215,12 +236,15 @@ func FailureRecordList(c *gin.Context) {
 		params.Paging.PageSize = 10
 	}
 
+	// 条件筛选select选项参数
+	options := logic.CollectL.GetRecordOptions()
+
 	// 获取满足条件的分页数据
 	list := logic.CollectL.GetRecordList(params)
-	system.Success(gin.H{"params": params, "list": list}, "影片分页信息获取成功", c)
+	system.Success(gin.H{"params": params, "list": list, "options": options}, "影片分页信息获取成功", c)
 }
 
-// CollectRecover 对失败的采集进行
+// CollectRecover 对失败的采集进行处理
 func CollectRecover(c *gin.Context) {
 	// 获取记录id
 	id, err := strconv.Atoi(c.DefaultQuery("id", "0"))
@@ -235,4 +259,25 @@ func CollectRecover(c *gin.Context) {
 		return
 	}
 	system.SuccessOnlyMsg("采集重试已开启, 请勿重复操作", c)
+}
+
+// CollectRecoverAll 恢复采集-全量
+func CollectRecoverAll(c *gin.Context) {
+	// 重新采集表中所有失败记录
+	logic.CollectL.RecoverAll()
+	system.SuccessOnlyMsg("恢复任务已成功开启!!!", c)
+}
+
+// ClearDoneRecord 清理已处理的记录
+func ClearDoneRecord(c *gin.Context) {
+	// 删除表中已处理完成的记录
+	logic.CollectL.ClearDoneRecord()
+	system.SuccessOnlyMsg("处理完成的记录信息已删除!!!", c)
+}
+
+// ClearAllRecord 删除所有记录
+func ClearAllRecord(c *gin.Context) {
+	// 截断失败采集记录表
+	logic.CollectL.ClearAllRecord()
+	system.SuccessOnlyMsg("采集异常记录信息已清空!!!", c)
 }

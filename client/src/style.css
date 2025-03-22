@@ -167,7 +167,7 @@ button:focus-visible {
     }
 }
 
-.el-dialog {
+.el-dialog, .el-message-box {
     border-radius: 8px !important;
     background-image: linear-gradient(135deg, #81FFEF 10%, #F067B4 100%) !important;
     --el-text-color-primary:  #5e1e99b8;
@@ -187,6 +187,13 @@ button:focus-visible {
     outline: none !important;
     border: none;
 }
+
+/* messagebox样式 */
+.el-message-box {
+    --el-color-primary: #9b49e7;
+    --el-border-color: #f9f9f9;
+}
+
 
 /*分页插件颜色*/
 .el-popper {

@@ -36,7 +36,7 @@ func CreateUserTable() {
 	// 如果不存在则创建表 并设置自增ID初始值为10000
 	if !ExistUserTable() {
 		err := db.Mdb.AutoMigrate(u)
-		db.Mdb.Exec(fmt.Sprintf("alter table %s auto_Increment=%d", u.TableName(), config.UserIdInitialVal))
+		db.Mdb.Exec(fmt.Sprintf("alter table %s auto_Increment = %s", u.TableName(), config.UserIdInitialVal))
 		if err != nil {
 			log.Println("Create Table SearchInfo Failed: ", err)
 		}

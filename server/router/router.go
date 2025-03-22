@@ -75,6 +75,10 @@ func SetupRouter() *gin.Engine {
 
 			collect.GET(`/record/list`, controller.FailureRecordList)
 			collect.GET(`/record/retry`, controller.CollectRecover)
+			collect.GET(`/record/retry/all`, controller.CollectRecoverAll)
+			collect.GET(`/record/clear/done`, controller.ClearDoneRecord)
+			collect.GET(`/record/clear/all`, controller.ClearAllRecord)
+
 		}
 
 		// 定时任务相关

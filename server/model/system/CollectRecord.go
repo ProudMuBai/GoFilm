@@ -1,6 +1,7 @@
 package system
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"log"
 	"server/config"
@@ -50,15 +51,18 @@ func FailureRecordList(vo RecordRequestVo) []FailureRecord {
 	if vo.OriginId != "" {
 		qw.Where("origin_id = ?", vo.OriginId)
 	}
+	if !vo.BeginTime.IsZero() && !vo.EndTime.IsZero() {
+		qw.Where("created_at BETWEEN ? AND ? ", vo.BeginTime, vo.EndTime)
+	}
 	//if vo.CollectType >= 0 {
 	//	qw.Where("collect_type = ?", vo.CollectType)
 	//}
 	//if vo.Hour != 0 {
 	//	qw.Where("hour = ?", vo.Hour)
 	//}
-	//if vo.Status >= 0 {
-	//	qw.Where("status = ?", vo.Status)
-	//}
+	if vo.Status >= 0 {
+		qw.Where("status = ?", vo.Status)
+	}
 
 	// 获取分页数据
 	GetPage(qw, vo.Paging)
@@ -113,4 +117,20 @@ func RetryRecord(id uint, status int64) error {
 	// 将本次更新成功的记录数据状态修改为成功 0
 	return db.Mdb.Model(&FailureRecord{}).Where("update_at > ?", fr.UpdatedAt).Update("status", 0).Error
 
+}
+
+// DelDoneRecord 删除已处理的记录信息 -- 逻辑删除
+func DelDoneRecord() {
+	if err := db.Mdb.Where("status = ?", 0).Delete(&FailureRecord{}).Error; err != nil {
+		log.Println("Delete failure record failed:", err)
+	}
+}
+
+// TruncateRecordTable  截断 record table
+func TruncateRecordTable() {
+	var s FailureRecord
+	err := db.Mdb.Exec(fmt.Sprintf("TRUNCATE Table %s", s.TableName())).Error
+	if err != nil {
+		log.Println("TRUNCATE TABLE Error: ", err)
+	}
 }

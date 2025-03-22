@@ -18,7 +18,7 @@ func CreateCron() *cron.Cron {
 	return cron.New(cron.WithSeconds())
 }
 
-// AddFilmUpdateCron 添加影片更新定时任务
+// AddFilmUpdateCron 添加 指定站点的影片更新定时任务
 func AddFilmUpdateCron(id, spec string) (cron.EntryID, error) {
 	// 校验 spec 表达式的有效性
 	if err := ValidSpec(spec); err != nil {
@@ -40,7 +40,7 @@ func AddFilmUpdateCron(id, spec string) (cron.EntryID, error) {
 	})
 }
 
-// AddAutoUpdateCron 自动更新定时任务
+// AddAutoUpdateCron 添加 所有已启用站点的影片更新定时任务
 func AddAutoUpdateCron(id, spec string) (cron.EntryID, error) {
 	// 校验 spec 表达式的有效性
 	if err := ValidSpec(spec); err != nil {
