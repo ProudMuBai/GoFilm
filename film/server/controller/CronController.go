@@ -140,17 +140,34 @@ func validTaskInfo(t system.FilmCollectTask) error {
 
 // 任务添加参数校验
 func validTaskAddVo(vo system.FilmCronVo) error {
-	if vo.Model != 0 && vo.Model != 1 {
+	switch vo.Model {
+	case 0:
+		if vo.Time == 0 {
+			return errors.New("参数校验失败, 采集时长不能为零值")
+		}
+	case 1:
+		if vo.Time == 0 {
+			return errors.New("参数校验失败, 采集时长不能为零值")
+		}
+		if vo.Ids == nil || len(vo.Ids) <= 0 {
+			return errors.New("参数校验失败, 自定义更新未绑定任何资源站点")
+		}
+	case 2:
+		break
+	default:
 		return errors.New("参数校验失败, 未定义的任务类型")
 	}
-	if vo.Time == 0 {
-		return errors.New("参数校验失败, 采集时长不能为零值")
-	}
+	//if vo.Model != 0 && vo.Model != 1 && vo.Model != 2 {
+	//	return errors.New("参数校验失败, 未定义的任务类型")
+	//}
+	//if vo.Time == 0 {
+	//	return errors.New("参数校验失败, 采集时长不能为零值")
+	//}
 	if err := spider.ValidSpec(vo.Spec); err != nil {
 		return errors.New(fmt.Sprint("参数校验失败 cron表达式校验失败: ", err.Error()))
 	}
-	if vo.Model == 1 && (vo.Ids == nil || len(vo.Ids) <= 0) {
-		return errors.New("参数校验失败, 自定义更新未绑定任何资源站点")
-	}
+	//if vo.Model == 1 && (vo.Ids == nil || len(vo.Ids) <= 0) {
+	//	return errors.New("参数校验失败, 自定义更新未绑定任何资源站点")
+	//}
 	return nil
 }

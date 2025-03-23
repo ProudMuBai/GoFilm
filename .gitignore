@@ -22,6 +22,8 @@ package-lock.json
 
 .idea/
 .idea
+.vscode
+.vscode/
 # 文件保留路径
 static/
 

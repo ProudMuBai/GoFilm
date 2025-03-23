@@ -69,6 +69,8 @@ const (
 	FilmCrontabKey = "Cron:Task:Film"
 	// DefaultUpdateSpec 每20分钟执行一次
 	DefaultUpdateSpec = "0 */20 * * * ?"
+	// EveryWeekSpec 每周日凌晨4点更新一次
+	EveryWeekSpec = "0 0 4 * * 0"
 	// DefaultUpdateTime 每次采集最近 3 小时内更新的影片
 	DefaultUpdateTime = 3
 )
@@ -82,10 +84,11 @@ const (
 // -------------------------Database Connection Params-----------------------------------
 const (
 	// SearchTableName 存放检索信息的数据表名
-	SearchTableName  = "search"
-	UserTableName    = "users"
-	UserIdInitialVal = 10000
-	FileTableName    = "files"
+	SearchTableName        = "search"
+	UserTableName          = "users"
+	UserIdInitialVal       = 10000
+	FileTableName          = "files"
+	FailureRecordTableName = "failure_records"
 
 	//mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 

@@ -93,7 +93,7 @@ func (jc *JsonCollect) GetFilmDetail(r util.RequestInfo) (list []system.MovieDet
 	//details := system.DetailListInfo{}
 	// 如果返回数据为空则直接结束本次循环
 	if len(r.Resp) <= 0 {
-		err = errors.New("response is empty")
+		err = errors.New(r.Err)
 		return
 	}
 	// 序列化详情数据
@@ -130,6 +130,23 @@ func (jc *JsonCollect) GetSingleFilm(r util.RequestInfo, ids string) {
 	r.Params.Set("pg", "1")
 	r.Params.Set("ids", ids)
 	//
+}
+
+// FailureRecord 记录失败采集的相关信息, 用于后续采集重试操作
+func (jc *JsonCollect) FailureRecord(r util.RequestInfo) {
+	// 记录采集失败时的采集参数
+
+	// 1. 采集站信息 (ID)
+
+	// 2. 采集参数, h 最新x小时影片, pg 页码
+
+	// 3. 将失败信息记录到redis ZSet集合中, score - time | member - data
+
+}
+
+// FilmDetailRetry 影片详情重试机制
+func (jc *JsonCollect) FilmDetailRetry(r util.RequestInfo) {
+
 }
 
 // ------------------------------------------------- XML Collect -------------------------------------------------

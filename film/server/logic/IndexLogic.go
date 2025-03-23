@@ -45,11 +45,26 @@ func (i *IndexLogic) IndexPage() map[string]interface{} {
 	// 2. 提供用于首页展示的顶级分类影片信息, 每分类 14条数据
 	var list []map[string]interface{}
 	for _, c := range tree.Children {
+		// 生成分页参数
 		page := system.Page{PageSize: 14, Current: 1}
-		movies := system.GetMovieListByPid(c.Id, &page)
-		// 获取当前分类的本月热门影片
-		HotMovies := system.GetHotMovieByPid(c.Id, &page)
-		item := map[string]interface{}{"nav": c, "movies": movies, "hot": HotMovies}
+		// 获取最近上映影片和本月热门影片
+		var movies []system.MovieBasicInfo
+		var hotMovies []system.SearchInfo
+		if c.Children != nil {
+			// 如果有子分类, 则通过Pid获取对应影片
+			// 获取当前分类的最新上映影片
+			movies = system.GetMovieListByPid(c.Id, &page)
+			// 获取当前分类的本月热门影片
+			hotMovies = system.GetHotMovieByPid(c.Id, &page)
+		} else {
+			// 如果当前分类为一级分类且没有子分类,则通过Cid获取对应数据
+			// 获取当前分类的最新上映影片
+			movies = system.GetMovieListByCid(c.Id, &page)
+			// 获取当前分类的本月热门影片
+			hotMovies = system.GetHotMovieByCid(c.Id, &page)
+		}
+
+		item := map[string]interface{}{"nav": c, "movies": movies, "hot": hotMovies}
 		list = append(list, item)
 	}
 	Info["content"] = list

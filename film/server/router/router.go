@@ -72,6 +72,13 @@ func SetupRouter() *gin.Engine {
 			//collect.GET(`/star`, controller.CollectFilm)
 			collect.GET(`/del`, controller.FilmSourceDel)
 			collect.GET(`/options`, controller.GetNormalFilmSource)
+
+			collect.GET(`/record/list`, controller.FailureRecordList)
+			collect.GET(`/record/retry`, controller.CollectRecover)
+			collect.GET(`/record/retry/all`, controller.CollectRecoverAll)
+			collect.GET(`/record/clear/done`, controller.ClearDoneRecord)
+			collect.GET(`/record/clear/all`, controller.ClearAllRecord)
+
 		}
 
 		// 定时任务相关
@@ -91,6 +98,7 @@ func SetupRouter() *gin.Engine {
 			spiderRoute.POST(`/start`, controller.StarSpider)
 			spiderRoute.GET(`/zero`, controller.SpiderReset)
 			spiderRoute.GET(`/clear`, controller.ClearAllFilm)
+			spiderRoute.GET(`/update/single`, controller.SingleUpdateSpider)
 			spiderRoute.GET(`/class/cover`, controller.CoverFilmClass)
 		}
 		// filmManage 影视管理

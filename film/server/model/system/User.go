@@ -36,7 +36,7 @@ func CreateUserTable() {
 	// 如果不存在则创建表 并设置自增ID初始值为10000
 	if !ExistUserTable() {
 		err := db.Mdb.AutoMigrate(u)
-		db.Mdb.Exec(fmt.Sprintf("alter table %s auto_Increment=%d", u.TableName(), config.UserIdInitialVal))
+		db.Mdb.Exec(fmt.Sprintf("alter table %s auto_Increment = %d", u.TableName(), config.UserIdInitialVal))
 		if err != nil {
 			log.Println("Create Table SearchInfo Failed: ", err)
 		}
@@ -81,6 +81,7 @@ func GetUserByNameOrEmail(userName string) *User {
 	return u
 }
 
+// GetUserById 通过id获取对应的用户信息
 func GetUserById(id uint) User {
 	var user = User{Model: gorm.Model{ID: id}}
 	db.Mdb.First(&user)

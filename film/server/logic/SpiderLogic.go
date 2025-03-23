@@ -48,6 +48,11 @@ func (sl *SpiderLogic) ZeroCollect(time int) {
 	go spider.StarZero(time)
 }
 
+// SyncCollect 同步采集
+func (sl *SpiderLogic) SyncCollect(ids string) {
+	go spider.CollectSingleFilm(ids)
+}
+
 // FilmClassCollect 影视分类采集, 直接覆盖当前分类数据
 func (sl *SpiderLogic) FilmClassCollect() error {
 	l := system.GetCollectSourceListByGrade(system.MasterCollect)

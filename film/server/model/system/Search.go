@@ -73,19 +73,19 @@ func FilmZero() {
 	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "OriginalResource*").Val()...)
 	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "Search*").Val()...)
 	// 删除mysql中留存的检索表
-	var s *SearchInfo
+	var s SearchInfo
 	//db.Mdb.Exec(fmt.Sprintf(`drop table if exists %s`, s.TableName()))
 	// 截断数据表 truncate table users
 	if ExistSearchTable() {
-		db.Mdb.Exec(fmt.Sprintf(`TRUNCATE table %s`, s.TableName()))
+		db.Mdb.Exec(fmt.Sprintf("TRUNCATE table %s", s.TableName()))
 	}
 }
 
 // ResetSearchTable 重置Search表
 func ResetSearchTable() {
 	// 删除 Search 表
-	var s *SearchInfo
-	db.Mdb.Exec(fmt.Sprintf(`drop table if exists %s`, s.TableName()))
+	var s SearchInfo
+	db.Mdb.Exec(fmt.Sprintf("drop table if exists %s", s.TableName()))
 	// 重新创建 Search 表
 	CreateSearchTable()
 }
@@ -112,7 +112,7 @@ func SaveSearchTag(search SearchInfo) {
 	// 获取redis中的searchMap
 	key := fmt.Sprintf(config.SearchTitle, search.Pid)
 	searchMap := db.Rdb.HGetAll(db.Cxt, key).Val()
-	// 是否存储对应分类的map, 如果不存在则缓存一份
+	// 是否存在对应分类的map, 如果不存在则缓存一份
 	if len(searchMap) == 0 {
 		searchMap = make(map[string]string)
 		searchMap["Category"] = "类型"
@@ -230,6 +230,7 @@ func CreateSearchTable() {
 	}
 }
 
+// ExistSearchTable 是否存在Search Table
 func ExistSearchTable() bool {
 	// 1. 判断表中是否存在当前表
 	return db.Mdb.Migrator().HasTable(&SearchInfo{})
@@ -237,7 +238,7 @@ func ExistSearchTable() bool {
 
 // AddSearchIndex search表中数据保存完毕后 将常用字段添加索引提高查询效率
 func AddSearchIndex() {
-	var s *SearchInfo
+	var s SearchInfo
 	tableName := s.TableName()
 	// 添加索引
 	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
@@ -331,8 +332,8 @@ func ExistSearchInfo(mid int64) bool {
 
 // TunCateSearchTable 截断SearchInfo数据表
 func TunCateSearchTable() {
-	var searchInfo *SearchInfo
-	err := db.Mdb.Exec(fmt.Sprint("TRUNCATE TABLE ", searchInfo.TableName())).Error
+	var searchInfo SearchInfo
+	err := db.Mdb.Exec(fmt.Sprintf("TRUNCATE TABLE %s", searchInfo.TableName())).Error
 	if err != nil {
 		log.Println("TRUNCATE TABLE Error: ", err)
 	}
@@ -434,7 +435,7 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 	return list
 }
 
-// GetHotMovieByPid  获取指定类别的热门影片
+// GetHotMovieByPid  获取Pid指定类别的热门影片
 func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
 	// 返回分页参数
 	//var count int64
@@ -446,6 +447,24 @@ func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
 	// 当前时间偏移一个月
 	t := time.Now().AddDate(0, -1, 0).Unix()
 	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid=? AND update_stamp > ?", pid, t).Order(" year DESC, hits DESC").Find(&s).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	return s
+}
+
+// GetHotMovieByCid 获取当前分类下的热门影片
+func GetHotMovieByCid(cid int64, page *Page) []SearchInfo {
+	// 返回分页参数
+	//var count int64
+	//db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
+	//page.Total = int(count)
+	//page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	// 进行具体的信息查询
+	var s []SearchInfo
+	// 当前时间偏移一个月
+	t := time.Now().AddDate(0, -1, 0).Unix()
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid=? AND update_stamp > ?", cid, t).Order(" year DESC, hits DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}

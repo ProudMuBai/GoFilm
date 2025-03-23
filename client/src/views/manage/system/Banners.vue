@@ -61,7 +61,7 @@
   <el-dialog v-model="data.dialogV.addV" width="680px" title="添加海报">
     <el-form :model="data.banner">
       <el-form-item label="影片ID&emsp;">
-        <el-input v-model="data.banner.mid" placeholder="影片唯一ID"/>
+        <el-input v-model.number="data.banner.mid" placeholder="影片唯一ID"/>
       </el-form-item>
       <el-form-item label="影片名称">
         <el-input v-model="data.banner.name" placeholder="影片名称"/>
@@ -138,7 +138,7 @@
   <el-dialog v-model="data.dialogV.editV" width="680px" title="修改海报信息">
     <el-form :model="data.banner">
       <el-form-item label="影片ID&emsp;">
-        <el-input v-model="data.banner.mid" placeholder="影片唯一ID"/>
+        <el-input v-model.number="data.banner.mid"  placeholder="影片唯一ID"/>
       </el-form-item>
       <el-form-item label="影片名称">
         <el-input v-model="data.banner.name" placeholder="影片名称"/>

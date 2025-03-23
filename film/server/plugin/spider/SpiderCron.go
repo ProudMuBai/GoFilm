@@ -7,7 +7,6 @@ import (
 	"log"
 	"server/config"
 	"server/model/system"
-	"time"
 )
 
 var (
@@ -19,7 +18,7 @@ func CreateCron() *cron.Cron {
 	return cron.New(cron.WithSeconds())
 }
 
-// AddFilmUpdateCron 添加影片更新定时任务
+// AddFilmUpdateCron 添加 指定站点的影片更新定时任务
 func AddFilmUpdateCron(id, spec string) (cron.EntryID, error) {
 	// 校验 spec 表达式的有效性
 	if err := ValidSpec(spec); err != nil {
@@ -41,7 +40,7 @@ func AddFilmUpdateCron(id, spec string) (cron.EntryID, error) {
 	})
 }
 
-// AddAutoUpdateCron 自动更新定时任务
+// AddAutoUpdateCron 添加 所有已启用站点的影片更新定时任务
 func AddAutoUpdateCron(id, spec string) (cron.EntryID, error) {
 	// 校验 spec 表达式的有效性
 	if err := ValidSpec(spec); err != nil {
@@ -61,6 +60,19 @@ func AddAutoUpdateCron(id, spec string) (cron.EntryID, error) {
 	})
 }
 
+// AddFilmRecoverCron 失败采集记录处理
+func AddFilmRecoverCron(spec string) (cron.EntryID, error) {
+	// 校验 spec 表达式的有效性
+	if err := ValidSpec(spec); err != nil {
+		return -99, errors.New(fmt.Sprint("定时任务添加失败,Cron表达式校验失败: ", err.Error()))
+	}
+	return CronCollect.AddFunc(spec, func() {
+		// 执行失败采集记录恢复
+		FullRecoverSpider()
+		log.Println("执行一次失败采集恢复任务")
+	})
+}
+
 // RemoveCron 删除定时任务
 func RemoveCron(id cron.EntryID) {
 	// 通过定时任务EntryID移出对应的定时任务
@@ -69,8 +81,8 @@ func RemoveCron(id cron.EntryID) {
 
 // GetEntryById 返回定时任务的相关时间信息
 func GetEntryById(id cron.EntryID) cron.Entry {
-	log.Printf("%+v\n", CronCollect.Entries())
-	log.Println("", CronCollect.Entry(id).Next.Format(time.DateTime))
+	//log.Printf("CronInfo: %+v\n", CronCollect.Entries())
+	//log.Println("Corn Next Execute Time:", CronCollect.Entry(id).Next.Format(time.DateTime))
 	return CronCollect.Entry(id)
 }
 

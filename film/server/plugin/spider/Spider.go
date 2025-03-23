@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/url"
 	"server/config"
 	"server/model/collect"
@@ -126,7 +127,7 @@ func CollectCategory(s *system.FilmSource) {
 	}
 }
 
-// 影视详情采集
+// collectFilm 影视详情采集 (单一源分页全采集)
 func collectFilm(s *system.FilmSource, h, pg int) {
 	// 生成请求参数
 	r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
@@ -139,6 +140,9 @@ func collectFilm(s *system.FilmSource, h, pg int) {
 	// 执行采集方法 获取影片详情list
 	list, err := spiderCore.GetFilmDetail(r)
 	if err != nil || len(list) <= 0 {
+		// 添加采集失败记录
+		fr := system.FailureRecord{OriginId: s.Id, OriginName: s.Name, Uri: s.Uri, CollectType: system.CollectVideo, PageNumber: pg, Hour: h, Cause: fmt.Sprintln(err), Status: 1}
+		system.SaveFailureRecord(fr)
 		log.Println("GetMovieDetail Error: ", err)
 		return
 	}
@@ -147,6 +151,41 @@ func collectFilm(s *system.FilmSource, h, pg int) {
 	case system.MasterCollect:
 		// 主站点 	保存完整影片详情信息到 redis
 		if err = system.SaveDetails(list); err != nil {
+			log.Println("SaveDetails Error: ", err)
+		}
+		// 如果主站点开启了图片同步, 则将图片url以及对应的mid存入ZSet集合中
+		if s.SyncPictures {
+			if err = system.SaveVirtualPic(conver.ConvertVirtualPicture(list)); err != nil {
+				log.Println("SaveVirtualPic Error: ", err)
+			}
+		}
+	case system.SlaveCollect:
+		// 附属站点	仅保存影片播放信息到redis
+		if err = system.SaveSitePlayList(s.Id, list); err != nil {
+			log.Println("SaveDetails Error: ", err)
+		}
+	}
+}
+
+// collectFilmById 采集指定ID的影片信息
+func collectFilmById(ids string, s *system.FilmSource) {
+	// 生成请求参数
+	r := util.RequestInfo{Uri: s.Uri, Params: url.Values{}}
+	// 设置分页页数
+	r.Params.Set("pg", "1")
+	// 设置影片IDS参数信息
+	r.Params.Set("ids", ids)
+	// 执行采集方法 获取影片详情list
+	list, err := spiderCore.GetFilmDetail(r)
+	if err != nil || len(list) <= 0 {
+		log.Println("GetMovieDetail Error: ", err)
+		return
+	}
+	// 通过采集站 Grade 类型, 执行不同的存储逻辑
+	switch s.Grade {
+	case system.MasterCollect:
+		// 主站点 	保存完整影片详情信息到 redis 和 mysql 中
+		if err = system.SaveDetail(list[0]); err != nil {
 			log.Println("SaveDetails Error: ", err)
 		}
 		// 如果主站点开启了图片同步, 则将图片url以及对应的mid存入ZSet集合中
@@ -191,7 +230,7 @@ func ConcurrentPageSpider(capacity int, s *system.FilmSource, h int, collectFunc
 			}
 		}()
 	}
-	for i := 0; i < config.MAXGoroutine; i++ {
+	for i := 0; i < GoroutineNum; i++ {
 		<-waitCh
 	}
 }
@@ -229,7 +268,7 @@ func AutoCollect(h int) {
 	}
 }
 
-// ClearSpider  删除已采集的影片信息
+// ClearSpider  删除所有已采集的影片信息
 func ClearSpider() {
 	system.FilmZero()
 }
@@ -240,6 +279,80 @@ func StarZero(h int) {
 	system.FilmZero()
 	// 开启自动采集
 	AutoCollect(h)
+}
+
+// CollectSingleFilm 通过影片唯一ID获取影片信息
+func CollectSingleFilm(ids string) {
+	// 获取采集站列表信息
+	fl := system.GetCollectSourceList()
+	// 循环遍历所有采集站信息
+	for _, f := range fl {
+		// 目前仅对主站点进行处理
+		if f.Grade == system.MasterCollect && f.State {
+			collectFilmById(ids, &f)
+			return
+		}
+	}
+}
+
+// ======================================================= 采集拓展内容  =======================================================
+
+// SingleRecoverSpider 二次采集
+func SingleRecoverSpider(fr *system.FailureRecord) {
+	// 通过采集时长范围执行不同的采集方式
+	switch {
+	case fr.Hour > 168 && fr.Hour < 360:
+		// 将此记录之后的所有同类采集记录变更为已重试
+		system.ChangeRecord(fr, 0)
+		// 如果采集的内容是 7~15 天之内更新的内容,则采集此记录之后的所有更新内容
+		// 获取采集参数h, 采集时长变更为 原采集时长 + 采集记录距现在的时长
+		h := fr.Hour + int(math.Ceil(time.Since(fr.CreatedAt).Hours()))
+		// 对当前所有已启用的站点 更新最新 h 小时的内容
+		AutoCollect(h)
+	case fr.Hour < 0, fr.Hour > 4320:
+		// 将此记录状态修改为已重试
+		system.ChangeRecord(fr, 0)
+		// 如果采集的是 最近180天内更新的内容 或全部内容, 则只对当前一条记录进行二次采集
+		s := system.FindCollectSourceById(fr.OriginId)
+		collectFilm(s, fr.Hour, fr.PageNumber)
+	default:
+		// 其余范围,暂不处理
+		break
+	}
+}
+
+// FullRecoverSpider 扫描记录表中的失败记录, 并进行处理 (用于定时任务定期处理失败采集)
+func FullRecoverSpider() {
+	/*
+		获取待处理的记录数据
+		1. 采集时长 > 168h (一周,7天)  状态-1 待处理, | 只获取满足条件的最早的待处理记录
+		2. 采集时长 > 4320h (半年,180天)  状态-1 待处理,   | 获取满足条件的所有数据
+	*/
+	list := system.PendingRecord()
+
+	// 遍历记录信息切片, 针对不同时长进行不同处理
+	for _, fr := range list {
+		switch {
+		case fr.Hour > 0 && fr.Hour < 4320:
+			// 将此记录之后的所有同类采集记录变更为已重试
+			system.ChangeRecord(&fr, 0)
+			// 如果采集的内容是 0~180 天之内更新的内容,则采集此记录之后的所有更新内容
+			// 获取采集参数h, 采集时长变更为 原采集时长 + 采集记录距现在的时长
+			h := fr.Hour + int(math.Ceil(time.Since(fr.CreatedAt).Hours()))
+			// 对当前所有已启用的站点 更新最新 h 小时的内容
+			AutoCollect(h)
+		case fr.Hour < 0, fr.Hour > 4320:
+			// 将此记录状态修改为已重试
+			system.ChangeRecord(&fr, 0)
+			// 如果采集的是 180天之前更新的内容 或全部内容, 则只对当前一条记录进行二次采集
+			s := system.FindCollectSourceById(fr.OriginId)
+			collectFilm(s, fr.Hour, fr.PageNumber)
+		default:
+			// 其余范围,暂不处理
+			break
+		}
+	}
+
 }
 
 // ======================================================= 公共方法  =======================================================

@@ -435,7 +435,7 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 	return list
 }
 
-// GetHotMovieByPid  获取指定类别的热门影片
+// GetHotMovieByPid  获取Pid指定类别的热门影片
 func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
 	// 返回分页参数
 	//var count int64
@@ -447,6 +447,24 @@ func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
 	// 当前时间偏移一个月
 	t := time.Now().AddDate(0, -1, 0).Unix()
 	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid=? AND update_stamp > ?", pid, t).Order(" year DESC, hits DESC").Find(&s).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	return s
+}
+
+// GetHotMovieByCid 获取当前分类下的热门影片
+func GetHotMovieByCid(cid int64, page *Page) []SearchInfo {
+	// 返回分页参数
+	//var count int64
+	//db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
+	//page.Total = int(count)
+	//page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	// 进行具体的信息查询
+	var s []SearchInfo
+	// 当前时间偏移一个月
+	t := time.Now().AddDate(0, -1, 0).Unix()
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid=? AND update_stamp > ?", cid, t).Order(" year DESC, hits DESC").Find(&s).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
