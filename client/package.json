@@ -23,8 +23,8 @@
     "typescript": "^4.9.3",
     "unplugin-auto-import": "^0.15.1",
     "unplugin-vue-components": "^0.24.1",
-    "vite": "^4.2.0",
-    "vite-plugin-ssr": "^0.4.109",
+    "vite": "^7.3.1",
+    "vite-plugin-ssr": "^0.4.85",
     "vue-router": "^4.1.6",
     "vue-tsc": "^1.2.0"
   }

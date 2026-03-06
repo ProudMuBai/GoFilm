@@ -86,13 +86,15 @@ const (
 	// SearchTableName 存放检索信息的数据表名
 	SearchTableName        = "search"
 	UserTableName          = "users"
+	MovieDetailName        = "movie_details"
+	SlaveMovieInfo         = "slave_infos"
 	UserIdInitialVal       = 10000
 	FileTableName          = "files"
 	FailureRecordTableName = "failure_records"
 
 	//mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 
-	MysqlDsn = "root:root@(192.168.20.5:3306)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
+	MysqlDsn = "root:root@(192.168.20.5:3601)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
 	//MysqlDsn = "root:MuBai0916$@(113.44.5.201:3610)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
 
 	// MysqlDsn docker compose 环境下的链接信息 mysql:3306 为 docker compose 中 mysql服务对应的网络名称和端口
@@ -108,7 +110,7 @@ const (
 	//RedisPassword = `MuBai0916$`
 	//RedisDBNo     = 0
 
-	RedisAddr     = `192.168.20.5:6379`
+	RedisAddr     = `192.168.20.5:3602`
 	RedisPassword = `root`
 	RedisDBNo     = 0
 

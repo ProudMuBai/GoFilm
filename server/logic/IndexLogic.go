@@ -1,14 +1,13 @@
 package logic
 
 import (
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"regexp"
 	"server/config"
 	"server/model/system"
-	"server/plugin/db"
+	"server/plugin/common/util"
 	"server/plugin/spider"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 /*
@@ -82,16 +81,13 @@ func (i *IndexLogic) ClearIndexCache() {
 }
 
 // GetFilmDetail 影片详情信息页面处理
-func (i *IndexLogic) GetFilmDetail(id int) system.MovieDetailVo {
-	// 通过Id 获取影片search信息
-	search := system.SearchInfo{}
-	db.Mdb.Where("mid", id).First(&search)
-	// 获取redis中的完整影视信息 MovieDetail:Cid11:Id24676
-	movieDetail := system.GetDetailByKey(fmt.Sprintf(config.MovieDetailKey, search.Cid, search.Mid))
-	var res = system.MovieDetailVo{MovieDetail: movieDetail}
+func (i *IndexLogic) GetFilmDetail(id int64) system.MovieDetailVo {
+	// 通过mid获取影片的详情信息
+	detail := system.GetDetailByMid(id)
 	//查找其他站点是否存在影片对应的播放源
-	res.List = multipleSource(&movieDetail)
-	return res
+	ml := multipleSource(&detail)
+	// 转换组合主次站点信息
+	return system.ConvertMovieDetailVo(detail, ml)
 }
 
 // GetCategoryInfo 分类信息获取, 组装导航栏需要的信息
@@ -135,13 +131,9 @@ func (i *IndexLogic) GetNavCategory() []*system.Category {
 // SearchFilmInfo 获取关键字匹配的影片信息
 func (i *IndexLogic) SearchFilmInfo(key string, page *system.Page) []system.MovieBasicInfo {
 	// 1. 从mysql中获取满足条件的数据, 每页10条
-	sl := system.SearchFilmKeyword(key, page)
-	// 2. 获取redis中的basicMovieInfo信息
-	var bl []system.MovieBasicInfo
-	for _, s := range sl {
-		bl = append(bl, system.GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, s.Cid, s.Mid)))
-	}
-	return bl
+	ids := system.SearchFilmKeyword(key, page)
+	// 2. 通过ids获取对应的影片信息
+	return system.GetBasicInfoByIds(ids)
 }
 
 // GetFilmCategory 根据Pid或Cid获取指定的分页数据
@@ -169,7 +161,7 @@ func (i *IndexLogic) GetPidCategory(pid int64) *system.CategoryTree {
 }
 
 // RelateMovie 根据当前影片信息匹配相关的影片
-func (i *IndexLogic) RelateMovie(detail system.MovieDetail, page *system.Page) []system.MovieBasicInfo {
+func (i *IndexLogic) RelateMovie(detail system.MovieDetailVo, page *system.Page) []system.MovieBasicInfo {
 	/*
 		根据当前影片信息匹配相关的影片
 		1. 分类Cid,
@@ -203,53 +195,40 @@ func (i *IndexLogic) SearchTags(pid int64) map[string]interface{} {
 func multipleSource(detail *system.MovieDetail) []system.PlayLinkVo {
 	// 生成多站点的播放源信息
 	master := system.GetCollectSourceListByGrade(system.MasterCollect)
-	var playList = []system.PlayLinkVo{{master[0].Id, master[0].Name, detail.PlayList[0]}}
-
-	// 整合多播放源, 初始化存储key map
-	names := make(map[string]int)
-	// 1. 判断detail的dbId是否存在, 存在则添加到names中作为匹配条件
-	if detail.DbId > 0 {
-		names[system.GenerateHashKey(detail.DbId)] = 0
-	}
-	// 2. 对name进行去除特殊格式处理
-	names[system.GenerateHashKey(detail.Name)] = 0
-	// 3. 对包含第一季的name进行处理
-	names[system.GenerateHashKey(regexp.MustCompile(`第一季$`).ReplaceAllString(detail.Name, ""))] = 0
-
-	// 4. 将subtitle进行切分,放入names中
-	if len(detail.SubTitle) > 0 && strings.Contains(detail.SubTitle, ",") {
-		for _, v := range strings.Split(detail.SubTitle, ",") {
-			names[system.GenerateHashKey(v)] = 0
+	var l = []system.PlayLinkVo{{master[0].Id, master[0].Name, detail.PlayList[0]}}
+	// 通过 name 以及 subTitle  生成 hash id  和 dbID 匹配次级站点播放信息
+	// 使用map 防止清洗后的id重复
+	idMap := make(map[string]int)
+	idMap[system.GenerateHashKey(detail.Mid)] = 0
+	// 将subTitle进行切割
+	if len(detail.SubTitle) > 0 {
+		for _, s := range strings.Split(util.FormatSpecialChar(detail.SubTitle), ",") {
+			idMap[system.GenerateHashKey(s)] = 0
 		}
 	}
-	if len(detail.SubTitle) > 0 && strings.Contains(detail.SubTitle, "/") {
-		for _, v := range strings.Split(detail.SubTitle, "/") {
-			names[system.GenerateHashKey(v)] = 0
-		}
+	// 遍历idMqp整合ids
+	var ids []string
+	for id, _ := range idMap {
+		ids = append(ids, id)
 	}
-	// 遍历所有附属站点列表
-	sc := system.GetCollectSourceListByGrade(system.SlaveCollect)
-	for _, s := range sc {
-		for k, _ := range names {
-			pl := system.GetMultiplePlay(s.Id, k)
-			if len(pl) > 0 {
-				// 如果当前站点已经匹配到数据则直接退出当前循环
-				//detail.PlayList = append(detail.PlayList, pl)
-				playList = append(playList, system.PlayLinkVo{Id: s.Id, Name: s.Name, LinkList: pl})
-				break
-			}
-		}
+	// 获取附属站点的基本信息
+	sMap := make(map[string]system.FilmSource)
+	for _, c := range system.GetCollectSourceListByGrade(system.SlaveCollect) {
+		sMap[c.Id] = c
 	}
-
-	return playList
+	// 获取满足条件的次级站点播放数据
+	for _, s := range system.GetMultiplePlay(ids, detail.DbId) {
+		l = append(l, system.PlayLinkVo{Id: s.Mid, Name: sMap[s.Mid].Name, LinkList: s.PlayList[0]})
+	}
+	return l
 }
 
 // GetFilmsByTags 通过searchTag 返回满足条件的分页影片信息
 func (i *IndexLogic) GetFilmsByTags(st system.SearchTagsVO, page *system.Page) []system.MovieBasicInfo {
 	// 获取满足条件的影片id 列表
-	sl := system.GetSearchInfosByTags(st, page)
+	ids := system.GetSearchInfosByTags(st, page)
 	// 通过key 获取对应影片的基本信息
-	return system.GetBasicInfoBySearchInfos(sl...)
+	return system.GetBasicInfoByIds(ids)
 }
 
 // GetFilmClassify 通过Pid返回当前所属分类下的首页展示数据

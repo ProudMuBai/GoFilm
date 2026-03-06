@@ -10,6 +10,10 @@ func TableInIt() {
 	system.InitAdminAccount()
 	// 创建 Search Table
 	system.CreateSearchTable()
+	// 创建 MovieDetails Table
+	system.CreateMovieDetailTable()
+	// 创建 SlaveMovieInfo Table
+	system.CreateSlaveMovieInfoTable()
 	// 创建图片信息管理表
 	system.CreateFileTable()
 	// 创建采集失效记录表

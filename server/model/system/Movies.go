@@ -1,16 +1,21 @@
 package system
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"hash/fnv"
+	"log"
 	"regexp"
 	"server/config"
+	"server/plugin/common/util"
 	"server/plugin/db"
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Movie 影片基本信息
@@ -23,31 +28,6 @@ type Movie struct {
 	Time     string `json:"time"`     // 更新时间
 	Remarks  string `json:"remarks"`  // 备注 | 清晰度
 	PlayFrom string `json:"playFrom"` // 播放来源
-}
-
-// MovieDescriptor 影片详情介绍信息
-type MovieDescriptor struct {
-	SubTitle    string `json:"subTitle"`    //子标题
-	CName       string `json:"cName"`       //分类名称
-	EnName      string `json:"enName"`      //英文名
-	Initial     string `json:"initial"`     //首字母
-	ClassTag    string `json:"classTag"`    //分类标签
-	Actor       string `json:"actor"`       //主演
-	Director    string `json:"director"`    //导演
-	Writer      string `json:"writer"`      //作者
-	Blurb       string `json:"blurb"`       //简介, 残缺,不建议使用
-	Remarks     string `json:"remarks"`     // 更新情况
-	ReleaseDate string `json:"releaseDate"` //上映时间
-	Area        string `json:"area"`        // 地区
-	Language    string `json:"language"`    //语言
-	Year        string `json:"year"`        //年份
-	State       string `json:"state"`       //影片状态 正片|预告...
-	UpdateTime  string `json:"updateTime"`  //更新时间
-	AddTime     int64  `json:"addTime"`     //资源添加时间戳
-	DbId        int64  `json:"dbId"`        //豆瓣id
-	DbScore     string `json:"dbScore"`     // 豆瓣评分
-	Hits        int64  `json:"hits"`        //影片热度
-	Content     string `json:"content"`     //内容简介
 }
 
 // MovieBasicInfo 影片基本信息
@@ -68,203 +48,420 @@ type MovieBasicInfo struct {
 	Year     string `json:"year"`     //年份
 }
 
-// MovieUrlInfo 影视资源url信息
-type MovieUrlInfo struct {
+// PlayItem 影视资源url信息
+type PlayItem struct {
 	Episode string `json:"episode"` // 集数
 	Link    string `json:"link"`    // 播放地址
 }
 
+// MoviePlayList 播放列表信息, 二维切片
+type MoviePlayList [][]PlayItem
+
+// FromList 播放来源切片
+type FromList []string
+
 // MovieDetail 影片详情信息
 type MovieDetail struct {
-	Id       int64    `json:"id"`       //影片Id
-	Cid      int64    `json:"cid"`      //分类ID
-	Pid      int64    `json:"pid"`      //一级分类ID
-	Name     string   `json:"name"`     //片名
-	Picture  string   `json:"picture"`  //简介图片
-	PlayFrom []string `json:"playFrom"` // 播放来源
-	DownFrom string   `json:"DownFrom"` //下载来源 例: http
+	Id          int64    `json:"id" gorm:"primaryKey"`      //影片Id
+	Mid         int64    `json:"mid"`                       //影片Id
+	Cid         int64    `json:"cid"`                       //分类ID
+	Pid         int64    `json:"pid"`                       //一级分类ID
+	Name        string   `json:"name"`                      //片名
+	Picture     string   `json:"picture"`                   //简介图片
+	SubTitle    string   `json:"subTitle"`                  //子标题
+	CName       string   `json:"cName"`                     //分类名称
+	EnName      string   `json:"enName"`                    //英文名
+	Initial     string   `json:"initial"`                   //首字母
+	ClassTag    string   `json:"classTag"`                  //分类标签
+	Actor       string   `json:"actor"`                     //主演
+	Director    string   `json:"director"`                  //导演
+	Writer      string   `json:"writer"`                    //作者
+	Blurb       string   `json:"blurb"`                     //简介, 残缺,不建议使用
+	Remarks     string   `json:"remarks"`                   // 更新情况
+	ReleaseDate string   `json:"releaseDate"`               //上映时间
+	Area        string   `json:"area"`                      // 地区
+	Language    string   `json:"language"`                  //语言
+	Year        string   `json:"year"`                      //年份
+	State       string   `json:"state"`                     //影片状态 正片|预告...
+	UpdateTime  string   `json:"updateTime"`                //更新时间
+	AddTime     int64    `json:"addTime"`                   //资源添加时间戳
+	DbId        int64    `json:"dbId"`                      //豆瓣id
+	DbScore     string   `json:"dbScore"`                   // 豆瓣评分
+	Hits        int64    `json:"hits"`                      //影片热度
+	Content     string   `json:"content"`                   //内容简介
+	PlayFrom    FromList `json:"playFrom" gorm:"type:json"` // 播放来源
+	DownFrom    string   `json:"DownFrom"`                  //下载来源 例: http
 	//PlaySeparator   string              `json:"playSeparator"` // 播放信息分隔符
-	PlayList        [][]MovieUrlInfo    `json:"playList"`     //播放地址url
-	DownloadList    [][]MovieUrlInfo    `json:"downloadList"` // 下载url地址
-	MovieDescriptor `json:"descriptor"` //影片描述信息
+	PlayList     MoviePlayList `json:"playList" gorm:"type:json"`     //播放地址url
+	DownloadList MoviePlayList `json:"downloadList" gorm:"type:json"` // 下载url地址
 }
 
-// ===================================Redis数据交互========================================================
+type SlaveMovieInfo struct {
+	Id  int64  `json:"id" gorm:"primaryKey"` // 自增ID
+	Sid string `json:"sid"`                  // 采集站标识ID
+	//Name      string  `json:"name"`	// 影片名称
+	Mid      string        `json:"mid"`  // 归一匹配ID
+	DbId     int64         `json:"dbId"` //豆瓣ID 可能为空
+	PlayList MoviePlayList `json:"playList" gorm:"type:json"`
+}
+
+// TableName 设置MovieDetail表的表名
+func (m *MovieDetail) TableName() string {
+	return config.MovieDetailName
+}
+
+// TableName 设置slaveMovieInfo 表名
+func (m *SlaveMovieInfo) TableName() string {
+	return config.SlaveMovieInfo
+}
+
+// CreateMovieDetailTable 创建存储检索信息的数据表
+func CreateMovieDetailTable() {
+	// 如果不存在则创建表 并设置自增ID初始值为10000
+	if !ExistMovieDetailTable() {
+		err := db.Mdb.AutoMigrate(&MovieDetail{})
+		if err != nil {
+			log.Println("Create Table MovieDetailsTable Failed: ", err)
+		}
+	}
+}
+
+// ExistMovieDetailTable 检测是否存在 MovieDetails表
+func ExistMovieDetailTable() bool {
+	return db.Mdb.Migrator().HasTable(&MovieDetail{})
+}
+
+// CreateSlaveMovieInfoTable 创建存储检索信息的数据表
+func CreateSlaveMovieInfoTable() {
+	// 如果不存在则创建表 并设置自增ID初始值为10000
+	if !ExistSlaveMovieInfoTable() {
+		err := db.Mdb.AutoMigrate(&SlaveMovieInfo{})
+		if err != nil {
+			log.Println("Create Table SlaveMovieInfoTable Failed: ", err)
+		}
+	}
+}
+
+// ExistSlaveMovieInfoTable 检测是否存在 MovieDetails表
+func ExistSlaveMovieInfoTable() bool {
+	return db.Mdb.Migrator().HasTable(&SlaveMovieInfo{})
+}
+
+// =================================== column序列化 接口========================================================
+
+func (m *MoviePlayList) Scan(value interface{}) error {
+	if value == nil {
+		*m = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("MoviePlayList serialization failed, value is not []byte")
+	}
+	return json.Unmarshal(b, m)
+}
+
+func (m MoviePlayList) Value() (driver.Value, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return json.Marshal(m)
+}
+
+func (fl *FromList) Scan(value interface{}) error {
+	if value == nil {
+		*fl = nil
+		return nil
+	}
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("FromList serialization failed, value is not []byte")
+	}
+	return json.Unmarshal(b, fl)
+}
+
+func (fl FromList) Value() (driver.Value, error) {
+	if fl == nil {
+		return nil, nil
+	}
+	return json.Marshal(fl)
+}
+
+// =================================== Spider数据处理 ========================================================
 
 // SaveDetails 保存影片详情信息到redis中 格式: MovieDetail:Cid?:Id?
-func SaveDetails(list []MovieDetail) (err error) {
-	// 遍历list中的信息
-	for _, detail := range list {
-		// 序列化影片详情信息
-		data, _ := json.Marshal(detail)
-		// 1. 原使用Zset存储, 但是不便于单个检索 db.Rdb.ZAdd(db.Cxt, fmt.Sprintf("%s:Cid%d", config.MovieDetailKey, detail.Cid), redis.Z{Score: float64(detail.Id), Member: member}).Err()
-		// 改为普通 k v 存储, k-> id关键字, v json序列化的结果
-		err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.FilmExpired).Err()
-		// 2. 同步保存简略信息到redis中
-		SaveMovieBasicInfo(detail)
-		// 3. 保存 Search tag redis中
-		if err == nil {
-			// 转换 detail信息
-			searchInfo := ConvertSearchInfo(detail)
-			// 只存储用于检索对应影片的关键字信息
-			SaveSearchTag(searchInfo)
-		}
-
+func SaveDetails(ml []MovieDetail) (err error) {
+	// 1. 先将详情信息存入 MovieDetail表中
+	if err = db.Mdb.Create(&ml).Error; err != nil {
+		log.Println("影片详情信息保存失败: ", err)
 	}
-	// 保存一份search信息到mysql, 批量存储
-	BatchSaveSearchInfo(list)
+	// 2. 将详情信息转化为SearchInfo并保存
+	BatchSaveSearchInfo(ml)
 	return err
 }
 
 // SaveDetail 保存单部影片信息
-func SaveDetail(detail MovieDetail) (err error) {
-	// 序列化影片详情信息
-	data, _ := json.Marshal(detail)
-	// 保存影片信息到Redis
-	err = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieDetailKey, detail.Cid, detail.Id), data, config.FilmExpired).Err()
-	if err != nil {
-		return err
-	}
-	// 2. 同步保存简略信息到redis中
-	SaveMovieBasicInfo(detail)
-	// 转换 detail信息
-	searchInfo := ConvertSearchInfo(detail)
-	// 3. 保存 Search tag redis中
-	// 只存储用于检索对应影片的关键字信息
+func SaveDetail(m MovieDetail) (err error) {
+	// 1. 转换 detail信息 searchInfo
+	searchInfo := ConvertSearchInfo(m)
+	// 2. 保存 Search tag 到 redis中 只存储用于检索对应影片的关键字信息
 	SaveSearchTag(searchInfo)
+	// 3. 将影片详情信息保存到 MovieDetails表中
+
+	// 4. 先查询数据库中是否存在对应记录 ,如果不存在对应记录则 保存当前记录
+	tx := db.Mdb.Begin()
+	if !ExistMovieDetailByMid(m.Mid) {
+		// 执行插入操作
+		if err := tx.Create(&m).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	} else {
+		// 只对会变化的字段进行更新
+		err := tx.Model(&MovieDetail{}).Where("mid", m.Mid).Updates(MovieDetail{PlayList: m.PlayList, DownloadList: m.DownloadList,
+			Remarks: m.Remarks, State: m.State, UpdateTime: m.UpdateTime, AddTime: m.AddTime, DbScore: m.DbScore, Hits: m.Hits}).Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	// 提交事务
+	tx.Commit()
+
 	// 保存影片检索信息到searchTable
 	err = SaveSearchInfo(searchInfo)
 	return err
+
 }
 
-// SaveMovieBasicInfo 摘取影片的详情部分信息转存为影视基本信息
-func SaveMovieBasicInfo(detail MovieDetail) {
-	basicInfo := MovieBasicInfo{
-		Id:       detail.Id,
-		Cid:      detail.Cid,
-		Pid:      detail.Pid,
-		Name:     detail.Name,
-		SubTitle: detail.SubTitle,
-		CName:    detail.CName,
-		State:    detail.State,
-		Picture:  detail.Picture,
-		Actor:    detail.Actor,
-		Director: detail.Director,
-		Blurb:    detail.Blurb,
-		Remarks:  detail.Remarks,
-		Area:     detail.Area,
-		Year:     detail.Year,
-	}
-	data, _ := json.Marshal(basicInfo)
-	_ = db.Rdb.Set(db.Cxt, fmt.Sprintf(config.MovieBasicInfoKey, detail.Cid, detail.Id), data, config.FilmExpired).Err()
+// ExistMovieDetailByMid 通过mid判断是否存在对应信息
+func ExistMovieDetailByMid(mid int64) bool {
+	var count int64
+	db.Mdb.Model(&SearchInfo{}).Where("mid", mid).Count(&count)
+	return count > 0
 }
 
 // SaveSitePlayList 仅保存播放url列表信息到当前站点
-func SaveSitePlayList(id string, list []MovieDetail) (err error) {
-	// 如果list 为空则直接返回
-	if len(list) <= 0 {
+func SaveSitePlayList(id string, ml []MovieDetail) (err error) {
+	// 如果ml 为空则直接返回
+	if len(ml) <= 0 {
 		return nil
 	}
-	res := make(map[string]string)
-	for _, d := range list {
-		if len(d.PlayList) > 0 {
-			data, _ := json.Marshal(d.PlayList[0])
-			// 不保存电影解说类
-			if strings.Contains(d.CName, "解说") {
-				continue
+	var sl []SlaveMovieInfo
+	for _, m := range ml {
+		s := SlaveMovieInfo{Sid: id, Mid: GenerateHashKey(m.Name), DbId: m.DbId, PlayList: m.PlayList}
+		// 查询表中是否已经存在对应的数据记录, 如果有则更新, 无则追加到切片中统一处理
+		if id := ExistSlaveMovieInfo(s); id <= 0 {
+			if err = db.Mdb.Model(&s).Where("id", id).Updates(s).Error; err != nil {
+				log.Println("附属站点影片信息更新失败: ", err)
 			}
-			// 如果DbId不为0, 则以dbID作为key进行hash额外存储一次
-			if d.DbId != 0 {
-				res[GenerateHashKey(d.DbId)] = string(data)
-			}
-			res[GenerateHashKey(d.Name)] = string(data)
+			continue
 		}
+		sl = append(sl, s)
 	}
-	// 如果结果不为空,则将数据保存到redis中
-	if len(res) > 0 {
-		// 保存形式 key: MultipleSource:siteName Hash[hash(movieName)]list
-		err = db.Rdb.HMSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, id), res).Err()
+	// 将处理后的结果存储到 SalveMovieInfo表中
+	if err = db.Mdb.Create(&sl).Error; err != nil {
+		log.Println("附属站点影片信息保存失败: ", err)
 	}
 	return
 }
 
-// BatchSaveSearchInfo 批量保存Search信息
-func BatchSaveSearchInfo(list []MovieDetail) {
-	var infoList []SearchInfo
-	for _, v := range list {
-		infoList = append(infoList, ConvertSearchInfo(v))
+// ExistSlaveMovieInfo 查询对应记录, 如果存在则返还id, 不存在则返还 -1
+func ExistSlaveMovieInfo(s SlaveMovieInfo) int64 {
+	var id int64
+	if err := db.Mdb.Model(&SlaveMovieInfo{}).Select("id").Where("sid = ? AND (mid = ? OR db_id = ?)", s.Sid, s.Mid, s.DbId).First(&id).Error; err != nil {
+		// 如果错误类型为gorm.ErrRecordNotFound, 直接返回 0
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0
+		}
+		// 如果是其他异常则输出异常信息并返回 -1
+		log.Println("Find SlaveMovieInfo Failed: ", err)
+		return -1
 	}
-	// 将检索信息存入redis中做一次转存
-	RdbSaveSearchInfo(infoList)
+	return id
 }
 
+// ============================ APi接口 ==================================================
+
+// GetDetailByMid 获取影片对应的详情信息
+func GetDetailByMid(mid int64) MovieDetail {
+	var d MovieDetail
+	// 查询mid对应的影片详情信息, 只查询部分字段
+	if err := db.Mdb.Model(&MovieDetail{}).Where("mid = ?", mid).First(&d).Error; err != nil {
+		log.Println("Find MovieDetail Failed: ", err)
+		return d
+	}
+	// 执行本地图片匹配
+	ReplaceDetailPic(&d)
+	return d
+}
+
+// GetBasicInfoByMid 获取Id对应的影片基本信息
+func GetBasicInfoByMid(mid int64) MovieBasicInfo {
+	// 通过id查询满足条件的影片基本信息
+	var basic MovieBasicInfo
+	var d MovieDetail
+	// 查询mid对应的影片详情信息, 只查询部分字段
+	if err := db.Mdb.Model(&MovieDetail{}).Select("id, mid, cid, pid, name, sub_title, c_name, state, picture, actor, director,"+
+		" content, remarks, area, year").Where("mid = ?", mid).First(&d).Error; err != nil {
+		log.Println("Find MovieDetail Failed: ", err)
+		return basic
+	}
+	// 匹配本地图片
+	ReplaceDetailPic(&d)
+	// 将 MovieDetail转化为 BasicInfo
+	basic = ConvertBasicInfo(d)
+	return basic
+}
+
+// GetBasicInfoByIds 通过searchInfo 获取影片的基本信息
+func GetBasicInfoByIds(ids []int64) []MovieBasicInfo {
+	var ml []MovieDetail
+	var l []MovieBasicInfo
+	// 使用in查询, 一次性拿到满足条件的数据
+	if err := db.Mdb.Model(&MovieDetail{}).Select("id, mid, cid, pid, name, sub_title, c_name, state, picture, actor, director,"+
+		" content, remarks, area, year").Where("mid IN (?)", ids).Find(&ml).Error; err != nil {
+		log.Println("BatchFind BasicInfo Failed: ", err)
+		return nil
+	}
+	// 将查询到的结果批量转化为BasicInfo
+	for _, m := range ml {
+		// 执行本地图片匹配
+		ReplaceDetailPic(&m)
+		l = append(l, ConvertBasicInfo(m))
+	}
+	return l
+}
+
+// GetMovieListByPid  通过Pid 分类ID 获取对应影片的数据信息
+func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
+	// 返回分页参数
+	var count int64
+	db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
+	page.Total = int(count)
+	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	// 通过Search表查询
+	var ids []int64
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Select("mid").Where("pid", pid).Order("update_stamp DESC").Find(&ids).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	// 通过ids查询影片基本信息并返回
+	return GetBasicInfoByIds(ids)
+}
+
+// GetMovieListByCid 通过Cid查找对应的影片分页数据, 不适合GetMovieListByPid 糅合
+func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
+	// 返回分页参数
+	var count int64
+	db.Mdb.Model(&SearchInfo{}).Where("cid", cid).Count(&count)
+	page.Total = int(count)
+	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
+	// 进行具体的信息查询
+	var ids []int64
+	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Select("mid").Where("cid", cid).Order("update_stamp DESC").Find(&ids).Error; err != nil {
+		log.Println(err)
+		return nil
+	}
+	// 通过影片ID去redis中获取id对应数据信息
+	return GetBasicInfoByIds(ids)
+}
+
+// GetRelateMovieBasicInfo GetRelateMovie 根据 name, cid, pid, classtag 获取相关影片
+func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
+	/*
+		根据当前影片信息匹配相关的影片
+		1. 分类Cid,
+		2. 如果影片名称含有第x季 则根据影片名进行模糊匹配
+		3. class_tag 剧情内容匹配, 切分后使用 or 进行匹配
+		4. area 地区
+		5. 语言 Language
+	*/
+	// sql 拼接查询条件
+	sql := ""
+
+	// 优先进行名称相似匹配, 先对影片名称进行精简, 只保留主体用于匹配同系列影片
+	name := util.CleanFilmName(search.Name)
+	sql = fmt.Sprintf(`select mid from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
+
+	// 添加其他相似匹配规则 同属二级分类
+	sql = fmt.Sprintf(`%s (select * from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
+	// 根据剧情标签查找相似影片, classTag 使用的分隔符为 , | /首先去除 classTag 中包含的所有空格
+	search.ClassTag = strings.ReplaceAll(search.ClassTag, " ", "")
+	// 如果 classTag 中包含分割符则进行拆分匹配
+	cl := strings.Split(util.FormatSpecialChar(search.ClassTag), ",")
+	if len(cl) > 0 {
+		s := "("
+		for _, c := range cl {
+			s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, c)
+		}
+		sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
+	} else {
+		sql = fmt.Sprintf(`%s class_tag like "%%%s%%"`, sql, search.ClassTag)
+	}
+	// 除名称外的相似影片使用随机排序
+	//sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
+	sql = fmt.Sprintf("%s AND search.deleted_at IS NULL limit %d,%d)", sql, page.Current, page.PageSize)
+	// 条件拼接完成后加上limit参数
+	sql = fmt.Sprintf("(%s)  limit %d,%d", sql, page.Current, page.PageSize)
+	// 执行sql, 获取满足条件的影片mid切片
+	var ids []int64
+	db.Mdb.Raw(sql).Scan(&ids)
+	// 通过 ids 获取影片基本信息,并返回
+	return GetBasicInfoByIds(ids)
+}
+
+// GetMultiplePlay 通过影片名的ID值匹配播放源, 不区分站点
+func GetMultiplePlay(mIds []string, dbIds int64) []SlaveMovieInfo {
+	// 初始化返回值
+	var l []SlaveMovieInfo
+	// 通过siteId, mIds, dbIds 检索满足条件的数据
+	if err := db.Mdb.Model(&SlaveMovieInfo{}).Select("play_list").Where("mid IN (?) OR db_id = ?", mIds, dbIds).Find(&l).Error; err != nil {
+		log.Println("GetMultiplePlay Failed: ", err)
+		return nil
+	}
+
+	return l
+}
+
+// ============================ 数据处理 ==================================================
+
 // ConvertSearchInfo 将detail信息处理成 searchInfo
-func ConvertSearchInfo(detail MovieDetail) SearchInfo {
-	score, _ := strconv.ParseFloat(detail.DbScore, 64)
-	stamp, _ := time.ParseInLocation(time.DateTime, detail.UpdateTime, time.Local)
+func ConvertSearchInfo(m MovieDetail) SearchInfo {
+	score, _ := strconv.ParseFloat(m.DbScore, 64)
+	stamp, _ := time.ParseInLocation(time.DateTime, m.UpdateTime, time.Local)
 	// detail中的年份信息并不准确, 因此采用 ReleaseDate中的年份
-	year, err := strconv.ParseInt(regexp.MustCompile(`[1-9][0-9]{3}`).FindString(detail.ReleaseDate), 10, 64)
+	year, err := strconv.ParseInt(regexp.MustCompile(`[1-9][0-9]{3}`).FindString(m.ReleaseDate), 10, 64)
 	if err != nil {
 		year = 0
 	}
 	return SearchInfo{
-		Mid:         detail.Id,
-		Cid:         detail.Cid,
-		Pid:         detail.Pid,
-		Name:        detail.Name,
-		SubTitle:    detail.SubTitle,
-		CName:       detail.CName,
-		ClassTag:    detail.ClassTag,
-		Area:        detail.Area,
-		Language:    detail.Language,
+		Mid:         m.Id,
+		Cid:         m.Cid,
+		Pid:         m.Pid,
+		Name:        m.Name,
+		SubTitle:    m.SubTitle,
+		CName:       m.CName,
+		ClassTag:    m.ClassTag,
+		Area:        m.Area,
+		Language:    m.Language,
 		Year:        year,
-		Initial:     detail.Initial,
+		Initial:     m.Initial,
 		Score:       score,
-		Hits:        detail.Hits,
+		Hits:        m.Hits,
 		UpdateStamp: stamp.Unix(),
-		State:       detail.State,
-		Remarks:     detail.Remarks,
+		State:       m.State,
+		Remarks:     m.Remarks,
 		// ReleaseDate 部分影片缺失该参数, 所以使用添加时间作为上映时间排序
-		ReleaseStamp: detail.AddTime,
+		ReleaseStamp: m.AddTime,
 	}
 }
 
-// GetBasicInfoByKey 获取Id对应的影片基本信息
-func GetBasicInfoByKey(key string) MovieBasicInfo {
-	// 反序列化得到的结果
-	data := []byte(db.Rdb.Get(db.Cxt, key).Val())
-	basic := MovieBasicInfo{}
-	_ = json.Unmarshal(data, &basic)
-	// 执行本地图片匹配
-	ReplaceBasicDetailPic(&basic)
-	return basic
-}
-
-// GetDetailByKey 获取影片对应的详情信息
-func GetDetailByKey(key string) MovieDetail {
-	// 反序列化得到的结果
-	data := []byte(db.Rdb.Get(db.Cxt, key).Val())
-	detail := MovieDetail{}
-	_ = json.Unmarshal(data, &detail)
-
-	// 执行本地图片匹配
-	ReplaceDetailPic(&detail)
-	return detail
-}
-
-// GetBasicInfoBySearchInfos 通过searchInfo 获取影片的基本信息
-func GetBasicInfoBySearchInfos(infos ...SearchInfo) []MovieBasicInfo {
-	var list []MovieBasicInfo
-	for _, s := range infos {
-		data := []byte(db.Rdb.Get(db.Cxt, fmt.Sprintf(config.MovieBasicInfoKey, s.Cid, s.Mid)).Val())
-		basic := MovieBasicInfo{}
-		_ = json.Unmarshal(data, &basic)
-
-		// 执行本地图片匹配
-		ReplaceBasicDetailPic(&basic)
-		list = append(list, basic)
-	}
-	return list
+// ConvertBasicInfo 将Detail信息转化为basic信息
+func ConvertBasicInfo(m MovieDetail) MovieBasicInfo {
+	return MovieBasicInfo{Id: m.Mid, Cid: m.Cid, Pid: m.Pid, Name: m.Name, SubTitle: m.SubTitle,
+		CName: m.CName, State: m.State, Picture: m.Picture, Actor: m.Actor, Director: m.Director, Blurb: m.Content,
+		Remarks: m.Remarks, Area: m.Area, Year: m.Year}
 }
 
 /*
@@ -274,18 +471,45 @@ func GetBasicInfoBySearchInfos(infos ...SearchInfo) []MovieBasicInfo {
 3. 去除name首尾的标点符号
 4. 将处理完成后的name转化为hash值作为存储时的key
 */
-// GenerateHashKey 存储播放源信息时对影片名称进行处理, 提高各站点间同一影片的匹配度
+// GenerateHashKey 存储播放源信息时对影片名称进行处理-生成id, 提高各站点间同一影片的匹配度
 func GenerateHashKey[K string | ~int | int64](key K) string {
 	mName := fmt.Sprint(key)
 	//1. 去除name中的所有空格
 	mName = regexp.MustCompile(`\s`).ReplaceAllString(mName, "")
-	//2. 去除name中含有的别名～.*～
-	mName = regexp.MustCompile(`～.*～$`).ReplaceAllString(mName, "")
+	//2. 添加常用的名称标准化替换规则
+	rules := []string{
+		// 中文季数标签统一
+		"season", "s", "第", "s", "季", "", "期", "", "画", "",
+		// --- 3. 剧场版标准化 ---
+		"剧场版", "ovo", "映画", "ovo", "电影版", "ovo", "The Movie", "ovo", "Movie", "ovo", "(Movie)", "ovo", "〔映画〕", "ovo",
+		// 特殊数学符号 (用户常用来代替数字，如 ∬ 代表 2)
+		"Ⅰ", "1", "Ⅱ", "2", "Ⅲ",
+		"∫", "1", "∬", "2", "∮", "3", "Ⅳ", "4", "Ⅴ", "5", "Ⅵ", "6", "Ⅶ", "7", "Ⅷ", "8", "Ⅸ", "9", "Ⅹ", "10", // 用户可能用积分号代表季数
+		"一", "1", "二", "2", "三", "3", "四", "4", "五", "5", "六", "6", "七", "7", "八", "8", "九", "9",
+		// 移除或替换无意义的装饰符号，这些符号在搜索中通常不仅无用还会阻碍匹配
+		"★", "", "☆", "", "◆", "", "◇", "", "●", "", "○", "",
+		"【", "", "】", "", "〖", "", "〗", "", "〔", "", "〕", "",
+		"「", "", "」", "", "『", "", "』", "",
+		"|", "", "｜", "", // 竖线分隔符
+		"~", "", "～", "", // 波浪号
+		"...", "", "……", "", // 省略号
+		"!", "", "！", "", "?", "", "？", "",
+		"(", "", ")", "", "（", "", "）", "",
+		"[", "", "]", "", "［", "", "］", "",
+		"{", "", "}", "", "｛", "", "｝", "",
+		"＆", "&", "＋", "+",
+		"-", "", "－", "", "—", "", "–", "", // 策略：通常移除所有标点，让 "A-B" 变成 "AB"
+		"_", "", "＿", "",
+		".", "", "．", "", "。", "",
+		",", "", "，", "",
+		":", "", ":", "", ":", "",
+		";", "", "；", "",
+		"'", "", "’", "", "\"", "", "“", "", "”", "",
+		"`", "", "｀", "",
+	}
+	mName = strings.NewReplacer(rules...).Replace(mName)
 	//3. 去除name首尾的标点符号
 	mName = regexp.MustCompile(`^[[:punct:]]+|[[:punct:]]+$`).ReplaceAllString(mName, "")
-	// 部分站点包含 动画版, 特殊别名 等字符, 需进行删除
-	//mName = regexp.MustCompile(`动画版`).ReplaceAllString(mName, "")
-	mName = regexp.MustCompile(`季.*`).ReplaceAllString(mName, "季")
 	//4. 将处理完成后的name转化为hash值作为存储时的key
 	h := fnv.New32a()
 	_, err := h.Write([]byte(mName))
@@ -293,28 +517,4 @@ func GenerateHashKey[K string | ~int | int64](key K) string {
 		return ""
 	}
 	return fmt.Sprint(h.Sum32())
-}
-
-// ============================采集方案.v1 遗留==================================================
-
-// SaveMoves  保存影片分页请求list
-func SaveMoves(list []Movie) (err error) {
-	// 整合数据
-	for _, m := range list {
-		//score, _ := time.ParseInLocation(time.DateTime, m.Time, time.Local)
-		movie, _ := json.Marshal(m)
-		// 以Cid为目录为集合进行存储, 便于后续搜索, 以影片id为分值进行存储 例 MovieList:Cid%d
-		err = db.Rdb.ZAdd(db.Cxt, fmt.Sprintf(config.MovieListInfoKey, m.Cid), redis.Z{Score: float64(m.Id), Member: movie}).Err()
-	}
-	return err
-}
-
-// AllMovieInfoKey 获取redis中所有的影视列表信息key MovieList:Cid
-func AllMovieInfoKey() []string {
-	return db.Rdb.Keys(db.Cxt, fmt.Sprint("MovieList:Cid*")).Val()
-}
-
-// GetMovieListByKey 获取指定分类的影片列表数据
-func GetMovieListByKey(key string) []string {
-	return db.Rdb.ZRange(db.Cxt, key, 0, -1).Val()
 }

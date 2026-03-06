@@ -3,9 +3,11 @@ package conver
 import (
 	"encoding/xml"
 	"log"
+	"regexp"
 	"server/config"
 	"server/model/collect"
 	"server/model/system"
+	"server/plugin/common/util"
 	"strings"
 )
 
@@ -70,36 +72,42 @@ func ConvertFilmDetails(details []collect.FilmDetail) []system.MovieDetail {
 
 // ConvertFilmDetail 将影片详情数据处理转化为 system.MovieDetail
 func ConvertFilmDetail(detail collect.FilmDetail) system.MovieDetail {
+	/*
+		对需数据进行相应的简化处理
+		1.对常见分割符进行统一化处理
+		2.如果演员和导演名单过长,则进行截断, 最多只保留3个
+	*/
+	detail.VodActor = regexp.MustCompile(`[$&#%]`).ReplaceAllString(detail.VodActor, ",")
+
 	md := system.MovieDetail{
-		Id:       detail.VodID,
+		Mid:      detail.VodID,
 		Cid:      detail.TypeID,
 		Pid:      detail.TypeID1,
 		Name:     detail.VodName,
 		Picture:  detail.VodPic,
 		DownFrom: detail.VodDownFrom,
-		MovieDescriptor: system.MovieDescriptor{
-			SubTitle:    detail.VodSub,
-			CName:       detail.TypeName,
-			EnName:      detail.VodEn,
-			Initial:     detail.VodLetter,
-			ClassTag:    detail.VodClass,
-			Actor:       detail.VodActor,
-			Director:    detail.VodDirector,
-			Writer:      detail.VodWriter,
-			Blurb:       detail.VodBlurb,
-			Remarks:     detail.VodRemarks,
-			ReleaseDate: detail.VodPubDate,
-			Area:        detail.VodArea,
-			Language:    detail.VodLang,
-			Year:        detail.VodYear,
-			State:       detail.VodState,
-			UpdateTime:  detail.VodTime,
-			AddTime:     detail.VodTimeAdd,
-			DbId:        detail.VodDouBanID,
-			DbScore:     detail.VodDouBanScore,
-			Hits:        detail.VodHits,
-			Content:     detail.VodContent,
-		},
+		SubTitle: detail.VodSub,
+		CName:    detail.TypeName,
+		EnName:   detail.VodEn,
+		Initial:  detail.VodLetter,
+		ClassTag: detail.VodClass,
+		Actor:    util.TruncateBySep(detail.VodActor, 3),
+		Director: util.TruncateBySep(detail.VodDirector, 2),
+		Writer:   util.TruncateBySep(detail.VodWriter, 2),
+		//Blurb:       detail.VodBlurb,
+		Blurb:       "", // blurb 和 content 内容重复度过高, 且内存占用过高, 所以舍弃简介字段
+		Remarks:     detail.VodRemarks,
+		ReleaseDate: detail.VodPubDate,
+		Area:        detail.VodArea,
+		Language:    detail.VodLang,
+		Year:        detail.VodYear,
+		State:       detail.VodState,
+		UpdateTime:  detail.VodTime,
+		AddTime:     detail.VodTimeAdd,
+		DbId:        detail.VodDouBanID,
+		DbScore:     detail.VodDouBanScore,
+		Hits:        detail.VodHits,
+		Content:     detail.VodContent,
 	}
 	// 通过分割符切分播放源信息  PlaySeparator $$$
 	md.PlayFrom = strings.Split(detail.VodPlayFrom, detail.VodPlayNote)
@@ -111,8 +119,8 @@ func ConvertFilmDetail(detail collect.FilmDetail) system.MovieDetail {
 }
 
 // GenFilmPlayList 处理影片播放地址数据, 只保留m3u8与mp4格式的链接,生成playList
-func GenFilmPlayList(playUrl, separator string) [][]system.MovieUrlInfo {
-	var res [][]system.MovieUrlInfo
+func GenFilmPlayList(playUrl, separator string) system.MoviePlayList {
+	var res system.MoviePlayList
 	if separator != "" {
 		// 1. 通过分隔符切分播放源地址
 		for _, l := range strings.Split(playUrl, separator) {
@@ -120,7 +128,6 @@ func GenFilmPlayList(playUrl, separator string) [][]system.MovieUrlInfo {
 			if strings.Contains(l, ".m3u8") || strings.Contains(l, ".mp4") {
 				// 2. 将每组播放源对应的播放列表信息存储到列表中
 				res = append(res, ConvertPlayUrl(l))
-
 			}
 		}
 	} else {
@@ -134,8 +141,8 @@ func GenFilmPlayList(playUrl, separator string) [][]system.MovieUrlInfo {
 }
 
 // GenAllFilmPlayList 处理影片播放地址数据, 保留全部播放链接,生成playList
-func GenAllFilmPlayList(playUrl, separator string) [][]system.MovieUrlInfo {
-	var res [][]system.MovieUrlInfo
+func GenAllFilmPlayList(playUrl, separator string) system.MoviePlayList {
+	var res system.MoviePlayList
 	if separator != "" {
 		// 1. 通过分隔符切分播放源地址
 		for _, l := range strings.Split(playUrl, separator) {
@@ -150,18 +157,18 @@ func GenAllFilmPlayList(playUrl, separator string) [][]system.MovieUrlInfo {
 }
 
 // ConvertPlayUrl 将单个playFrom的播放地址字符串处理成列表形式
-func ConvertPlayUrl(playUrl string) []system.MovieUrlInfo {
+func ConvertPlayUrl(playUrl string) []system.PlayItem {
 	// 对每个片源的集数和播放地址进行分割 Episode$Link#Episode$Link
-	var l []system.MovieUrlInfo
+	var l []system.PlayItem
 	for _, p := range strings.Split(playUrl, "#") {
 		// 处理 Episode$Link 形式的播放信息
 		if strings.Contains(p, "$") {
-			l = append(l, system.MovieUrlInfo{
+			l = append(l, system.PlayItem{
 				Episode: strings.Split(p, "$")[0],
 				Link:    strings.Split(p, "$")[1],
 			})
 		} else {
-			l = append(l, system.MovieUrlInfo{
+			l = append(l, system.PlayItem{
 				Episode: "(｀・ω・´)",
 				Link:    p,
 			})

@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
 	"server/logic"
 	"server/model/system"
 	"strconv"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -40,10 +41,10 @@ func FilmDetail(c *gin.Context) {
 		return
 	}
 	// 获取影片详情信息
-	detail := logic.IL.GetFilmDetail(id)
+	detail := logic.IL.GetFilmDetail(int64(id))
 	// 获取相关推荐影片数据
 	page := system.Page{Current: 0, PageSize: 14}
-	relateMovie := logic.IL.RelateMovie(detail.MovieDetail, &page)
+	relateMovie := logic.IL.RelateMovie(detail, &page)
 	system.Success(gin.H{
 		"detail": detail,
 		"relate": relateMovie,
@@ -61,23 +62,22 @@ func FilmPlayInfo(c *gin.Context) {
 		return
 	}
 	// 获取影片详情信息
-	detail := logic.IL.GetFilmDetail(id)
+	detail := logic.IL.GetFilmDetail(int64(id))
 	// 如果 playFrom 为空, 则设置默认播放源和默认影片数据
 	if len(playFrom) <= 1 && len(detail.List) > 0 {
 		playFrom = detail.List[0].Id
 
 	}
 	// 获取当前影片播放信息
-	var currentPlay system.MovieUrlInfo
+	var currentPlay system.PlayItem
 	for _, v := range detail.List {
 		if v.Id == playFrom {
 			currentPlay = v.LinkList[episode]
 		}
 	}
-
 	// 推荐影片信息
 	page := system.Page{Current: 0, PageSize: 14}
-	relateMovie := logic.IL.RelateMovie(detail.MovieDetail, &page)
+	relateMovie := logic.IL.RelateMovie(detail, &page)
 	system.Success(gin.H{
 		"detail":          detail,
 		"current":         currentPlay,
