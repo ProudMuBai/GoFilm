@@ -21,7 +21,7 @@
 **部署方式**
 
 - [Docker部署](https://github.com/ProudMuBai/GoFilm/blob/main/film/README.md) 
-- [1Panel部署(可视化面板操作)](https://blog.mubai.link/2024/04/21/Docs/gofilm/)
+- [1Panel部署(可视化面板操作)](https://blog.mubai.link/procedure/application/github/GoFilm/)
 
 **使用指南**
 
