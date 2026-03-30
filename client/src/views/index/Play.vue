@@ -15,18 +15,18 @@
     <div class="current_play_info">
       <div class="play_info_left">
         <h3 class="current_play_title"><a
-            :href="`/filmDetail?link=${data.detail.id}`">{{ data.detail.name }}</a>{{ data.current.episode }}</h3>
+            :href="`/filmDetail?link=${data.detail.mid}`">{{ data.detail.name }}</a>{{ data.current.episode }}</h3>
         <div class="tags">
           <a :href="`/filmClassifySearch?Pid=${data.detail.pid}&Category=${data.detail.cid}`">
             <el-icon>
               <Promotion/>
             </el-icon>
-            {{ data.detail.descriptor.cName }}</a>
+            {{ data.detail.cName }}</a>
           <span>{{
-              data.detail.descriptor.classTag ? data.detail.descriptor.classTag.replaceAll(',', '/') : '未知'
+              data.detail.classTag ? data.detail.classTag.replaceAll(',', '/') : '未知'
             }}</span>
-          <span class="hidden-sm-and-down">{{ data.detail.descriptor.year }}</span>
-          <span class="hidden-sm-and-down">{{ data.detail.descriptor.area }}</span>
+          <span class="hidden-sm-and-down">{{ data.detail.year }}</span>
+          <span class="hidden-sm-and-down">{{ data.detail.area }}</span>
         </div>
       </div>
       <div class="play_info_right">
@@ -103,6 +103,7 @@ const data = reactive({
   loading: false,
   detail: {
     id: '',
+    mid: '',
     cid: '',
     pid: '',
     name: '',
@@ -111,29 +112,27 @@ const data = reactive({
     DownFrom: '',
     playList: [[]],
     downloadList: '',
-    descriptor: {
-      subTitle: '',
-      cName: '',
-      enName: '',
-      initial: '',
-      classTag: '',
-      actor: '',
-      director: '',
-      writer: '',
-      blurb: '',
-      remarks: '',
-      releaseDate: '',
-      area: '',
-      language: '',
-      year: '',
-      state: '',
-      updateTime: '',
-      addTime: '',
-      dbId: '',
-      dbScore: '',
-      hits: '',
-      content: '',
-    },
+    subTitle: '',
+    cName: '',
+    enName: '',
+    initial: '',
+    classTag: '',
+    actor: '',
+    director: '',
+    writer: '',
+    blurb: '',
+    remarks: '',
+    releaseDate: '',
+    area: '',
+    language: '',
+    year: '',
+    state: '',
+    updateTime: '',
+    addTime: '',
+    dbId: '',
+    dbScore: '',
+    hits: '',
+    content: '',
     list: [],
   },
   current: {index: 0, episode: '', link: ''},
@@ -258,25 +257,25 @@ const saveFilmHisroy = () => {
     // 处理播放历史要记录的影片相关信息
     let player = document.getElementsByTagName("video")[0]
     let history = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
-    let link = `/play?id=${data.detail.id}&source=${data.currentTabId}&episode=${data.current.index}&currentTime=${player.currentTime}`
+    let link = `/play?id=${data.detail.mid}&source=${data.currentTabId}&episode=${data.current.index}&currentTime=${player.currentTime}`
     // 处理播放时长
     let timeStamp = new Date().getTime()
     let time = fmt.dateFormat(timeStamp)
     let progress = `${fmt.secondToTime(player.currentTime)} / ${fmt.secondToTime(player.duration)}`
-    history[data.detail.id] = {
-          id: data.detail.id,
-          name: data.detail.name,
-          picture: data.detail.picture,
-          episode: data.current.episode,
-          time: time,
-          timeStamp: timeStamp,
-          source: data.currentTabId,
-          link: link,
-          currentTime: player.currentTime,
-          duration: player.duration,
-          progress: progress,
-          devices: global.isMobile
-        }
+    history[data.detail.mid] = {
+      id: data.detail.mid,
+      name: data.detail.name,
+      picture: data.detail.picture,
+      episode: data.current.episode,
+      time: time,
+      timeStamp: timeStamp,
+      source: data.currentTabId,
+      link: link,
+      currentTime: player.currentTime,
+      duration: player.duration,
+      progress: progress,
+      devices: global.isMobile
+    }
     // 将历史记录添加到cookie中
     cookieUtil.setCookie(COOKIE_KEY_MAP.FILM_HISTORY, JSON.stringify(history))
   }
@@ -420,8 +419,8 @@ onBeforeMount(() => {
 
   .tags a {
     padding: 5px 10px;
-/*    background-color: rgba(155, 73, 231, 0.72);*/
-    background: linear-gradient( #9B49E7B8, #9B49E799);
+    /*    background-color: rgba(155, 73, 231, 0.72);*/
+    background: linear-gradient(#9B49E7B8, #9B49E799);
     color: #c4c2c2;
     font-size: 13px;
     border-radius: 6px;
@@ -513,7 +512,7 @@ onBeforeMount(() => {
   .tags a {
     padding: 5px 10px;
     color: #c4c2c2;
-    background: linear-gradient( #9B49E7B8, #9B49E799);
+    background: linear-gradient(#9B49E7B8, #9B49E799);
     font-size: 13px;
     border-radius: 6px;
     margin-right: 3px;

@@ -65,7 +65,7 @@
         <!--<el-table-column prop="subTitle" align="center" label="影片别名" />-->
         <el-table-column prop="cName" align="center" label="所属分类">
           <template #default="scope">
-            <el-tag type="warning" disable-transitions>{{ scope.row.cName }}</el-tag>
+            <el-tag type="warning" disable-transitions>{{ scope.row.cName?scope.row.cName:'暂无' }}</el-tag>
           </template>
         </el-table-column>
         <!--<el-table-column prop="classTag" align="left" label="剧情标签" >-->

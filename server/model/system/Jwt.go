@@ -3,12 +3,13 @@ package system
 import (
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"server/config"
 	"server/plugin/common/util"
 	"server/plugin/db"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserClaims struct {

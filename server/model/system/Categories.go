@@ -57,3 +57,24 @@ func GetChildrenTree(id int64) []*CategoryTree {
 	return nil
 
 }
+
+// GetRevealCategoryList 获取show=true的二级分类信息
+func GetRevealCategoryList() []*CategoryTree {
+	// 初始化分类信息切片
+	var cl []*CategoryTree
+	var tree CategoryTree
+	// 从redis获取分类信息树
+	data := db.Rdb.Get(db.Cxt, config.CategoryTreeKey).Val()
+	_ = json.Unmarshal([]byte(data), &tree)
+	// 迭代分类树信息, 将show=true的二级分类信息添加到cl切片中
+	for _, t := range tree.Children {
+		if t.Show {
+			for _, c := range t.Children {
+				if c.Show {
+					cl = append(cl, c)
+				}
+			}
+		}
+	}
+	return cl
+}

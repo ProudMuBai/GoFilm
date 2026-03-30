@@ -4,7 +4,6 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import {ElementPlusResolver} from "unplugin-vue-components/resolvers";
 
-
 export default defineConfig({
     // 本地测试环境
     server: {
@@ -43,13 +42,13 @@ export default defineConfig({
         }),
     ],
     css: {devSourcemap: true},
-    build: {
-        terserOptions: {
-            compress: {
-                drop_console:true,
-                drop_debugger: true,
-            }
+    esbuild: {
+        // 生产环境移除 console 和 debugger
+        drop: ['console', 'debugger'],
+    },
+    resolve: {
+        alias: {
         }
-    }
+    },
 
 })

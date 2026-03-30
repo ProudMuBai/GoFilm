@@ -3,7 +3,6 @@ package conver
 import (
 	"encoding/xml"
 	"log"
-	"regexp"
 	"server/config"
 	"server/model/collect"
 	"server/model/system"
@@ -77,7 +76,6 @@ func ConvertFilmDetail(detail collect.FilmDetail) system.MovieDetail {
 		1.对常见分割符进行统一化处理
 		2.如果演员和导演名单过长,则进行截断, 最多只保留3个
 	*/
-	detail.VodActor = regexp.MustCompile(`[$&#%]`).ReplaceAllString(detail.VodActor, ",")
 
 	md := system.MovieDetail{
 		Mid:      detail.VodID,
@@ -113,7 +111,7 @@ func ConvertFilmDetail(detail collect.FilmDetail) system.MovieDetail {
 	md.PlayFrom = strings.Split(detail.VodPlayFrom, detail.VodPlayNote)
 	// v2 只保留m3u8播放源
 	md.PlayList = GenFilmPlayList(detail.VodPlayURL, detail.VodPlayNote)
-	md.DownloadList = GenFilmPlayList(detail.VodDownURL, detail.VodPlayNote)
+	//md.DownloadList = GenFilmPlayList(detail.VodDownURL, detail.VodPlayNote)
 
 	return md
 }

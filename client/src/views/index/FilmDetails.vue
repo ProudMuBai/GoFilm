@@ -8,20 +8,20 @@
           <h3>{{ data.detail.name }}</h3>
           <ul class="tags">
             <li style="margin: 2px 0">{{
-                data.detail.descriptor.classTag ? `${data.detail.descriptor.classTag}`.replaceAll(",", " | ") : '未知'
+                data.detail.classTag ? `${data.detail.classTag}`.replaceAll(",", " | ") : '未知'
               }}
             </li>
           </ul>
-          <p><span>导演:</span> {{ data.detail.descriptor.director }}</p>
-          <p><span>主演:</span> {{ handleLongText(data.detail.descriptor.actor) }}</p>
-          <p><span>上映:</span> {{ data.detail.descriptor.releaseDate }}</p>
-          <p><span>地区:</span> {{ data.detail.descriptor.area }}</p>
-          <p v-if="data.detail.descriptor.remarks"><span>连载:</span>{{ data.detail.descriptor.remarks }}</p>
-          <!--<p><span>评分:</span><b id="score">{{ data.detail.descriptor.dbScore }}</b></p>-->
+          <p><span>导演:</span> {{ data.detail.director }}</p>
+          <p><span>主演:</span> {{ handleLongText(data.detail.actor) }}</p>
+          <p><span>上映:</span> {{ data.detail.releaseDate }}</p>
+          <p><span>地区:</span> {{ data.detail.area }}</p>
+          <p v-if="data.detail.remarks"><span>连载:</span>{{ data.detail.remarks }}</p>
+          <!--<p><span>评分:</span><b id="score">{{ data.detail.dbScore }}</b></p>-->
         </div>
       </div>
       <div class="mt_content">
-        <p v-html="`${data.detail.descriptor.content}`.replaceAll('　　', '')"></p>
+        <p v-html="`${data.detail.content}`.replaceAll('　　', '')"></p>
       </div>
     </div>
     <!-- pc端title-->
@@ -34,32 +34,33 @@
             <el-icon>
               <Promotion/>
             </el-icon>
-            {{ data.detail.descriptor.cName }}
+            {{ data.detail.cName }}
           </a>
         </li>
-        <li v-if="data.detail.descriptor.classTag">
-          {{ `${data.detail.descriptor.classTag}`.replaceAll(",", "&emsp;") }}
+        <li v-if="data.detail.classTag">
+          {{ `${data.detail.classTag}`.replaceAll(",", "&emsp;") }}
         </li>
-        <li>{{ data.detail.descriptor.year }}</li>
-        <li>{{ data.detail.descriptor.area }}</li>
+        <li>{{ data.detail.year }}</li>
+        <li>{{ data.detail.area }}</li>
       </ul>
-      <p><span>导演:</span> {{ data.detail.descriptor.director }}</p>
-      <p><span>主演:</span> {{ data.detail.descriptor.actor }}</p>
-      <p><span>上映:</span> {{ data.detail.descriptor.releaseDate }}</p>
-      <p v-if="data.detail.descriptor.remarks"><span>连载:</span>{{ data.detail.descriptor.remarks }}</p>
-      <p><span>评分:</span><b id="score">{{ data.detail.descriptor.dbScore }}</b></p>
+      <p><span>导演:</span> {{ data.detail.director }}</p>
+      <p><span>主演:</span> {{ data.detail.actor }}</p>
+      <p><span>上映:</span> {{ data.detail.releaseDate }}</p>
+      <p v-if="data.detail.remarks"><span>连载:</span>{{ data.detail.remarks }}</p>
+      <p><span>评分:</span><b id="score">{{ data.detail.dbScore }}</b></p>
       <div class="cus_wap">
         <p style="min-width: 40px"><span>剧情:</span></p>
         <p ref="textContent" class="text_content">
-          <el-button v-if="`${data.detail.descriptor.content}`.length > 140" class="multi_text"
+          <el-button v-if="`${data.detail.content}`.length > 140" class="multi_text"
                      style="color:#a574b7;"
                      @click="showContent(multiBtn.state)" link>{{ multiBtn.text }}
           </el-button>
-          <span class="cus_info" v-html="data.detail.descriptor.content"></span>
+          <span class="cus_info" v-html="data.detail.content"></span>
         </p>
       </div>
       <p>
-        <el-button type="warning" class="player" size="large" @click="play({episode:0,source:data.detail.list[0].id})" round>
+        <el-button type="warning" class="player" size="large" @click="play({episode:0,source:data.detail.list[0].id})"
+                   round>
           <el-icon>
             <CaretRight/>
           </el-icon>
@@ -69,12 +70,12 @@
     </div>
     <!--播放列表-->
     <div class="play-module">
-      <div class="play-module-item" >
+      <div class="play-module-item">
         <div class="module-heading">
           <p class=" play-module-title">播放列表</p>
           <div class="play-tab-group">
-            <a  href="javascript:;"  :class="`play-tab-item ${data.currentTabId == item.id ? 'tab-active':''}`"
-                v-for="item in data.detail.list" @click="changeTab(item.id)" >{{ item.name }}</a>
+            <a href="javascript:;" :class="`play-tab-item ${data.currentTabId == item.id ? 'tab-active':''}`"
+               v-for="item in data.detail.list" @click="changeTab(item.id)">{{ item.name }}</a>
           </div>
         </div>
         <div class="play-list">
@@ -100,6 +101,7 @@ import {ApiGet} from "../../utils/request";
 import {ElMessage} from 'element-plus'
 import {Promotion, CaretRight} from "@element-plus/icons-vue";
 import RelateList from "../../components/index/RelateList.vue";
+
 // 获取路由对象
 const router = useRouter()
 const data = reactive({
@@ -113,29 +115,27 @@ const data = reactive({
     DownFrom: '',
     playList: [[]],
     downloadList: '',
-    descriptor: {
-      subTitle: '',
-      cName: '',
-      enName: '',
-      initial: '',
-      classTag: '',
-      actor: '',
-      director: '',
-      writer: '',
-      blurb: '',
-      remarks: '',
-      releaseDate: '',
-      area: '',
-      language: '',
-      year: '',
-      state: '',
-      updateTime: '',
-      addTime: '',
-      dbId: '',
-      dbScore: '',
-      hits: '',
-      content: '',
-    },
+    subTitle: '',
+    cName: '',
+    enName: '',
+    initial: '',
+    classTag: '',
+    actor: '',
+    director: '',
+    writer: '',
+    blurb: '',
+    remarks: '',
+    releaseDate: '',
+    area: '',
+    language: '',
+    year: '',
+    state: '',
+    updateTime: '',
+    addTime: '',
+    dbId: '',
+    dbScore: '',
+    hits: '',
+    content: '',
     list: []
   },
   relate: [],
@@ -155,9 +155,8 @@ const handleLongText = (t: string): string => {
 }
 
 
-
 // 播放源切换
-const changeTab = (id:string)=>{
+const changeTab = (id: string) => {
   data.currentTabId = id
 }
 
@@ -187,11 +186,11 @@ onBeforeMount(() => {
       data.detail = resp.data.detail
       // 去除影视简介中的无用内容和特殊标签格式等
       data.detail.name = data.detail.name.replace(/(～.*～)/g, '')
-      data.detail.descriptor.content = data.detail.descriptor.content.replace(/(&.*;)|( )|(　　)|(\n)|(<[^>]+>)/g, '')
+      data.detail.content = data.detail.content.replace(/(&.*;)|( )|(　　)|(\n)|(<[^>]+>)/g, '')
       data.relate = resp.data.relate
       // 处理过长数据
-      data.detail.descriptor.actor = handleLongText(data.detail.descriptor.actor)
-      data.detail.descriptor.director = handleLongText(data.detail.descriptor.director)
+      data.detail.actor = handleLongText(data.detail.actor)
+      data.detail.director = handleLongText(data.detail.director)
       data.currentTabId = resp.data.detail.list[0].id
       data.loading = true
     } else {
@@ -205,7 +204,6 @@ onBeforeMount(() => {
 
 })
 </script>
-
 
 
 <!--移动端适配-->
@@ -284,6 +282,7 @@ onBeforeMount(() => {
   width: 100%;
   padding: 0 1%;
 }
+
 /*影片播放列表信息展示*/
 
 /*顶部影片信息显示区域*/

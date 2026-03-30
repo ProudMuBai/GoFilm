@@ -199,7 +199,7 @@ func multipleSource(detail *system.MovieDetail) []system.PlayLinkVo {
 	// 通过 name 以及 subTitle  生成 hash id  和 dbID 匹配次级站点播放信息
 	// 使用map 防止清洗后的id重复
 	idMap := make(map[string]int)
-	idMap[system.GenerateHashKey(detail.Mid)] = 0
+	idMap[system.GenerateHashKey(detail.Name)] = 0
 	// 将subTitle进行切割
 	if len(detail.SubTitle) > 0 {
 		for _, s := range strings.Split(util.FormatSpecialChar(detail.SubTitle), ",") {
@@ -218,7 +218,7 @@ func multipleSource(detail *system.MovieDetail) []system.PlayLinkVo {
 	}
 	// 获取满足条件的次级站点播放数据
 	for _, s := range system.GetMultiplePlay(ids, detail.DbId) {
-		l = append(l, system.PlayLinkVo{Id: s.Mid, Name: sMap[s.Mid].Name, LinkList: s.PlayList[0]})
+		l = append(l, system.PlayLinkVo{Id: s.Sid, Name: sMap[s.Sid].Name, LinkList: s.PlayList[0]})
 	}
 	return l
 }

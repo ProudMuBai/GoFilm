@@ -3,7 +3,6 @@ package util
 import (
 	"crypto/md5"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
@@ -61,24 +60,24 @@ func PasswordEncrypt(password, salt string) string {
 }
 
 // ParsePriKeyBytes 解析私钥
-func ParsePriKeyBytes(buf []byte) (*rsa.PrivateKey, error) {
+func ParsePriKeyBytes(buf []byte) (any, error) {
 	p := &pem.Block{}
 	p, buf = pem.Decode(buf)
 	if p == nil {
 		return nil, errors.New("private key parse  error")
 	}
-	return x509.ParsePKCS1PrivateKey(p.Bytes)
+	return x509.ParsePKCS8PrivateKey(p.Bytes)
 }
 
 // ParsePubKeyBytes 解析公钥
-func ParsePubKeyBytes(buf []byte) (*rsa.PublicKey, error) {
+func ParsePubKeyBytes(buf []byte) (any, error) {
 	p, _ := pem.Decode(buf)
 	if p == nil {
 		return nil, errors.New("parse publicKey content nil")
 	}
-	pubKey, err := x509.ParsePKCS1PublicKey(p.Bytes)
+	pubKey, err := x509.ParsePKIXPublicKey(p.Bytes)
 	if err != nil {
-		return nil, errors.New("x509.ParsePKCS1PublicKey error")
+		return nil, errors.New("x509.ParsePKIXPublicKey error")
 	}
 	return pubKey, nil
 }
@@ -130,7 +129,7 @@ func ValidPwd(s string) error {
 // TruncateBySep 截断字符串,保留指定数量的结果
 func TruncateBySep(s string, limit int) string {
 	// 如果保留数量小于等于0则返回空值
-	if limit <= 0 {
+	if len(s) <= 0 || limit <= 0 {
 		return ""
 	}
 	// 先强制对不同的分割符进行统一替换为 ,
@@ -139,6 +138,9 @@ func TruncateBySep(s string, limit int) string {
 	// Split 会在分隔符连续出现或出现在首尾时产生空字符串，这通常符合预期
 	parts := strings.Split(s, ",")
 	// 片段数量小于或等于限制，直接返回原字符串
+	if len(parts) <= limit {
+		return strings.Join(parts, ",")
+	}
 	// 返回原字符串是为了保留原始的格式（比如末尾是否有分隔符）
 	// 即使不截断也重新 Join 一遍（去除多余的空片段等)
 	return strings.Join(parts[:limit], ",")

@@ -76,7 +76,7 @@ type MovieDetail struct {
 	Actor       string   `json:"actor"`                     //主演
 	Director    string   `json:"director"`                  //导演
 	Writer      string   `json:"writer"`                    //作者
-	Blurb       string   `json:"blurb"`                     //简介, 残缺,不建议使用
+	Blurb       string   `json:"blurb" gorm:"type:text"`    //简介, 残缺,不建议使用
 	Remarks     string   `json:"remarks"`                   // 更新情况
 	ReleaseDate string   `json:"releaseDate"`               //上映时间
 	Area        string   `json:"area"`                      // 地区
@@ -88,7 +88,7 @@ type MovieDetail struct {
 	DbId        int64    `json:"dbId"`                      //豆瓣id
 	DbScore     string   `json:"dbScore"`                   // 豆瓣评分
 	Hits        int64    `json:"hits"`                      //影片热度
-	Content     string   `json:"content"`                   //内容简介
+	Content     string   `json:"content" gorm:"type:text"`  //内容简介
 	PlayFrom    FromList `json:"playFrom" gorm:"type:json"` // 播放来源
 	DownFrom    string   `json:"DownFrom"`                  //下载来源 例: http
 	//PlaySeparator   string              `json:"playSeparator"` // 播放信息分隔符
@@ -115,6 +115,8 @@ func (m *SlaveMovieInfo) TableName() string {
 	return config.SlaveMovieInfo
 }
 
+// ================================= 数据表处理 =================================
+
 // CreateMovieDetailTable 创建存储检索信息的数据表
 func CreateMovieDetailTable() {
 	// 如果不存在则创建表 并设置自增ID初始值为10000
@@ -131,6 +133,15 @@ func ExistMovieDetailTable() bool {
 	return db.Mdb.Migrator().HasTable(&MovieDetail{})
 }
 
+// ResetMovieDetailTable 重置 MovieDetailTable
+func ResetMovieDetailTable() {
+	var m MovieDetail
+	err := db.Mdb.Exec(fmt.Sprintf("TRUNCATE TABLE %s", m.TableName())).Error
+	if err != nil {
+		log.Println("MovieDetailTable Reset Error: ", err)
+	}
+}
+
 // CreateSlaveMovieInfoTable 创建存储检索信息的数据表
 func CreateSlaveMovieInfoTable() {
 	// 如果不存在则创建表 并设置自增ID初始值为10000
@@ -145,6 +156,39 @@ func CreateSlaveMovieInfoTable() {
 // ExistSlaveMovieInfoTable 检测是否存在 MovieDetails表
 func ExistSlaveMovieInfoTable() bool {
 	return db.Mdb.Migrator().HasTable(&SlaveMovieInfo{})
+}
+
+// ResetSlaveMovieInfoTable 重置 SlaveMovieInfoTable (附属站点数据表一般不会单独重置)
+func ResetSlaveMovieInfoTable() {
+	var s SlaveMovieInfo
+	err := db.Mdb.Exec(fmt.Sprintf("TRUNCATE TABLE %s", s.TableName())).Error
+	if err != nil {
+		log.Println("SlaveMovieInfoTable Reset Error: ", err)
+	}
+}
+
+// DelSlaveMovieInfos 删除表中对应站点的数据信息
+func DelSlaveMovieInfos(id string) {
+	// 一次删除过多数据会锁表, 因此直接截断表
+
+	//if err := db.Mdb.Where("sid = ?", id).Delete(&SlaveMovieInfo{}).Error; err != nil {
+	//	log.Println("Delete SlaveMovieInfos  Error: ", err)
+	//}
+}
+
+func AddMovieDetailIndex() {
+	var m MovieDetail
+	tableName := m.TableName()
+	// 添加索引
+	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
+}
+
+func AddSlaveMovieInfoIndex() {
+	var s SlaveMovieInfo
+	tableName := s.TableName()
+	// 添加索引
+	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_dbId ON %s (db_id)", tableName))
 }
 
 // =================================== column序列化 接口========================================================
@@ -234,6 +278,33 @@ func SaveDetail(m MovieDetail) (err error) {
 
 }
 
+// BatchUpdateDetails 保存或更新detail数据
+func BatchUpdateDetails(ml []MovieDetail) (err error) {
+	// 先将details批量保存或更新
+	for _, m := range ml {
+		if !ExistMovieDetailByMid(m.Mid) {
+			// 执行插入操作
+			if err := db.Mdb.Create(&m).Error; err != nil {
+				return err
+			}
+		} else {
+			// 只对会变化的字段进行更新
+			err := db.Mdb.Model(&MovieDetail{}).Where("mid", m.Mid).Updates(MovieDetail{PlayList: m.PlayList, DownloadList: m.DownloadList,
+				Remarks: m.Remarks, State: m.State, UpdateTime: m.UpdateTime, AddTime: m.AddTime, DbScore: m.DbScore, Hits: m.Hits}).Error
+			if err != nil {
+				return err
+			}
+		}
+		// 转化处理searchInfo信息s
+		s := ConvertSearchInfo(m)
+		// 保存searchInfo信息
+		if err := SaveSearchInfo(s); err != nil {
+			return err
+		}
+	}
+	return err
+}
+
 // ExistMovieDetailByMid 通过mid判断是否存在对应信息
 func ExistMovieDetailByMid(mid int64) bool {
 	var count int64
@@ -241,8 +312,40 @@ func ExistMovieDetailByMid(mid int64) bool {
 	return count > 0
 }
 
-// SaveSitePlayList 仅保存播放url列表信息到当前站点
-func SaveSitePlayList(id string, ml []MovieDetail) (err error) {
+// SaveAllSitePlayList 保存附属站点影片信息 (仅在全量采集时使调用)
+func SaveAllSitePlayList(id string, ml []MovieDetail) (err error) {
+	// 如果ml 为空则直接返回
+	if len(ml) <= 0 {
+		return nil
+	}
+	var sl []SlaveMovieInfo
+	for _, m := range ml {
+		// 只执行保存操作, 不考虑更新情况
+		s := SlaveMovieInfo{Sid: id, Mid: GenerateHashKey(m.Name), DbId: m.DbId, PlayList: m.PlayList}
+		sl = append(sl, s)
+	}
+	// 将处理后的结果存储到 SalveMovieInfo表中
+	if len(sl) > 0 {
+		if err = db.Mdb.Create(&sl).Error; err != nil {
+			log.Println("附属站点影片信息保存失败: ", err)
+		}
+	}
+	return
+}
+
+// SaveSitePlayList 保存附属站点影片信息
+func SaveSitePlayList(sl []SlaveMovieInfo) (err error) {
+	if len(sl) <= 0 {
+		return nil
+	}
+	if err = db.Mdb.Create(&sl).Error; err != nil {
+		log.Println("附属站点影片信息保存失败: ", err)
+	}
+	return err
+}
+
+// UpdateSitePlayList 仅保存播放url列表信息到当前站点
+func UpdateSitePlayList(id string, ml []MovieDetail) (err error) {
 	// 如果ml 为空则直接返回
 	if len(ml) <= 0 {
 		return nil
@@ -250,8 +353,8 @@ func SaveSitePlayList(id string, ml []MovieDetail) (err error) {
 	var sl []SlaveMovieInfo
 	for _, m := range ml {
 		s := SlaveMovieInfo{Sid: id, Mid: GenerateHashKey(m.Name), DbId: m.DbId, PlayList: m.PlayList}
-		// 查询表中是否已经存在对应的数据记录, 如果有则更新, 无则追加到切片中统一处理
-		if id := ExistSlaveMovieInfo(s); id <= 0 {
+		// 查询表中是否已经存在对应的数据记录, 如果有则更新, 无则追加到切片中统一处理, id =-1 表示不存在对应数据
+		if id := ExistSlaveMovieInfo(s); id > 0 {
 			if err = db.Mdb.Model(&s).Where("id", id).Updates(s).Error; err != nil {
 				log.Println("附属站点影片信息更新失败: ", err)
 			}
@@ -260,8 +363,10 @@ func SaveSitePlayList(id string, ml []MovieDetail) (err error) {
 		sl = append(sl, s)
 	}
 	// 将处理后的结果存储到 SalveMovieInfo表中
-	if err = db.Mdb.Create(&sl).Error; err != nil {
-		log.Println("附属站点影片信息保存失败: ", err)
+	if len(sl) > 0 {
+		if err = db.Mdb.Create(&sl).Error; err != nil {
+			log.Println("附属站点影片信息保存失败: ", err)
+		}
 	}
 	return
 }
@@ -279,6 +384,108 @@ func ExistSlaveMovieInfo(s SlaveMovieInfo) int64 {
 		return -1
 	}
 	return id
+}
+
+// =================================== Spider数据处理--Redis转存 ========================================================
+
+// MovieDetailCache 主站点数据采集先缓存到redis
+func MovieDetailCache(ml []MovieDetail) error {
+	// 以mid为key将数据存储到redis的hash中
+	var data = make(map[string]string)
+	for _, m := range ml {
+		r, _ := json.Marshal(m)
+		data[fmt.Sprint(m.Mid)] = string(r)
+	}
+	return db.Rdb.HSet(db.Cxt, config.MovieDetailKey, data).Err()
+}
+
+// SlaveDetailCache 附属站点影片信息缓存
+func SlaveDetailCache(id string, ml []MovieDetail) error {
+	// 以mid为key将数据存储到redis的hash中
+	var data = make(map[string]string)
+	for _, m := range ml {
+		// 只执行保存操作, 不考虑更新情况
+		s := SlaveMovieInfo{Sid: id, Mid: GenerateHashKey(m.Name), DbId: m.DbId, PlayList: m.PlayList}
+		r, _ := json.Marshal(s)
+		data[s.Mid] = string(r)
+	}
+	// 使用 Sid:Mid为key, 用以区分不同站点数据
+	return db.Rdb.HSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetailKey, id), data).Err()
+}
+
+// SyncMovieDetail 同步redis中的影片数据到mysql中
+func SyncMovieDetail(sid string, grade SourceGrade) {
+	// 初始化游标
+	var cursor uint64 = 0
+	// 根据采集站的类型 Master | Slave 进行不同的处理逻辑
+	switch grade {
+	case MasterCollect:
+		// 循环扫描detail信息, 存储完成后进行删除
+		for {
+			vs, nextCursor, err := db.Rdb.HScan(db.Cxt, config.MovieDetailKey, cursor, "", config.FilmScanSize).Result()
+			if err != nil {
+				log.Println("ScanMovieDetail Failed: ", err)
+			}
+			if len(vs) > 0 {
+				var ks []string
+				var ml []MovieDetail
+				for i := 0; i < len(vs); i += 2 {
+					ks = append(ks, vs[i])
+					var m MovieDetail
+					_ = json.Unmarshal([]byte(vs[i+1]), &m)
+					ml = append(ml, m)
+				}
+				// 批量保存movieDetail
+				if err := SaveDetails(ml); err != nil {
+					log.Println("SyncMovieDetail Failed: ", err)
+				}
+				// 删除已提取的元素
+				if err := db.Rdb.HDel(db.Cxt, config.MovieDetailKey, ks...).Err(); err != nil {
+					log.Println("DeleteMovieDetailCache Failed: ", err)
+				}
+			}
+			// 更新游标
+			cursor = nextCursor
+			// 如果游标归零则结束循环同步
+			if cursor <= 0 {
+				break
+			}
+		}
+	case SlaveCollect:
+		// 循环扫描detail信息, 存储完成后进行删除
+		for {
+			vs, nextCursor, err := db.Rdb.HScan(db.Cxt, fmt.Sprintf(config.MultipleSiteDetailKey, sid), cursor, "", config.FilmScanSize).Result()
+			if err != nil {
+				log.Println("ScanSlaveDetail Failed: ", err)
+			}
+			if len(vs) > 0 {
+				var ks []string
+				var sl []SlaveMovieInfo
+				for i := 0; i < len(vs); i += 2 {
+					ks = append(ks, vs[i])
+					var s SlaveMovieInfo
+					_ = json.Unmarshal([]byte(vs[i+1]), &s)
+					sl = append(sl, s)
+				}
+				// 批量保存movieDetail
+				err := SaveSitePlayList(sl)
+				if err != nil {
+					log.Println("SyncSlaveDetail Failed: ", err)
+				}
+				// 删除已提取的元素
+				if err := db.Rdb.HDel(db.Cxt, fmt.Sprintf(config.MultipleSiteDetailKey, sid), ks...).Err(); err != nil {
+					log.Println("DeleteSlaveDetailCache Failed: ", err)
+				}
+			}
+			// 更新游标
+			cursor = nextCursor
+			// 如果游标归零则结束循环同步
+			if cursor == 0 {
+				break
+			}
+		}
+	}
+
 }
 
 // ============================ APi接口 ==================================================
@@ -342,7 +549,7 @@ func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 通过Search表查询
 	var ids []int64
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Select("mid").Where("pid", pid).Order("update_stamp DESC").Find(&ids).Error; err != nil {
+	if err := db.Mdb.Model(&SearchInfo{}).Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Select("mid").Where("pid", pid).Order("update_stamp DESC").Find(&ids).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -367,7 +574,7 @@ func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
 	return GetBasicInfoByIds(ids)
 }
 
-// GetRelateMovieBasicInfo GetRelateMovie 根据 name, cid, pid, classtag 获取相关影片
+// GetRelateMovieBasicInfo GetRelateMovie 根据 name, cid, pid, classTag 获取相关影片
 func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	/*
 		根据当前影片信息匹配相关的影片
@@ -385,7 +592,7 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	sql = fmt.Sprintf(`select mid from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
 
 	// 添加其他相似匹配规则 同属二级分类
-	sql = fmt.Sprintf(`%s (select * from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
+	sql = fmt.Sprintf(`%s (select mid from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
 	// 根据剧情标签查找相似影片, classTag 使用的分隔符为 , | /首先去除 classTag 中包含的所有空格
 	search.ClassTag = strings.ReplaceAll(search.ClassTag, " ", "")
 	// 如果 classTag 中包含分割符则进行拆分匹配
@@ -416,7 +623,7 @@ func GetMultiplePlay(mIds []string, dbIds int64) []SlaveMovieInfo {
 	// 初始化返回值
 	var l []SlaveMovieInfo
 	// 通过siteId, mIds, dbIds 检索满足条件的数据
-	if err := db.Mdb.Model(&SlaveMovieInfo{}).Select("play_list").Where("mid IN (?) OR db_id = ?", mIds, dbIds).Find(&l).Error; err != nil {
+	if err := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("mid IN (?) OR db_id = ?", mIds, dbIds).Find(&l).Error; err != nil {
 		log.Println("GetMultiplePlay Failed: ", err)
 		return nil
 	}
@@ -436,7 +643,7 @@ func ConvertSearchInfo(m MovieDetail) SearchInfo {
 		year = 0
 	}
 	return SearchInfo{
-		Mid:         m.Id,
+		Mid:         m.Mid,
 		Cid:         m.Cid,
 		Pid:         m.Pid,
 		Name:        m.Name,
@@ -483,7 +690,7 @@ func GenerateHashKey[K string | ~int | int64](key K) string {
 		// --- 3. 剧场版标准化 ---
 		"剧场版", "ovo", "映画", "ovo", "电影版", "ovo", "The Movie", "ovo", "Movie", "ovo", "(Movie)", "ovo", "〔映画〕", "ovo",
 		// 特殊数学符号 (用户常用来代替数字，如 ∬ 代表 2)
-		"Ⅰ", "1", "Ⅱ", "2", "Ⅲ",
+		"Ⅰ", "1", "Ⅱ", "2", "Ⅲ", "3",
 		"∫", "1", "∬", "2", "∮", "3", "Ⅳ", "4", "Ⅴ", "5", "Ⅵ", "6", "Ⅶ", "7", "Ⅷ", "8", "Ⅸ", "9", "Ⅹ", "10", // 用户可能用积分号代表季数
 		"一", "1", "二", "2", "三", "3", "四", "4", "五", "5", "六", "6", "七", "7", "八", "8", "九", "9",
 		// 移除或替换无意义的装饰符号，这些符号在搜索中通常不仅无用还会阻碍匹配

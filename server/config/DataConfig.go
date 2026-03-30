@@ -15,6 +15,12 @@ const (
 	// MAXGoroutine max goroutine, 执行spider中对协程的数量限制
 	MAXGoroutine = 10
 
+	// FilmSaveCacheThreshold 采集数据保存时直接保存 or 缓存到 redis ( h < 168, 缓存到redis)
+	FilmSaveCacheThreshold = 168
+
+	// FilmScanSize 同步影片数据时每次扫描的数据量
+	FilmScanSize = 50
+
 	FilmPictureUploadDir = "./static/upload/gallery"
 	FilmPictureUrlPath   = "/upload/pic/poster/"
 	FilmPictureAccess    = "/api/upload/pic/poster/"
@@ -29,12 +35,14 @@ const (
 	MovieListInfoKey = "MovieList:Cid%d"
 
 	// MovieDetailKey movie detail影视详情信息 可以
-	MovieDetailKey = "MovieDetail:Cid%d:Id%d"
+	MovieDetailKey = "MovieDetail:Master"
 	// MovieBasicInfoKey 影片基本信息, 简略版本
 	MovieBasicInfoKey = "MovieBasicInfo:Cid%d:Id%d"
 
-	// MultipleSiteDetail 多站点影片信息存储key
-	MultipleSiteDetail = "MultipleSource:%s"
+	// MultipleSiteDetailKey 多站点影片信息存储key
+	MultipleSiteDetailKey = "MovieDetail:Slave:%s"
+
+	MovieDetailTemp = "Temp:MovieDetail:%s"
 
 	// SearchInfoTemp redis暂存检索数据信息
 	SearchInfoTemp = "Search:SearchInfoTemp"
@@ -45,7 +53,7 @@ const (
 	SearchTag = "Search:Pid%d:%s"
 
 	// VirtualPictureKey 待同步图片临时存储 key
-	VirtualPictureKey = "VirtualPicture"
+	VirtualPictureKey = "Temp:VirtualPicture"
 	// MaxScanCount redis Scan 操作每次扫描的数据量, 每次最多扫描300条数据
 	MaxScanCount = 300
 )

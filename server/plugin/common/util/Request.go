@@ -2,14 +2,15 @@ package util
 
 import (
 	"fmt"
-	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/extensions"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/extensions"
 )
 
 /*
@@ -27,6 +28,18 @@ type RequestInfo struct {
 	Header http.Header `json:"header"` // 请求头数据
 	Resp   []byte      `json:"resp"`   // 响应结果数据
 	Err    string      `json:"err"`    // 错误信息
+}
+
+// CopyRequestInfo 属性复制, 隔离地址引用造成的并发问题
+func CopyRequestInfo(r RequestInfo) RequestInfo {
+	// 初始化返回值
+	newInfo := RequestInfo{Uri: r.Uri, Params: url.Values{}}
+
+	// 循环拷贝r的每个k,v
+	for k, v := range r.Params {
+		newInfo.Params[k] = append([]string(nil), v...)
+	}
+	return newInfo
 }
 
 // RefererUrl 记录上次请求的url

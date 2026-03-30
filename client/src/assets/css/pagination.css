@@ -26,7 +26,7 @@
     color: #67d9e8;
 }
 
-:deep(.btn-prev) {
+:deep(.el-pagination .btn-prev) {
     font-weight: bold;
     width: 45px;
     height: 45px;
@@ -35,7 +35,7 @@
     border-radius: 50%;
 }
 
-:deep(.btn-next) {
+:deep(.el-pagination .btn-next) {
     font-weight: bold;
     width: 45px;
     height: 45px;
@@ -64,12 +64,12 @@
         height: 35px;
     }
 
-    :deep(.btn-prev) {
+    :deep(.el-pagination .btn-prev) {
         width: 35px;
         height: 35px;
     }
 
-    :deep(.btn-next) {
+    :deep(.el-pagination .btn-next) {
         width: 35px;
         height: 35px;
     }
