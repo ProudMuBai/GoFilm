@@ -15,6 +15,12 @@ const (
 	// MAXGoroutine max goroutine, 执行spider中对协程的数量限制
 	MAXGoroutine = 10
 
+	// FilmSaveCacheThreshold 采集数据保存时直接保存 or 缓存到 redis ( h < 168, 缓存到redis)
+	FilmSaveCacheThreshold = 168
+
+	// FilmScanSize 同步影片数据时每次扫描的数据量
+	FilmScanSize = 50
+
 	FilmPictureUploadDir = "./static/upload/gallery"
 	FilmPictureUrlPath   = "/upload/pic/poster/"
 	FilmPictureAccess    = "/api/upload/pic/poster/"
@@ -29,12 +35,14 @@ const (
 	MovieListInfoKey = "MovieList:Cid%d"
 
 	// MovieDetailKey movie detail影视详情信息 可以
-	MovieDetailKey = "MovieDetail:Cid%d:Id%d"
+	MovieDetailKey = "MovieDetail:Master"
 	// MovieBasicInfoKey 影片基本信息, 简略版本
 	MovieBasicInfoKey = "MovieBasicInfo:Cid%d:Id%d"
 
-	// MultipleSiteDetail 多站点影片信息存储key
-	MultipleSiteDetail = "MultipleSource:%s"
+	// MultipleSiteDetailKey 多站点影片信息存储key
+	MultipleSiteDetailKey = "MovieDetail:Slave:%s"
+
+	MovieDetailTemp = "Temp:MovieDetail:%s"
 
 	// SearchInfoTemp redis暂存检索数据信息
 	SearchInfoTemp = "Search:SearchInfoTemp"
@@ -45,7 +53,7 @@ const (
 	SearchTag = "Search:Pid%d:%s"
 
 	// VirtualPictureKey 待同步图片临时存储 key
-	VirtualPictureKey = "VirtualPicture"
+	VirtualPictureKey = "Temp:VirtualPicture"
 	// MaxScanCount redis Scan 操作每次扫描的数据量, 每次最多扫描300条数据
 	MaxScanCount = 300
 )
@@ -70,7 +78,8 @@ const (
 	// DefaultUpdateSpec 每20分钟执行一次
 	DefaultUpdateSpec = "0 */20 * * * ?"
 	// EveryWeekSpec 每周日凌晨4点更新一次
-	EveryWeekSpec = "0 0 4 * * 0"
+	EveryWeekSpec  = "0 0 3 * * 0"
+	PeriodSyncSpec = "0 0 4 * * 0"
 	// DefaultUpdateTime 每次采集最近 3 小时内更新的影片
 	DefaultUpdateTime = 3
 )
@@ -86,6 +95,8 @@ const (
 	// SearchTableName 存放检索信息的数据表名
 	SearchTableName        = "search"
 	UserTableName          = "users"
+	MovieDetailName        = "movie_details"
+	SlaveMovieInfo         = "slave_infos"
 	UserIdInitialVal       = 10000
 	FileTableName          = "files"
 	FailureRecordTableName = "failure_records"

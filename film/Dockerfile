@@ -1,4 +1,4 @@
-FROM golang:1.20
+FROM golang:latest
 
 ENV GO111MODULE=auto \
     CGO_ENABLED=0 \

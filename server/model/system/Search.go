@@ -75,6 +75,8 @@ func AddSearchIndex() {
 	tableName := s.TableName()
 	// 添加索引
 	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_pid ON %s (pid)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_cid ON %s (cid)", tableName))
 	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_time ON %s (update_stamp DESC)", tableName))
 	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_hits ON %s (hits DESC)", tableName))
 	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_score ON %s (score DESC)", tableName))
@@ -274,31 +276,32 @@ func SaveSearchInfo(s SearchInfo) error {
 }
 
 // BatchSaveOrUpdate 判断数据库中是否存在对应mid的数据, 如果存在则更新, 否则插入
-func BatchSaveOrUpdate(list []SearchInfo) {
-	tx := db.Mdb.Begin()
-	for _, info := range list {
-		var count int64
-		// 通过当前影片id 对应的记录数
-		tx.Model(&SearchInfo{}).Where("mid", info.Mid).Count(&count)
-		// 如果存在对应数据则进行更新, 否则保存相应数据
-		if count > 0 {
-			// 记录已经存在则执行更新部分内容
-			err := tx.Model(&SearchInfo{}).Where("mid", info.Mid).Updates(SearchInfo{UpdateStamp: info.UpdateStamp, Hits: info.Hits, State: info.State,
-				Remarks: info.Remarks, Score: info.Score, ReleaseStamp: info.ReleaseStamp}).Error
+func BatchSaveOrUpdate(ml []MovieDetail) error {
+	//
+	var sl []SearchInfo
+	for _, m := range ml {
+		s := ConvertSearchInfo(m)
+		// 如果存在对应数据则直接进行更新操作
+		if ExistSearchInfo(s.Mid) {
+			// 如果已经存在当前记录则将当前记录进行更新
+			err := db.Mdb.Model(&SearchInfo{}).Where("mid", s.Mid).Updates(SearchInfo{UpdateStamp: s.UpdateStamp, Hits: s.Hits, State: s.State,
+				Remarks: s.Remarks, Score: s.Score, ReleaseStamp: s.ReleaseStamp}).Error
 			if err != nil {
-				tx.Rollback()
+				log.Println("Save Search Info error: ", err)
 			}
-		} else {
-			// 执行插入操作
-			if err := tx.Create(&info).Error; err != nil {
-				tx.Rollback()
-			}
-			// 插入成功后保存一份tag信息到redis中
-			BatchHandleSearchTag(info)
+			break
+		}
+		// 如果不存在对应信息则保存一份tag
+		BatchHandleSearchTag(s)
+		sl = append(sl, s)
+	}
+	// 将需要添加的信息切片进行整合,统一添加
+	if len(sl) > 0 {
+		if err := db.Mdb.Create(&sl).Error; err != nil {
+			return err
 		}
 	}
-	// 提交事务
-	tx.Commit()
+	return nil
 }
 
 // BatchSaveSearchInfo 批量保存Search信息(全量采集时使用,不考虑更新情况)

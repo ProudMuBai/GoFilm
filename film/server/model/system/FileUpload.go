@@ -3,8 +3,6 @@ package system
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 	"log"
 	"path/filepath"
 	"regexp"
@@ -12,6 +10,9 @@ import (
 	"server/plugin/common/util"
 	"server/plugin/db"
 	"strings"
+
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
 // FileInfo 图片信息对象
@@ -173,8 +174,10 @@ func SyncFilmPicture() {
 
 // ReplaceDetailPic 将影片详情中的图片地址替换为自己的
 func ReplaceDetailPic(d *MovieDetail) {
-	// 查询影片对应的本地图片信息
-	if ExistFileInfoByRid(d.Id) {
+	// 获取主站点信息, 如果未开启图片同步功能则直接返回
+	s := GetCollectSourceListByGrade(MasterCollect)[0]
+	// 如果开启了图片同步 且存在对应图片信息 则查询影片对应的本地图片信息,
+	if s.SyncPictures && ExistFileInfoByRid(d.Id) {
 		// 如果存在关联的本地图片, 则查询对应的图片信息
 		f := GetFileInfoByRid(d.Id)
 		// 替换采集站的图片链接为本地链接

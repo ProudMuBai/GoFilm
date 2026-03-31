@@ -25,7 +25,7 @@ func (sl *SpiderLogic) StartCollect(id string, h int) error {
 	}
 	// 存在则开启协程执行采集方法
 	go func() {
-		err := spider.HandleCollect(id, h)
+		err := spider.HandleCollectRefine(id, h)
 		if err != nil {
 			log.Printf("资源站[%s]采集任务执行失败: %s", id, err)
 		}

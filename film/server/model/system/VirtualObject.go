@@ -112,15 +112,46 @@ type UserInfoVo struct {
 
 // PlayLinkVo 多站点播放链接数据列表
 type PlayLinkVo struct {
-	Id       string         `json:"id"`
-	Name     string         `json:"name"`
-	LinkList []MovieUrlInfo `json:"linkList"`
+	Id       string     `json:"id"`
+	Name     string     `json:"name"`
+	LinkList []PlayItem `json:"linkList"`
 }
 
 // MovieDetailVo 影片详情数据, 播放源合并版
 type MovieDetailVo struct {
-	MovieDetail
-	List []PlayLinkVo `json:"list"`
+	Id          int64        `json:"id" gorm:"primaryKey"`      //影片Id
+	Mid         int64        `json:"mid"`                       //影片Id
+	Cid         int64        `json:"cid"`                       //分类ID
+	Pid         int64        `json:"pid"`                       //一级分类ID
+	Name        string       `json:"name"`                      //片名
+	Picture     string       `json:"picture"`                   //简介图片
+	SubTitle    string       `json:"subTitle"`                  //子标题
+	CName       string       `json:"cName"`                     //分类名称
+	EnName      string       `json:"enName"`                    //英文名
+	Initial     string       `json:"initial"`                   //首字母
+	ClassTag    string       `json:"classTag"`                  //分类标签
+	Actor       string       `json:"actor"`                     //主演
+	Director    string       `json:"director"`                  //导演
+	Writer      string       `json:"writer"`                    //作者
+	Blurb       string       `json:"blurb"`                     //简介, 残缺,不建议使用
+	Remarks     string       `json:"remarks"`                   // 更新情况
+	ReleaseDate string       `json:"releaseDate"`               //上映时间
+	Area        string       `json:"area"`                      // 地区
+	Language    string       `json:"language"`                  //语言
+	Year        string       `json:"year"`                      //年份
+	State       string       `json:"state"`                     //影片状态 正片|预告...
+	UpdateTime  string       `json:"updateTime"`                //更新时间
+	AddTime     int64        `json:"addTime"`                   //资源添加时间戳
+	DbId        int64        `json:"dbId"`                      //豆瓣id
+	DbScore     string       `json:"dbScore"`                   // 豆瓣评分
+	Hits        int64        `json:"hits"`                      //影片热度
+	Content     string       `json:"content"`                   //内容简介
+	PlayFrom    FromList     `json:"playFrom" gorm:"type:json"` // 播放来源
+	DownFrom    string       `json:"DownFrom"`                  //下载来源 例: http
+	List        []PlayLinkVo `json:"list"`                      // 播放信息切片组
+	//PlaySeparator   string              `json:"playSeparator"` // 播放信息分隔符
+	//PlayList     MoviePlayList `json:"playList" gorm:"type:json"`     //播放地址url
+	DownloadList MoviePlayList `json:"downloadList" gorm:"type:json"` // 下载url地址
 }
 
 type RecordRequestVo struct {
@@ -131,4 +162,42 @@ type RecordRequestVo struct {
 	BeginTime   time.Time `json:"beginTime"`   // 起始时间
 	EndTime     time.Time `json:"endTime"`     // 结束时间
 	Paging      *Page     `json:"paging"`      // 分页参数
+}
+
+// ----------------------------------- vo type convert  --------------------------------------------------------------
+
+// ConvertMovieDetailVo 整合详情信息
+func ConvertMovieDetailVo(d MovieDetail, l []PlayLinkVo) MovieDetailVo {
+	return MovieDetailVo{
+		Id:          d.Id,
+		Mid:         d.Mid,
+		Cid:         d.Cid,
+		Pid:         d.Pid,
+		Name:        d.Name,
+		Picture:     d.Picture,
+		SubTitle:    d.SubTitle,
+		CName:       d.CName,
+		EnName:      d.EnName,
+		Initial:     d.Initial,
+		ClassTag:    d.ClassTag,
+		Actor:       d.Actor,
+		Director:    d.Director,
+		Writer:      d.Writer,
+		Blurb:       "", // blurb 和 content 内容重复度过高, 且内存占用过高, 所以舍弃简介字段
+		Remarks:     d.Remarks,
+		ReleaseDate: d.ReleaseDate,
+		Area:        d.Area,
+		Language:    d.Language,
+		Year:        d.Year,
+		State:       d.State,
+		UpdateTime:  d.UpdateTime,
+		AddTime:     d.AddTime,
+		DbId:        d.DbId,
+		DbScore:     d.DbScore,
+		Hits:        d.Hits,
+		Content:     d.Content,
+		PlayFrom:    d.PlayFrom,
+		DownFrom:    d.DownFrom,
+		List:        l,
+	}
 }

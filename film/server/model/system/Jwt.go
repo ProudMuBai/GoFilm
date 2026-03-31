@@ -3,12 +3,13 @@ package system
 import (
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
 	"log"
 	"server/config"
 	"server/plugin/common/util"
 	"server/plugin/db"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserClaims struct {
@@ -77,7 +78,7 @@ func SaveUserToken(token string, userId uint) error {
 func GetUserTokenById(userId uint) string {
 	token, err := db.Rdb.Get(db.Cxt, fmt.Sprintf(config.UserTokenKey, userId)).Result()
 	if err != nil {
-		log.Println(err)
+		log.Println("User Token Not Found: ", err)
 		return ""
 	}
 	return token

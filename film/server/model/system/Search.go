@@ -3,10 +3,7 @@ package system
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 	"log"
-	"math"
 	"reflect"
 	"regexp"
 	"server/config"
@@ -15,6 +12,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
 // SearchInfo 存储用于检索的信息
@@ -45,40 +45,60 @@ type Tag struct {
 	Value interface{} `json:"value"`
 }
 
+// ================================= Search 数据表处理 =================================
+
+// TableName 设置默认表名
 func (s *SearchInfo) TableName() string {
 	return config.SearchTableName
 }
 
-// ================================= Spider 数据处理(redis) =================================
-
-// RdbSaveSearchInfo 批量保存检索信息到redis
-func RdbSaveSearchInfo(list []SearchInfo) {
-	// 1.整合一下zset数据集
-	var members []redis.Z
-	for _, s := range list {
-		member, _ := json.Marshal(s)
-		members = append(members, redis.Z{Score: float64(s.Mid), Member: member})
+// CreateSearchTable 创建存储检索信息的数据表
+func CreateSearchTable() {
+	// 如果不存在则创建表
+	if !ExistSearchTable() {
+		err := db.Mdb.AutoMigrate(&SearchInfo{})
+		if err != nil {
+			log.Println("Create Table SearchInfo Failed: ", err)
+		}
 	}
-	// 2.批量保存到zset集合中
-	db.Rdb.ZAdd(db.Cxt, config.SearchInfoTemp, members...)
+}
+
+// ExistSearchTable 是否存在Search Table
+func ExistSearchTable() bool {
+	// 1. 判断表中是否存在当前表
+	return db.Mdb.Migrator().HasTable(&SearchInfo{})
+}
+
+// AddSearchIndex search表中数据保存完毕后 将常用字段添加索引提高查询效率
+func AddSearchIndex() {
+	var s SearchInfo
+	tableName := s.TableName()
+	// 添加索引
+	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_pid ON %s (pid)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_cid ON %s (cid)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_time ON %s (update_stamp DESC)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_hits ON %s (hits DESC)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_score ON %s (score DESC)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_release ON %s (release_stamp DESC)", tableName))
+	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_year ON %s (year DESC)", tableName))
+
 }
 
 // FilmZero 删除所有库存数据
 func FilmZero() {
 	// 删除redis中当前库存储的所有数据
 	//db.Rdb.FlushDB(db.Cxt)
-	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "MovieBasicInfoKey*").Val()...)
-	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "MovieDetail*").Val()...)
-	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "MultipleSource*").Val()...)
-	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "OriginalResource*").Val()...)
+	//db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "MovieBasicInfoKey*").Val()...)
+	//db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "MovieDetail*").Val()...)
+	//db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "MultipleSource*").Val()...)
+	//db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "OriginalResource*").Val()...)
 	db.Rdb.Del(db.Cxt, db.Rdb.Keys(db.Cxt, "Search*").Val()...)
-	// 删除mysql中留存的检索表
-	var s SearchInfo
-	//db.Mdb.Exec(fmt.Sprintf(`drop table if exists %s`, s.TableName()))
-	// 截断数据表 truncate table users
-	if ExistSearchTable() {
-		db.Mdb.Exec(fmt.Sprintf("TRUNCATE table %s", s.TableName()))
-	}
+	// 执行影片信息相关数据表的初始化重置
+	ResetSearchTable()
+	ResetMovieDetailTable()
+	// 次级站点共用一张表, 所以目前暂不处理
+	//ResetSlaveMovieInfoTable()
 }
 
 // ResetSearchTable 重置Search表
@@ -87,12 +107,26 @@ func ResetSearchTable() {
 	var s SearchInfo
 	db.Mdb.Exec(fmt.Sprintf("drop table if exists %s", s.TableName()))
 	// 重新创建 Search 表
-	CreateSearchTable()
+	err := db.Mdb.AutoMigrate(&SearchInfo{})
+	if err != nil {
+		log.Println("Create Table SearchInfo Failed: ", err)
+	}
 }
+
+// ================================= Spider 数据处理(redis) =================================
 
 // DelMtPlay 清空附加播放源信息
 func DelMtPlay(keys []string) {
 	db.Rdb.Del(db.Cxt, keys...)
+}
+
+// TunCateSearchTable 截断SearchInfo数据表
+func TunCateSearchTable() {
+	var s SearchInfo
+	err := db.Mdb.Exec(fmt.Sprintf("TRUNCATE TABLE %s", s.TableName())).Error
+	if err != nil {
+		log.Println("TRUNCATE TABLE Error: ", err)
+	}
 }
 
 /*
@@ -219,108 +253,72 @@ func BatchHandleSearchTag(infos ...SearchInfo) {
 
 // ================================= Spider 数据处理(mysql) =================================
 
-// CreateSearchTable 创建存储检索信息的数据表
-func CreateSearchTable() {
-	// 如果不存在则创建表
-	if !ExistSearchTable() {
-		err := db.Mdb.AutoMigrate(&SearchInfo{})
-		if err != nil {
-			log.Println("Create Table SearchInfo Failed: ", err)
-		}
-	}
-}
-
-// ExistSearchTable 是否存在Search Table
-func ExistSearchTable() bool {
-	// 1. 判断表中是否存在当前表
-	return db.Mdb.Migrator().HasTable(&SearchInfo{})
-}
-
-// AddSearchIndex search表中数据保存完毕后 将常用字段添加索引提高查询效率
-func AddSearchIndex() {
-	var s SearchInfo
-	tableName := s.TableName()
-	// 添加索引
-	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_time ON %s (update_stamp DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_hits ON %s (hits DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_score ON %s (score DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_release ON %s (release_stamp DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_year ON %s (year DESC)", tableName))
-
-}
-
-// BatchSave 批量保存影片search信息
-func BatchSave(list []SearchInfo) {
-	tx := db.Mdb.Begin()
-	// 防止程序异常终止
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-	if err := tx.CreateInBatches(list, len(list)).Error; err != nil {
-		// 插入失败则回滚事务, 重新进行插入
-		tx.Rollback()
-	}
-	// 保存成功后将相应tag数据缓存到redis中
-	BatchHandleSearchTag(list...)
-	tx.Commit()
-}
-
-// BatchSaveOrUpdate 判断数据库中是否存在对应mid的数据, 如果存在则更新, 否则插入
-func BatchSaveOrUpdate(list []SearchInfo) {
-	tx := db.Mdb.Begin()
-	for _, info := range list {
-		var count int64
-		// 通过当前影片id 对应的记录数
-		tx.Model(&SearchInfo{}).Where("mid", info.Mid).Count(&count)
-		// 如果存在对应数据则进行更新, 否则保存相应数据
-		if count > 0 {
-			// 记录已经存在则执行更新部分内容
-			err := tx.Model(&SearchInfo{}).Where("mid", info.Mid).Updates(SearchInfo{UpdateStamp: info.UpdateStamp, Hits: info.Hits, State: info.State,
-				Remarks: info.Remarks, Score: info.Score, ReleaseStamp: info.ReleaseStamp}).Error
-			if err != nil {
-				tx.Rollback()
-			}
-		} else {
-			// 执行插入操作
-			if err := tx.Create(&info).Error; err != nil {
-				tx.Rollback()
-			}
-			// 插入成功后保存一份tag信息到redis中
-			BatchHandleSearchTag(info)
-		}
-	}
-	// 提交事务
-	tx.Commit()
-}
-
-// SaveSearchInfo 添加影片检索信息
+// SaveSearchInfo 添加影片检索信息( 无记录则保存, 有记录则更新)
 func SaveSearchInfo(s SearchInfo) error {
 	// 先查询数据库中是否存在对应记录
 	// 如果不存在对应记录则 保存当前记录
-	tx := db.Mdb.Begin()
 	if !ExistSearchInfo(s.Mid) {
 		// 执行插入操作
-		if err := tx.Create(&s).Error; err != nil {
-			tx.Rollback()
+		if err := db.Mdb.Create(&s).Error; err != nil {
 			return err
 		}
 		// 执行添加操作时保存一份tag信息
 		BatchHandleSearchTag(s)
 	} else {
 		// 如果已经存在当前记录则将当前记录进行更新
-		err := tx.Model(&SearchInfo{}).Where("mid", s.Mid).Updates(SearchInfo{UpdateStamp: s.UpdateStamp, Hits: s.Hits, State: s.State,
+		err := db.Mdb.Model(&SearchInfo{}).Where("mid", s.Mid).Updates(SearchInfo{UpdateStamp: s.UpdateStamp, Hits: s.Hits, State: s.State,
 			Remarks: s.Remarks, Score: s.Score, ReleaseStamp: s.ReleaseStamp}).Error
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
 	}
-	// 提交事务
-	tx.Commit()
 	return nil
+}
+
+// BatchSaveOrUpdate 判断数据库中是否存在对应mid的数据, 如果存在则更新, 否则插入
+func BatchSaveOrUpdate(ml []MovieDetail) error {
+	//
+	var sl []SearchInfo
+	for _, m := range ml {
+		s := ConvertSearchInfo(m)
+		// 如果存在对应数据则直接进行更新操作
+		if ExistSearchInfo(s.Mid) {
+			// 如果已经存在当前记录则将当前记录进行更新
+			err := db.Mdb.Model(&SearchInfo{}).Where("mid", s.Mid).Updates(SearchInfo{UpdateStamp: s.UpdateStamp, Hits: s.Hits, State: s.State,
+				Remarks: s.Remarks, Score: s.Score, ReleaseStamp: s.ReleaseStamp}).Error
+			if err != nil {
+				log.Println("Save Search Info error: ", err)
+			}
+			break
+		}
+		// 如果不存在对应信息则保存一份tag
+		BatchHandleSearchTag(s)
+		sl = append(sl, s)
+	}
+	// 将需要添加的信息切片进行整合,统一添加
+	if len(sl) > 0 {
+		if err := db.Mdb.Create(&sl).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// BatchSaveSearchInfo 批量保存Search信息(全量采集时使用,不考虑更新情况)
+func BatchSaveSearchInfo(ml []MovieDetail) {
+	// 将 MovieDetail切片 处理为 searchInfo切片
+	var sl []SearchInfo
+	for _, m := range ml {
+		s := ConvertSearchInfo(m)
+		// 保存一份tag信息到redis
+		SaveSearchTag(s)
+		// 追加数据到转化后的切片中
+		sl = append(sl, s)
+	}
+	// 批量保存影片检索信息
+	if err := db.Mdb.Create(&sl).Error; err != nil {
+		log.Println("影片详情信息保存失败: ", err)
+	}
 }
 
 // ExistSearchInfo 通过Mid查询是否存在影片的检索信息
@@ -330,110 +328,7 @@ func ExistSearchInfo(mid int64) bool {
 	return count > 0
 }
 
-// TunCateSearchTable 截断SearchInfo数据表
-func TunCateSearchTable() {
-	var searchInfo SearchInfo
-	err := db.Mdb.Exec(fmt.Sprintf("TRUNCATE TABLE %s", searchInfo.TableName())).Error
-	if err != nil {
-		log.Println("TRUNCATE TABLE Error: ", err)
-	}
-}
-
-// SyncSearchInfo 同步影片检索信息
-func SyncSearchInfo(model int) {
-	switch model {
-	case 0:
-		// 重置Search表, (恢复为初始状态, 未添加索引)
-		ResetSearchTable()
-		// 批量添加 SearchInfo
-		SearchInfoToMdb(model)
-		// 保存完所有 SearchInfo 后添加字段索引
-		AddSearchIndex()
-	case 1:
-		// 批量更新或添加
-		SearchInfoToMdb(model)
-	}
-}
-
-// SearchInfoToMdb 扫描redis中的检索信息, 并批量存入mysql (model 执行模式 0-清空并保存 || 1-更新)
-func SearchInfoToMdb(model int) {
-	// 获取集合中的元素数量, 如果集合中没有元素则直接返回
-	count := db.Rdb.ZCard(db.Cxt, config.SearchInfoTemp).Val()
-	if count <= 0 {
-		return
-	}
-	// 1.从redis中批量扫描详情信息
-	list := db.Rdb.ZPopMax(db.Cxt, config.SearchInfoTemp, config.MaxScanCount).Val()
-	// 如果扫描到的信息为空则直接退出
-	if len(list) <= 0 {
-		return
-	}
-	// 2. 处理数据
-	var sl []SearchInfo
-	for _, s := range list {
-		// 解析详情数据
-		info := SearchInfo{}
-		_ = json.Unmarshal([]byte(s.Member.(string)), &info)
-		sl = append(sl, info)
-	}
-	// 通过model执行对应的保存方法
-	switch model {
-	case 0:
-		// 批量添加 SearchInfo
-		BatchSave(sl)
-	case 1:
-		// 批量更新或添加
-		BatchSaveOrUpdate(sl)
-	}
-	//  如果 SearchInfoTemp 依然存在数据, 则递归执行
-	SearchInfoToMdb(model)
-}
-
 // ================================= API 数据接口信息处理 =================================
-
-// GetMovieListByPid  通过Pid 分类ID 获取对应影片的数据信息
-func GetMovieListByPid(pid int64, page *Page) []MovieBasicInfo {
-	// 返回分页参数
-	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Count(&count)
-	page.Total = int(count)
-	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
-	// 进行具体的信息查询
-	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("pid", pid).Order("update_stamp DESC").Find(&s).Error; err != nil {
-		log.Println(err)
-		return nil
-	}
-	// 通过影片ID去redis中获取id对应数据信息
-	var list []MovieBasicInfo
-	for _, v := range s {
-		// 通过key搜索指定的影片信息 , MovieDetail:Cid6:Id15441
-		list = append(list, GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, v.Cid, v.Mid)))
-	}
-	return list
-}
-
-// GetMovieListByCid 通过Cid查找对应的影片分页数据, 不适合GetMovieListByPid 糅合
-func GetMovieListByCid(cid int64, page *Page) []MovieBasicInfo {
-	// 返回分页参数
-	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("cid", cid).Count(&count)
-	page.Total = int(count)
-	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
-	// 进行具体的信息查询
-	var s []SearchInfo
-	if err := db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Where("cid", cid).Order("update_stamp DESC").Find(&s).Error; err != nil {
-		log.Println(err)
-		return nil
-	}
-	// 通过影片ID去redis中获取id对应数据信息
-	var list []MovieBasicInfo
-	for _, v := range s {
-		// 通过key搜索指定的影片信息 , MovieDetail:Cid6:Id15441
-		list = append(list, GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, v.Cid, v.Mid)))
-	}
-	return list
-}
 
 // GetHotMovieByPid  获取Pid指定类别的热门影片
 func GetHotMovieByPid(pid int64, page *Page) []SearchInfo {
@@ -472,89 +367,18 @@ func GetHotMovieByCid(cid int64, page *Page) []SearchInfo {
 }
 
 // SearchFilmKeyword 通过关键字搜索库存中满足条件的影片名
-func SearchFilmKeyword(keyword string, page *Page) []SearchInfo {
-	var searchList []SearchInfo
+func SearchFilmKeyword(keyword string, page *Page) []int64 {
+	var ids []int64
 	// 1. 先统计搜索满足条件的数据量
 	var count int64
 	db.Mdb.Model(&SearchInfo{}).Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Count(&count)
 	page.Total = int(count)
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 2. 获取满足条件的数据
-	db.Mdb.Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).
-		Where("name LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Or("sub_title LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Order("year DESC, update_stamp DESC").Find(&searchList)
-	return searchList
-}
+	db.Mdb.Model(&SearchInfo{}).Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Select("mid").
+		Where("name LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Or("sub_title LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Order("year DESC, update_stamp DESC").Find(&ids)
 
-// GetRelateMovieBasicInfo GetRelateMovie 根据SearchInfo获取相关影片
-func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
-	/*
-		根据当前影片信息匹配相关的影片
-		1. 分类Cid,
-		2. 如果影片名称含有第x季 则根据影片名进行模糊匹配
-		3. class_tag 剧情内容匹配, 切分后使用 or 进行匹配
-		4. area 地区
-		5. 语言 Language
-	*/
-	// sql 拼接查询条件
-	sql := ""
-
-	// 优先进行名称相似匹配
-	//search.Name = regexp.MustCompile("第.{1,3}季").ReplaceAllString(search.Name, "")
-	name := regexp.MustCompile(`(第.{1,3}季.*)|([0-9]{1,3})|(剧场版)|(\s\S*$)|(之.*)|([\p{P}\p{S}].*)`).ReplaceAllString(search.Name, "")
-	// 如果处理后的影片名称依旧没有改变 且具有一定长度 则截取部分内容作为搜索条件
-	if len(name) == len(search.Name) && len(name) > 10 {
-		// 中文字符需截取3的倍数,否则可能乱码
-		name = name[:int(math.Ceil(float64(len(name))/5)*3)]
-	}
-	sql = fmt.Sprintf(`select * from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
-	// 执行后续匹配内容, 匹配结果过少,减少过滤条件
-	//sql = fmt.Sprintf(`%s select * from %s where cid=%d AND area="%s" AND language="%s" AND`, sql, search.TableName(), search.Cid, search.Area, search.Language)
-
-	// 添加其他相似匹配规则
-	sql = fmt.Sprintf(`%s (select * from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
-	// 根据剧情标签查找相似影片, classTag 使用的分隔符为 , | /
-	// 首先去除 classTag 中包含的所有空格
-	search.ClassTag = strings.ReplaceAll(search.ClassTag, " ", "")
-	// 如果 classTag 中包含分割符则进行拆分匹配
-	if strings.Contains(search.ClassTag, ",") {
-		s := "("
-		for _, t := range strings.Split(search.ClassTag, ",") {
-			s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, t)
-		}
-		sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
-	} else if strings.Contains(search.ClassTag, "/") {
-		s := "("
-		for _, t := range strings.Split(search.ClassTag, "/") {
-			s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, t)
-		}
-		sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
-	} else {
-		sql = fmt.Sprintf(`%s class_tag like "%%%s%%"`, sql, search.ClassTag)
-	}
-	// 除名称外的相似影片使用随机排序
-	//sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
-	sql = fmt.Sprintf("%s AND search.deleted_at IS NULL limit %d,%d)", sql, page.Current, page.PageSize)
-	// 条件拼接完成后加上limit参数
-	sql = fmt.Sprintf("(%s)  limit %d,%d", sql, page.Current, page.PageSize)
-	// 执行sql
-	var list []SearchInfo
-	db.Mdb.Raw(sql).Scan(&list)
-	// 根据list 获取对应的BasicInfo
-	var basicList []MovieBasicInfo
-	for _, s := range list {
-		// 通过key获取对应的影片基本数据
-		basicList = append(basicList, GetBasicInfoByKey(fmt.Sprintf(config.MovieBasicInfoKey, s.Cid, s.Mid)))
-	}
-
-	return basicList
-}
-
-// GetMultiplePlay 通过影片名hash值匹配播放源
-func GetMultiplePlay(siteId, key string) []MovieUrlInfo {
-	data := db.Rdb.HGet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetail, siteId), key).Val()
-	var playList []MovieUrlInfo
-	_ = json.Unmarshal([]byte(data), &playList)
-	return playList
+	return ids
 }
 
 // GetSearchTag 通过影片分类 Pid 返回对应分类的tag信息
@@ -629,7 +453,7 @@ func HandleTagStr(title string, tags ...string) []map[string]string {
 }
 
 // GetSearchInfosByTags 查询满足searchTag条件的影片分页数据
-func GetSearchInfosByTags(st SearchTagsVO, page *Page) []SearchInfo {
+func GetSearchInfosByTags(st SearchTagsVO, page *Page) []int64 {
 	// 准备查询语句的条件
 	qw := db.Mdb.Model(&SearchInfo{})
 	// 通过searchTags的非空属性值, 拼接对应的查询条件
@@ -679,19 +503,19 @@ func GetSearchInfosByTags(st SearchTagsVO, page *Page) []SearchInfo {
 	// 返回分页参数
 	GetPage(qw, page)
 	// 查询具体的searchInfo 分页数据
-	var sl []SearchInfo
-	if err := qw.Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&sl).Error; err != nil {
+	var ids []int64
+	if err := qw.Select("mid").Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&ids).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
-	return sl
+	return ids
 
 }
 
 // GetMovieListBySort 通过排序类型返回对应的影片基本信息
 func GetMovieListBySort(t int, pid int64, page *Page) []MovieBasicInfo {
-	var sl []SearchInfo
-	qw := db.Mdb.Model(&SearchInfo{}).Where("pid", pid).Limit(page.PageSize).Offset((page.Current) - 10*page.PageSize)
+	var ids []int64
+	qw := db.Mdb.Model(&SearchInfo{}).Select("mid").Where("pid", pid).Limit(page.PageSize).Offset((page.Current) - 10*page.PageSize)
 	// 针对不同排序类型返回对应的分页数据
 	switch t {
 	case 0:
@@ -704,11 +528,11 @@ func GetMovieListBySort(t int, pid int64, page *Page) []MovieBasicInfo {
 		// 最近更新 (更新时间)
 		qw.Order("update_stamp DESC")
 	}
-	if err := qw.Find(&sl).Error; err != nil {
+	if err := qw.Find(&ids).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
-	return GetBasicInfoBySearchInfos(sl...)
+	return GetBasicInfoByIds(ids)
 
 }
 

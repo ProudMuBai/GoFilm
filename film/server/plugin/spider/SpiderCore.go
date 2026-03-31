@@ -89,7 +89,7 @@ func (jc *JsonCollect) GetFilmDetail(r util.RequestInfo) (list []system.MovieDet
 	r.Params.Set(`ac`, `detail`)
 	util.ApiGet(&r)
 	// 影视详情信息
-	detailPage := collect.FilmDetailLPage{}
+	var detailPage collect.FilmDetailLPage
 	//details := system.DetailListInfo{}
 	// 如果返回数据为空则直接结束本次循环
 	if len(r.Resp) <= 0 {

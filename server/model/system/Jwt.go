@@ -78,7 +78,7 @@ func SaveUserToken(token string, userId uint) error {
 func GetUserTokenById(userId uint) string {
 	token, err := db.Rdb.Get(db.Cxt, fmt.Sprintf(config.UserTokenKey, userId)).Result()
 	if err != nil {
-		log.Println(err)
+		log.Println("User Token Not Found: ", err)
 		return ""
 	}
 	return token

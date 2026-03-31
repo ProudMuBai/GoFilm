@@ -3,7 +3,6 @@ package util
 import (
 	"crypto/md5"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
@@ -12,6 +11,7 @@ import (
 	"log"
 	"net/url"
 	"regexp"
+	"strings"
 )
 
 // GenerateUUID 生成UUID
@@ -60,24 +60,24 @@ func PasswordEncrypt(password, salt string) string {
 }
 
 // ParsePriKeyBytes 解析私钥
-func ParsePriKeyBytes(buf []byte) (*rsa.PrivateKey, error) {
+func ParsePriKeyBytes(buf []byte) (any, error) {
 	p := &pem.Block{}
 	p, buf = pem.Decode(buf)
 	if p == nil {
 		return nil, errors.New("private key parse  error")
 	}
-	return x509.ParsePKCS1PrivateKey(p.Bytes)
+	return x509.ParsePKCS8PrivateKey(p.Bytes)
 }
 
 // ParsePubKeyBytes 解析公钥
-func ParsePubKeyBytes(buf []byte) (*rsa.PublicKey, error) {
+func ParsePubKeyBytes(buf []byte) (any, error) {
 	p, _ := pem.Decode(buf)
 	if p == nil {
 		return nil, errors.New("parse publicKey content nil")
 	}
-	pubKey, err := x509.ParsePKCS1PublicKey(p.Bytes)
+	pubKey, err := x509.ParsePKIXPublicKey(p.Bytes)
 	if err != nil {
-		return nil, errors.New("x509.ParsePKCS1PublicKey error")
+		return nil, errors.New("x509.ParsePKIXPublicKey error")
 	}
 	return pubKey, nil
 }
@@ -101,6 +101,7 @@ func ValidURL(s string) bool {
 	return true
 }
 
+// ValidPwd 校验密码
 func ValidPwd(s string) error {
 	if len(s) < 8 || len(s) > 12 {
 		return fmt.Errorf("密码长度不符合规范, 必须为8-10位")
@@ -123,4 +124,73 @@ func ValidPwd(s string) error {
 		return errors.New("密码必须包含特殊字")
 	}
 	return nil
+}
+
+// TruncateBySep 截断字符串,保留指定数量的结果
+func TruncateBySep(s string, limit int) string {
+	// 如果保留数量小于等于0则返回空值
+	if len(s) <= 0 || limit <= 0 {
+		return ""
+	}
+	// 先强制对不同的分割符进行统一替换为 ,
+	s = regexp.MustCompile(`[$&#%]`).ReplaceAllString(s, ",")
+	// 使用 strings.Split 分割字符串
+	// Split 会在分隔符连续出现或出现在首尾时产生空字符串，这通常符合预期
+	parts := strings.Split(s, ",")
+	// 片段数量小于或等于限制，直接返回原字符串
+	if len(parts) <= limit {
+		return strings.Join(parts, ",")
+	}
+	// 返回原字符串是为了保留原始的格式（比如末尾是否有分隔符）
+	// 即使不截断也重新 Join 一遍（去除多余的空片段等)
+	return strings.Join(parts[:limit], ",")
+}
+
+// CleanFilmName 清洗影片名称，只保留主体
+func CleanFilmName(name string) string {
+	if name == "" {
+		return ""
+	}
+	// 1. 去除常见的前缀 (方括号、圆括号内的内容) 匹配 [xxx], 【xxx】, (xxx), （xxx）
+	//rePrefix := regexp.MustCompile(`^\s*[\[【\(（][^\]】\)）]*[\]】\)）]\s*`)
+	//for rePrefix.MatchString(name) {
+	//	name = rePrefix.ReplaceAllString(name, "")
+	//}
+	// 2.定义需要清洗的特殊标识关键字集合
+	var noisePatterns = []string{
+		`第 [零一二三四五六七八九十\d]+ 季`, `第 [零一二三四五六七八九十\d]+ 话`, `第 [零一二三四五六七八九十\d]+ 集`,
+		`Season\s*\d+`, `S\d+`, `Ep\d+`, `\d{1,3}\s*(话 | 集)`,
+		`\s+(II|III|IV|V|VI|VII|VIII|IX|X)\s*$`,
+		`剧场版`, `电影版`, `OVA`, `OAD`, `SP`, `特别篇`, `总集篇`, `外传`, `序`, `破`, `急`, `终章`,
+		`\d{3,4}[Pp]`, `HD`, `FHD`, `UHD`, `4K`, `BD`, `BluRay`, `BDRip`, `HEVC`, `H264`, `H265`,
+		`GB`, `MB`, `MP4`, `MKV`, `AVI`, `RMVB`,
+		`字幕组`, `动漫`, `动画`, `新版`, `重制版`, `连载`, `更新`, `全集`, `合集`,
+		`Uncensored`, `NoCen`, `Dubbed`, `Subbed`, `Raw`, `生肉`, `熟肉`,
+	}
+	// 3. 处理拼接完整的正则表达式
+	fullPattern := `(?i)(?:\s+|\.+|_+|-+) (` + strings.Join(noisePatterns, "|") + `).*$`
+	cutRegex := regexp.MustCompile(fullPattern)
+	// 去除满足匹配集的子串
+	name = cutRegex.ReplaceAllString(name, "")
+	// 特殊处理 "之" 字结构 (仅当 "之" 后紧跟噪音词时切除)	之\s*(噪音词)
+	reRegex := regexp.MustCompile(`(?i) 之\s* (` + strings.Join(noisePatterns, "|") + `).*$`)
+	name = reRegex.ReplaceAllString(name, "")
+
+	// 修剪 - 去除末尾残留的符号和空白
+	name = strings.TrimRight(name, " \t\n\r._-])：:")
+
+	return name
+}
+
+// FormatSpecialChar 格式化特殊字符, 统一替换为逗号
+func FormatSpecialChar(src string) string {
+	// 执行替换
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '#', '/', '$', '&', '%', '^', '*', '-':
+			return ','
+		default:
+			return r
+		}
+	}, src)
 }

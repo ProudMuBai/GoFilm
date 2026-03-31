@@ -2,10 +2,11 @@ package system
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"log"
 	"server/config"
 	"server/plugin/db"
+
+	"gorm.io/gorm"
 )
 
 // FailureRecord 失败采集记录信息机构体
@@ -15,10 +16,11 @@ type FailureRecord struct {
 	OriginName  string       `json:"originName"`  // 采集站唯一ID
 	Uri         string       `json:"uri"`         // 采集源链接
 	CollectType ResourceType `json:"collectType"` // 采集类型
-	PageNumber  int          `json:"pageNumber"`  // 页码
-	Hour        int          `json:"hour"`        // 采集参数 h 时长
-	Cause       string       `json:"cause"`       // 失败原因
-	Status      int          `json:"status"`      // 重试状态
+	Params      string       `json:"params"`      //采集参数
+	//PageNumber  int          `json:"pageNumber"`  // 页码
+	Hour   int    `json:"hour"`   // 采集参数 h 时长
+	Cause  string `json:"cause"`  // 失败原因
+	Status int    `json:"status"` // 重试状态
 }
 
 // TableName 采集失败记录表表名
@@ -101,7 +103,7 @@ func PendingRecord() []FailureRecord {
 	db.Mdb.Where("(hour > 4320 OR hour < 0) AND status = 1").Find(&list)
 	// 2. 获取 hour > 0 && hour < 4320 && status = 1 的影片信息(只获取最早的一条记录)
 	var fr FailureRecord
-	db.Mdb.Where("hour > 0 AND hour < 4320 AND status = 1").Order("hour DESC, created_at ASC").First(&fr)
+	db.Mdb.Where("hour > 2 AND hour < 360 AND status = 1").Order("hour DESC, created_at ASC").First(&fr)
 	// 3. 将 fr 添加到 list中
 	list = append(list, fr)
 	return list
@@ -109,10 +111,12 @@ func PendingRecord() []FailureRecord {
 
 // ChangeRecord 修改已完成二次采集的记录状态
 func ChangeRecord(fr *FailureRecord, status int) {
+	// 获取采集参数中的h时间参数
+	h := fr.Hour
 	switch {
-	case fr.Hour > 168 && fr.Hour < 360:
-		db.Mdb.Model(&FailureRecord{}).Where("hour > 168 AND hour < 360 AND created_at >= ?", fr.CreatedAt).Update("status", status)
-	case fr.Hour < 0, fr.Hour > 4320:
+	case h > 2 && h < 360:
+		db.Mdb.Model(&FailureRecord{}).Where("hour > 2 AND hour < 360 AND created_at >= ?", fr.CreatedAt).Update("status", status)
+	case h < 0, h > 4320:
 		db.Mdb.Model(&FailureRecord{}).Where("id = ?", fr.ID).Update("status", status)
 	default:
 		// 其余范围,暂不处理

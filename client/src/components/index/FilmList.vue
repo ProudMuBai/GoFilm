@@ -16,7 +16,7 @@
           <span class="cus_remark hidden-md-and-down">{{ item.remarks }}</span>
         </div>
 
-        <div v-if="!global.isMobile"  class="film-card-inner">
+        <div v-if="!global.isMobile && item.id != -99"  class="film-card-inner">
           <div class="film-card-front">
             <a :href="`/filmDetail?link=${item.id}`" class="link_content">
               <div class="tag_group">
@@ -35,7 +35,7 @@
             <el-button class="card-detail" :icon="Discount" color="#626aef" plain round @click="toDetail(item.id)" >详情</el-button>
           </div>
         </div>
-        <a v-if="!global.isMobile" :href="`/filmDetail?link=${item.id}`" class="content_text_tag hidden-sm-and-down">{{ item.name.split("[")[0] }}</a>
+        <a v-if="!global.isMobile && item.id != -99" :href="`/filmDetail?link=${item.id}`" class="content_text_tag hidden-sm-and-down">{{ item.name.split("[")[0] }}</a>
 
       </div>
     </template>
@@ -85,7 +85,12 @@ watchEffect(() => {
       l.push(temp)
     }
   }
-  d.list = l
+  // d.list = l
+  d.list = l.map((item: any) => {
+    item.blurb = item.blurb.replace(/<[^>]*>/g, '')
+    // console.log(item.blur)
+    return item
+  })
 })
 
 

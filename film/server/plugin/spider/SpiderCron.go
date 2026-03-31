@@ -3,10 +3,11 @@ package spider
 import (
 	"errors"
 	"fmt"
-	"github.com/robfig/cron/v3"
 	"log"
 	"server/config"
 	"server/model/system"
+
+	"github.com/robfig/cron/v3"
 )
 
 var (
@@ -18,30 +19,8 @@ func CreateCron() *cron.Cron {
 	return cron.New(cron.WithSeconds())
 }
 
-// AddFilmUpdateCron 添加 指定站点的影片更新定时任务
-func AddFilmUpdateCron(id, spec string) (cron.EntryID, error) {
-	// 校验 spec 表达式的有效性
-	if err := ValidSpec(spec); err != nil {
-		return -99, errors.New(fmt.Sprint("定时任务添加失败,Cron表达式校验失败: ", err.Error()))
-	}
-	return CronCollect.AddFunc(spec, func() {
-		// 通过创建任务时生成的 Id 获取任务相关数据
-		ft, err := system.GetFilmTaskById(id)
-		if err != nil {
-			log.Println("FilmCollectCron Exec Failed: ", err)
-		}
-		// 如果当前定时任务状态为开启则执行对应的采集任务
-		if ft.State && ft.Model == 1 {
-			// 对指定ids的资源站数据进行更新操作
-			BatchCollect(ft.Time, ft.Ids...)
-		}
-		// 任务执行完毕
-		log.Printf("执行一次定时任务: Task[%s]\n", ft.Id)
-	})
-}
-
-// AddAutoUpdateCron 添加 所有已启用站点的影片更新定时任务
-func AddAutoUpdateCron(id, spec string) (cron.EntryID, error) {
+// AddCron 添加定时任务
+func AddCron(id, spec string) (cron.EntryID, error) {
 	// 校验 spec 表达式的有效性
 	if err := ValidSpec(spec); err != nil {
 		return -99, errors.New(fmt.Sprint("定时任务添加失败,Cron表达式校验失败: ", err.Error()))
@@ -53,24 +32,25 @@ func AddAutoUpdateCron(id, spec string) (cron.EntryID, error) {
 			log.Println("FilmCollectCron Exec Failed: ", err)
 		}
 		// 开启对系统中已启用站点的自动更新
-		if ft.State && ft.Model == 0 {
-			AutoCollect(ft.Time)
-			log.Println("执行一次自动更新任务")
+		if ft.State {
+			switch ft.Model {
+			case 0:
+				AutoCollect(ft.Time)
+				log.Println("执行一次已启用站点的影片自动更新任务")
+			case 1:
+				// 对指定ids的资源站数据进行更新操作
+				BatchCollect(ft.Time, ft.Ids...)
+				log.Println("执行一次指定站点的影片自动更新任务")
+			case 2:
+				FullRecoverSpider()
+				log.Println("执行一次采集失败的记录处理任务")
+			case 3:
+				FullSyncMovieDetail()
+				log.Println("执行一次所有站点的影片信息同步任务")
+			}
 		}
 	})
-}
 
-// AddFilmRecoverCron 失败采集记录处理
-func AddFilmRecoverCron(spec string) (cron.EntryID, error) {
-	// 校验 spec 表达式的有效性
-	if err := ValidSpec(spec); err != nil {
-		return -99, errors.New(fmt.Sprint("定时任务添加失败,Cron表达式校验失败: ", err.Error()))
-	}
-	return CronCollect.AddFunc(spec, func() {
-		// 执行失败采集记录恢复
-		FullRecoverSpider()
-		log.Println("执行一次失败采集恢复任务")
-	})
 }
 
 // RemoveCron 删除定时任务
