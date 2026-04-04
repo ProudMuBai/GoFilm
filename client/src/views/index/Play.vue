@@ -1,17 +1,6 @@
 <template>
   <div class="player_area" v-show="data.loading">
-    <div class="player_p">
-      <!--preload-->
-      <video-player @mounted="playerMount" :src="data.options.src" :poster="posterImg" controls
-                    @ready="beforePlay"
-                    @ended="isAutoPlay"
-                    :loop="false"
-                    @keydown="handlePlay"
-                    :bufferedPercent="30"
-                    :volume="data.options.volume"
-                    crossorigin="anonymous" playsinline class="video-player"
-                    :playback-rates="[0.5, 1.0, 1.5, 2.0]"/>
-    </div>
+    <div ref="playerContainer" class="player_p"/>
     <div class="current_play_info">
       <div class="play_info_left">
         <h3 class="current_play_title"><a
@@ -74,29 +63,23 @@
 <script lang="ts" setup>
 import {
   computed, inject,
-  onBeforeMount, onBeforeUpdate,
+  onBeforeMount,
   reactive,
-  Ref,
   ref,
-  watchEffect,
-  withDirectives
+  watch,
 } from "vue";
-import {onBeforeRouteUpdate, useRouter} from "vue-router";
-import {ApiGet} from "../../utils/request";
+import {useRouter} from "vue-router";
+import {ApiGet} from "@/utils/request";
 import {ElMessage} from "element-plus";
 import RelateList from "../../components/index/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
 import posterImg from '../../assets/image/play.png'
-import {cookieUtil, COOKIE_KEY_MAP} from '../../utils/cookie'
+import {cookieUtil, COOKIE_KEY_MAP} from '@/utils/cookie'
 // 引入视频播放器组件
-import {VideoPlayer} from '@videojs-player/vue'
-import 'video.js/dist/video-js.css'
-import {fmt} from "../../utils/format";
-
-// 播放源切换事件
-const changeTab = (id: string) => {
-  data.currentTabId = id
-}
+import Player, {Events, Plugin} from "xgplayer"
+import 'xgplayer/dist/index.min.css';
+import HlsPlugin from 'xgplayer-hls'
+import {fmt} from "@/utils/format";
 
 // 播放页所需数据
 const data = reactive({
@@ -110,7 +93,7 @@ const data = reactive({
     picture: '',
     playFrom: [],
     DownFrom: '',
-    playList: [[]],
+    list: [[]],
     downloadList: '',
     subTitle: '',
     cName: '',
@@ -133,7 +116,6 @@ const data = reactive({
     dbScore: '',
     hits: '',
     content: '',
-    list: [],
   },
   current: {index: 0, episode: '', link: ''},
   relate: [],
@@ -142,12 +124,18 @@ const data = reactive({
   autoplay: true,
   options: {
     title: "", //视频名称
-    src: "", //视频源
+    url: "", //视频源
     volume: 0.6, // 音量
     currentTime: 50,
+    autoplay: false,
+    urls: [],
   },
 })
-//
+
+// 获取路由信息
+const router = useRouter()
+const global = inject<any>('global')
+// 是否存在下一集
 const hasNext = computed(() => {
   let flag = false
   data.detail.list.forEach((item: any) => {
@@ -157,111 +145,46 @@ const hasNext = computed(() => {
   })
   return flag
 })
-
-// 获取路由信息
-const router = useRouter()
-const global = inject<any>('global')
-
+// 播放源切换事件
+const changeTab = (id: string) => {
+  data.currentTabId = id
+}
 // 点击播集数播放对应影片
 const playChange = (play: { sourceId: string, episodeIndex: number, target: any }) => {
   data.detail.list.forEach((item: any) => {
     if (item.id == play.sourceId) {
       let currPlay = item.linkList[play.episodeIndex]
       data.current = {index: play.episodeIndex, episode: currPlay.episode, link: currPlay.link}
-      data.options.src = currPlay.link
+      data.options.url = currPlay.link
       data.options.title = data.detail.name + "  " + currPlay.episode
       data.currentTabId = play.sourceId
     }
   })
 }
-
 // player相关事件
-const handlePlay = (e: any) => {
-  e.preventDefault()
-  switch (e.keyCode) {
-    case 32:
-      if (e.target.paused) {
-        e.target.play()
-      } else {
-        e.target.pause()
-      }
-      break
-    case 37:
-      e.target.currentTime = e.target.currentTime - 5 < 0 ? 0 : e.target.currentTime - 5
-      break
-    case 39:
-      e.target.currentTime = e.target.currentTime + 5 > e.target.duration ? e.target.duration : e.target.currentTime + 5
-      break
-    case 38:
-      data.options.volume = data.options.volume + 0.05 > 1 ? 1 : data.options.volume + 0.05
-      break
-    case 40:
-      data.options.volume = data.options.volume - 0.05 < 0 ? 0 : data.options.volume - 0.05
-      break
-  }
-}
-// 播放结束后是否自动播放下一集
-const isAutoPlay = () => {
-  if (!data.autoplay) {
-    return
-  }
-  playNext()
-}
 // 点击下一集按钮
 const playNext = () => {
   // 如果不存在下一集信息则直接返回
   if (!hasNext.value) {
     return
   }
-  playChange({sourceId: data.currentTabId, episodeIndex: data.current.index + 1, target: ''})
   if (data.autoplay) {
     setTimeout(() => {
-      document.getElementsByTagName("video")[0].play()
-    }, 1000)
+      playChange({sourceId: data.currentTabId, episodeIndex: data.current.index + 1, target: ''})
+    }, 100)
   }
 }
-// 主动触发快捷键
-const triggerKeyMap = (keyCode: number) => {
-  let player = document.getElementsByTagName("video")[0]
-  player.focus()
-  const event = document.createEvent('HTMLEvents');
-  event.initEvent('keydown', true, false);
-  event.keyCode = keyCode; // 设置键码
-  player.dispatchEvent(event)
-}
-const handleBtn = (e: any) => {
-  let btns = document.getElementsByClassName('vjs-button')
-  for (let el of btns) {
-    el.addEventListener('keydown', function (t: any) {
-      t.preventDefault()
-      triggerKeyMap(t.keyCode)
-    })
-  }
-}
-// player 加载完成事件
-const playerMount = (e: any) => {
-  // 处理功能按钮相关事件
-  handleBtn(e)
-}
-// player 准备就绪事件
-const beforePlay = (e: any) => {
-  // 从router参数中获取时间信息
-  let currentTime = router.currentRoute.value.query.currentTime
-  currentTime && e.target.player.currentTime(currentTime)
-}
-
 
 //影片信息加入本地的观看历史中, 先获取cookie,已存在则追加,否则添加
-const saveFilmHisroy = () => {
-  if (data.options.src.length > 0) {
+const saveFilmHistory = () => {
+  if (data.options.url.length > 0) {
     // 处理播放历史要记录的影片相关信息
-    let player = document.getElementsByTagName("video")[0]
     let history = cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY) ? JSON.parse(cookieUtil.getCookie(COOKIE_KEY_MAP.FILM_HISTORY)) : {}
-    let link = `/play?id=${data.detail.mid}&source=${data.currentTabId}&episode=${data.current.index}&currentTime=${player.currentTime}`
+    let link = `/play?id=${data.detail.mid}&source=${data.currentTabId}&episode=${data.current.index}&currentTime=${mPlayer.currentTime}`
     // 处理播放时长
     let timeStamp = new Date().getTime()
     let time = fmt.dateFormat(timeStamp)
-    let progress = `${fmt.secondToTime(player.currentTime)} / ${fmt.secondToTime(player.duration)}`
+    let progress = `${fmt.secondToTime(mPlayer.currentTime)} / ${fmt.secondToTime(mPlayer.duration)}`
     history[data.detail.mid] = {
       id: data.detail.mid,
       name: data.detail.name,
@@ -271,8 +194,8 @@ const saveFilmHisroy = () => {
       timeStamp: timeStamp,
       source: data.currentTabId,
       link: link,
-      currentTime: player.currentTime,
-      duration: player.duration,
+      currentTime: mPlayer.currentTime,
+      duration: mPlayer.duration,
       progress: progress,
       devices: global.isMobile
     }
@@ -282,7 +205,7 @@ const saveFilmHisroy = () => {
 }
 
 // 在浏览器关闭前或页面刷新前将当前影片的观看信息存入历史记录中
-window.addEventListener('beforeunload', saveFilmHisroy)
+window.addEventListener('beforeunload', saveFilmHistory)
 
 
 // 初始化页面数据
@@ -294,73 +217,281 @@ onBeforeMount(() => {
       data.current = {index: resp.data.currentEpisode, ...resp.data.current}
       data.relate = resp.data.relate
       // 设置当前的视频播放url
-      data.options.src = data.current.link
+      data.options.url = data.current.link
       // 设置当前播放源ID信息
       data.currentTabId = resp.data.currentPlayFrom
       data.loading = true
+      data.detail.list.forEach((item: any) => {
+        if (resp.data.currentPlayFrom == item.id) {
+          data.options.urls = item.linkList.map((i: any) => {
+            return i.link
+          })
+        }
+      })
+
     } else {
       ElMessage.error({message: resp.msg})
     }
+  }).then(() => {
+    // 拿到数据后初始化播放器
+    mPlayer = new Player({
+      el: playerContainer.value,
+      url: data.options.url,
+      poster: posterImg,
+      width: "",
+      height: "",
+      autoplay: data.options.autoplay,
+      lang: 'zh-cn', // 设置语言为中文
+      volume: 0.7,   // 初始音量
+      playbackRate: [3, 2, 1.5, 1, 0.75, 0.5],
+      playnext: {
+        urlList: data.options.urls,
+      },
+      playsinline: true,
+      // "x5-playsinline": true, // 针对腾讯 X5 内核（微信、QQ、部分安卓）
+      // "x5-video-player-type": "h5-page", // 关键：使用同层播放器
+      // "webapp-role": "foo", // 某些特定环境下的 hack
+      "x5-video-orientation": "landscape",
+      "x5-video-player-fullscreen": "true",
+      plugins: [HlsPlugin, playListPlugin],
+      hls: {
+        retryCount: 3, // 重试 3 次，默认值
+        retryDelay: 1000, // 每次重试间隔 1 秒，默认值
+        loadTimeout: 10000, // 请求超时时间为 10 秒，默认值
+        fetchOptions: {mode: 'cors'},
+        targetLatency: 10, // 直播目标延迟，默认 10 秒
+        maxLatency: 20, // 直播允许的最大延迟，默认 20 秒
+        preloadTime: 100 ,// 默认值
+        disconnectTime: 0, // 直播断流时间，默认 0 秒，（独立使用时等于 maxLatency）
+        // preloadTime: 30 // 默认值
+      },
+      controls: {
+        autoHide: true
+      },
+      keyboard: {playbackRate: 3},
+      mobile: {
+        disableGesture: true,
+        // controls: true,
+        rotateFullScreen: true,
+        hideDefaultControls: true,
+        gestureX: true,
+        gestureYL: true,
+        disableVolume: true,
+        scopeR: 0.15,
+        pressRate: 3,//长按倍速
+        disablePress: false,
+      },
+      // controls: {
+      //   autoHide: false,
+      // },
+    })
+    // 播放器初始化完成时设置播放时长参数
+    mPlayer.on(Events.READY, () => {
+      // 从router参数中获取时间信息
+      let currentTime = router.currentRoute.value.query.currentTime
+      if (currentTime) {
+        mPlayer.currentTime = currentTime
+      }
+    })
+    // 播放完成事件
+    mPlayer.on(Events.ENDED, () => {
+      data.autoplay && playNext()
+    })
+    // 下一集按钮点击事件
+    mPlayer.on(Events.PLAYNEXT, () => {
+      playNext()
+    })
   })
 })
+
+// 获取playerContainer挂载节点
+const playerContainer = ref<HTMLDivElement | undefined>(undefined)
+let mPlayer: any = null
+
+// 监测播放器数据信息变化
+watch(data.options, (newVal) => {
+  if (mPlayer) {
+    mPlayer.pause();
+    mPlayer.currentTime = 0
+    mPlayer.src = newVal.url
+    // mPlayer.load()
+    mPlayer.play()
+  }
+})
+
+
+const {POSITIONS} = Plugin
+
+class playListPlugin extends Plugin {
+  // 插件的名称，将作为插件实例的唯一key值
+  static get pluginName() {
+    return 'customPlayList'
+  }
+
+  static get defaultConfig() {
+    return {
+      // 挂载在controls的右侧，如果不指定则默认挂载在播放器根节点上
+      position: POSITIONS.CONTROLS_RIGHT
+    }
+  }
+
+  constructor(args: any) {
+    super(args)
+  }
+
+  // 定义属性类型
+  private listContainer: HTMLElement | null = null;
+  private currentIndex: number = 0;
+
+  private renderListItems() {
+    if (!this.listContainer) return;
+    // 清空现有内容
+    this.listContainer.innerHTML = '';
+    this.listContainer.className = 'playListContainer'
+    // 数据渲染
+    let l: any = data.detail.list.find((item: any) => {
+      if (item.id == data.currentTabId) {
+        return item
+      }
+    })
+    l.linkList.forEach((item: any, index: number) => {
+      const el = document.createElement('div')
+      el.className = 'playlist-item';
+      el.innerText = item.episode;
+      // 选中项高亮样式
+      const isActive = index === data.current.index
+      if (isActive) {
+        el.className = 'playlist-item active'
+      }
+      // 绑定点击切换视频事件
+      el.onclick = (e) => {
+        e.stopPropagation();
+        playChange({sourceId: data.currentTabId, episodeIndex: index, target: el})
+        // 重新渲染以更新高亮状态
+        this.renderListItems();
+        // 播放后自动收起列表（可选体验优化）
+        this.toggleList()
+      }
+      el.addEventListener('wheel', (e:any)=> {
+          e.preventDefault()
+          this.listContainer && (this.listContainer.scrollTop += e.deltaY+50)
+      });
+      this.listContainer && this.listContainer.appendChild(el);
+    })
+  }
+
+  // 播放器初始化完成后触发
+  afterPlayerInit() {
+    // TODO 播放器调用start初始化播放源之后的逻辑
+    this.bind('click', (e: any) => {
+      console.log('---------------------------------click')
+      e.stopPropagation(); // 阻止冒泡
+      this.toggleList();
+    })
+    // 点击播放器其他区域时关闭列表
+    if (this.player.root) {
+      this.player.root.addEventListener('click', () => {
+        if (this.listContainer) {
+          this.listContainer.style.display = 'none'
+        }
+      })
+    }
+    this.listContainer = document.querySelector('.playList-panel')
+    this.listContainer && this.listContainer.addEventListener('mouseout', (e) => {
+      // 手指离开时的操作
+      e.stopPropagation();
+      this.toggleList()
+    })
+    this.renderListItems()
+  }
+
+  // 切换列表显示状态
+  private toggleList() {
+    if (this.listContainer) {
+      const isHidden = (this.listContainer.style.display == 'none' || this.listContainer.style.display == '')
+      this.listContainer.style.display = isHidden ? 'block' : 'none'
+      let mobilePlugin = mPlayer.getPlugin('mobile');
+      if (isHidden) {
+        // console.log(mPlayer.plugins)
+        // console.log(mPlayer.getPlugin('cssfullscreen'))
+        // mPlayer.getPlugin('cssfullscreen').show();
+        // mobilePlugin.disable();
+      } else {
+        // mPlayer.getPlugin('cssfullscreen').hide();
+        // mobilePlugin.enable();
+      }
+    }
+  }
+
+  afterCreate() {
+  }
+
+  destroy() {
+    this.listContainer = null;
+  }
+
+
+  render() {
+    return `<xg-icon class="iconfont icon-dianying1" ><div class="playList-panel" /></xg-icon>`
+  }
+}
 </script>
+
+<style>
+.xg-right-grid .icon-dianying1 {
+  display: block;
+  color: #ffffff;
+  padding: 0;
+  font-size: 25px;
+  line-height: 40px;
+}
+
+.xgplayer-playlist-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.playListContainer {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  width: 100px;
+  max-height: 180px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.playListContainer .playlist-item {
+  font-size: 16px;
+  max-height: 30px;
+  line-height: 30px;
+  color: #fff;
+  cursor: pointer;
+  border-bottom: 1px solid #333;
+  background: transparent;
+  font-weight: normal;
+}
+
+.playListContainer .playlist-item:hover {
+  color: #9a5dd3cc;
+}
+
+.playListContainer .active {
+  background: #9a5dd3cc;
+  font-weight: bold;
+}
+
+</style>
 
 <style scoped>
 @import "/src/assets/css/film.css";
 /*vue3-video-play 相关设置*/
 /*//播放器控件区域大小*/
-.video-player {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute;
-  border-radius: 6px;
-
-}
-
-:deep(.vjs-big-play-button) {
-  line-height: 2em;
-  height: 2em;
-  width: 2em;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.65);
-}
-
-:deep(.vjs-control-bar) {
-  background: rgba(0, 0, 0, 0.32);
-}
-
-/*取消video被选中的白边*/
-:deep(video:focus) {
-  border: none !important;
-  outline: none;
-}
-
-:deep(.data-vjs-player:focus) {
-  border: none !important;
-  outline: none;
-}
-
-:deep(.vjs-tech) {
-  border-radius: 6px;
-}
-
-:deep(img) {
-  border-radius: 6px;
-}
-
-/*进度条配色*/
-:deep(.video-js .vjs-load-progress div) {
-  background: rgba(255, 255, 255, 0.55) !important;
-}
-
-:deep(.video-js .vjs-play-progress) {
-  background: #44c8cf;
-}
-
-:deep(.video-js .vjs-slider) {
-  background-color: hsla(0, 0%, 100%, .2);
-}
 
 
 /*当前播放的影片信息展示*/
@@ -459,9 +590,8 @@ onBeforeMount(() => {
 
 .player_p {
   width: 100%;
-  /*height: 700px;*/
+  aspect-ratio: 16 / 9;
   margin: 0;
-  padding-bottom: 56.25% !important;
   position: relative;
   border-radius: 6px;
   display: flex;

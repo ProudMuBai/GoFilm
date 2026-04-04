@@ -103,6 +103,7 @@ const (
 
 	// MysqlDsn mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 	MysqlDsn = "root:root@(192.168.20.5:3601)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
+	//MysqlDsn = "root:MuBai0916$@(47.254.16.58:3610)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
 
 	/*
 		redis 配置信息
@@ -114,6 +115,10 @@ const (
 	RedisAddr     = `192.168.20.5:3602`
 	RedisPassword = `root`
 	RedisDBNo     = 0
+
+	//RedisAddr     = `47.254.16.58:3620`
+	//RedisPassword = `MuBai0916$`
+	//RedisDBNo     = 0
 
 	// MysqlDsn docker compose 环境下的链接信息 mysql:3306 为 docker compose 中 mysql服务对应的网络名称和端口
 	//MysqlDsn = "root:root@(mysql:3306)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"

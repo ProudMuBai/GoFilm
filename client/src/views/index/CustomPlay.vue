@@ -14,83 +14,78 @@
       </div>
     </div>
     <!--播放器区域-->
-    <div class="player_area">
-      <video-player @mounted="playerMount" :src="data.options.src" :poster="posterImg" controls
-                    :loop="false"
-                    @keydown="handlePlay"
-                    :bufferedPercent="30"
-                    :volume="data.options.volume"
-                    crossorigin="anonymous" playsinline class="video-player"
-                    :playback-rates="[0.5, 1.0, 1.5, 2.0]"/>
-    </div>
+    <div ref="playerContainer" class="player_area" />
   </div>
 </template>
 
 <script setup lang="ts">
 import {Search} from "@element-plus/icons-vue";
 import posterImg from "../../assets/image/play.png";
-import {VideoPlayer} from "@videojs-player/vue";
-import {reactive} from "vue";
+// import {VideoPlayer} from "@videojs-player/vue";
+import {onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
+import Player from "xgplayer"
+import 'xgplayer/dist/index.min.css';
+import HlsPlugin from 'xgplayer-hls'
+
 
 const data = reactive({
   link: '',
   options: {
+    // width: '100%',
+    // height: '100%',
     title: "", //视频名称
-    src: "", //视频源
+    url: "https://vip.dytt-tvs.com/20260401/15005_f4adf97f/index.m3u8", //视频源
     volume: 0.6, // 音量
     currentTime: 50,
+    autoplay: false,
   },
 })
 
-// 播放器按钮功能处理
-const handlePlay = (e: any) => {
-  e.preventDefault()
-  switch (e.keyCode) {
-    case 32:
-      if (e.target.paused) {
-        e.target.play()
-      } else {
-        e.target.pause()
-      }
-      break
-    case 37:
-      e.target.currentTime = e.target.currentTime - 5 < 0 ? 0 : e.target.currentTime - 5
-      break
-    case 39:
-      e.target.currentTime = e.target.currentTime + 5 > e.target.duration ? e.target.duration : e.target.currentTime + 5
-      break
-    case 38:
-      data.options.volume = data.options.volume + 0.05 > 1 ? 1 : data.options.volume + 0.05
-      break
-    case 40:
-      data.options.volume = data.options.volume - 0.05 < 0 ? 0 : data.options.volume - 0.05
-      break
-  }
-}
-// 主动触发快捷键
-const triggerKeyMap = (keyCode: number) => {
-  let player = document.getElementsByTagName("video")[0]
-  player.focus()
-  const event = document.createEvent('HTMLEvents');
-  event.initEvent('keydown', true, false);
-  event.keyCode = keyCode; // 设置键码
-  player.dispatchEvent(event)
-}
-const handleBtn = (e: any) => {
-  let btns = document.getElementsByClassName('vjs-button')
-  for (let el of btns) {
-    el.addEventListener('keydown', function (t: any) {
-      t.preventDefault()
-      triggerKeyMap(t.keyCode)
-    })
-  }
-}
-// player 加载完成事件
-const playerMount = (e:any) =>{
-  // 处理功能按钮相关事件
-  handleBtn(e)
-}
+// 获取播放器渲染节点
+const playerContainer = ref<HTMLDivElement | undefined>(undefined)
+// 视频组件实例化
+const playerInstance = ref()
+
+
+onMounted(() => {
+  playerInstance.value = new Player({
+    el: playerContainer.value,
+    url: data.options.url,
+    poster: posterImg,
+    width: "",
+    height: "",
+    autoplay: data.options.autoplay,
+    lang: 'zh-cn', // 设置语言为中文
+    volume: 0.7,   // 初始音量
+    playbackRate:[3, 2, 1.5, 1, 0.75, 0.5],
+    playsinline: true,
+    plugins:[HlsPlugin],
+    hls: {
+      retryCount: 3, // 重试 3 次，默认值
+      retryDelay: 1000, // 每次重试间隔 1 秒，默认值
+      loadTimeout: 10000, // 请求超时时间为 10 秒，默认值
+      fetchOptions: {mode: 'cors'},
+      targetLatency: 10, // 直播目标延迟，默认 10 秒
+      maxLatency:  20, // 直播允许的最大延迟，默认 20 秒
+      disconnectTime: 0, // 直播断流时间，默认 0 秒，（独立使用时等于 maxLatency）
+      // preloadTime: 30 // 默认值
+    },
+    controls: {
+      autoHide: true
+    },
+    keyboard: { playbackRate: 3 },
+    mobile: {
+      controls: true,
+      rotateFullScreen: true,
+      playsinline: true,
+      hideDefaultControls: true,
+      pressRate: 3,//长按倍速
+      disablePress: false,
+    }
+  })
+})
+
 
 // 播放执行
 const play = () => {
@@ -100,9 +95,11 @@ const play = () => {
     return
   }
   // 同步 link 为 player src
-  data.options.src = data.link
+  data.options.url = data.link
+  playerInstance.value.src = data.link
+  playerInstance.value.load()
+  playerInstance.value.play()
   // 执行播放器播放
-  document.getElementsByTagName("video")[0].play()
 }
 
 </script>
@@ -115,6 +112,10 @@ const play = () => {
   margin: 0 auto;
   height: 80%
 }
+
+
+
+/*========================================================================================================================*/
 
 .player_header {
   margin: 40px auto;
@@ -154,15 +155,16 @@ const play = () => {
 
 /*播放器样式.*/
 .player_area {
-  width: 100%;
-  /*height: 700px;*/
-  margin: 0;
-  padding-bottom: 56.25% !important;
+  width: 92%;
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+/*  padding-bottom: 56.25% !important;*/
   position: relative;
   border-radius: 6px;
   display: flex;
 }
 
+/*
 .video-player {
   width: 80% !important;
   height: 80% !important;
@@ -184,7 +186,7 @@ const play = () => {
   background: rgba(0, 0, 0, 0.32);
 }
 
-/*取消video被选中的白边*/
+!*取消video被选中的白边*!
 :deep(video:focus) {
   border: none !important;
   outline: none;
@@ -203,7 +205,7 @@ const play = () => {
   border-radius: 6px;
 }
 
-/*进度条配色*/
+!*进度条配色*!
 :deep(.video-js .vjs-load-progress div) {
   background: rgba(255, 255, 255, 0.55) !important;
 }
@@ -215,5 +217,6 @@ const play = () => {
 :deep(.video-js .vjs-slider) {
   background-color: hsla(0, 0%, 100%, .2);
 }
+*/
 
 </style>

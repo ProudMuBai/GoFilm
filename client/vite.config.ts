@@ -1,8 +1,15 @@
 import {defineConfig} from 'vite'
-import vue from '@vitejs/plugin-vue'
+import vue from "@vitejs/plugin-vue"
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import {ElementPlusResolver} from "unplugin-vue-components/resolvers";
+// @ts-ignore
+import path from 'path'
+import { fileURLToPath, URL } from 'node:url' // 1. 导入 node:url 模块
+
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
 
 export default defineConfig({
     // 本地测试环境
@@ -12,7 +19,7 @@ export default defineConfig({
         proxy: {
             "/api": {
                 target: `http://127.0.0.1:3601`,
-                // target: `http://113.44.5.201:3601`,
+                // target: `http://www.mubai.us.ci:3601`,
                 changeOrigin: true, // 允许跨域
                 rewrite: path => path.replace(/^\/api/, '')
             }
@@ -48,7 +55,9 @@ export default defineConfig({
     },
     resolve: {
         alias: {
-        }
+            // 2. 配置 @ 指向 src 目录的绝对路径
+            '@': path.resolve(__dirname, './src'),
+        },
     },
 
 })

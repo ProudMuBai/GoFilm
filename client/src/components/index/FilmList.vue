@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 
-import {defineProps, inject, reactive, watchEffect} from 'vue'
+import { inject, reactive, watchEffect} from 'vue'
 import {Discount} from "@element-plus/icons-vue";
 
 const props = defineProps({

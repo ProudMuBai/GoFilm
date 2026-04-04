@@ -177,6 +177,7 @@ func DelSlaveMovieInfos(id string) {
 	//}
 }
 
+// AddMovieDetailIndex 添加详情表索引
 func AddMovieDetailIndex() {
 	var m MovieDetail
 	tableName := m.TableName()
@@ -184,14 +185,16 @@ func AddMovieDetailIndex() {
 	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
 }
 
+// AddSlaveMovieInfoIndex 添加附属站点信息表索引
 func AddSlaveMovieInfoIndex() {
 	var s SlaveMovieInfo
 	tableName := s.TableName()
 	// 如果不存在索引则创建对应索引
 	if !db.Mdb.Migrator().HasIndex(&s, "idx_mid") {
 		// 添加索引
-		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_mid ON %s (mid)", tableName))
-		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_dbId ON %s (db_id)", tableName))
+		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_sid ON %s (sid DESC)", tableName))
+		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_mid ON %s (mid DESC)", tableName))
+		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_dbId ON %s (db_id DESC", tableName))
 	}
 }
 
@@ -554,8 +557,7 @@ func GetDetailByMid(mid int64) MovieDetail {
 	if err != nil {
 		// 如果没有获取到对应值, 则去mysql中进行查找
 		if errors.Is(err, redis.Nil) {
-			if err := db.Mdb.Model(&MovieDetail{}).Select("id, mid, cid, pid, name, sub_title, c_name, state, picture, actor, director,"+
-				" content, remarks, area, year").Where("mid = ?", mid).Find(&m).Error; err != nil {
+			if err := db.Mdb.Where("mid = ?", mid).Find(&m).Error; err != nil {
 				log.Println("Find BasicInfo Failed: ", err)
 				return m
 			}
@@ -631,7 +633,7 @@ func GetBasicInfoByIds(ids []int64) []MovieBasicInfo {
 	// 如果存在nil值,则去mysql进行补全
 	if len(newIds) > 0 {
 		if err := db.Mdb.Model(&MovieDetail{}).Select("id, mid, cid, pid, name, sub_title, c_name, state, picture, actor, director,"+
-			" content, remarks, area, year").Where("mid IN (?)", ids).Find(&ml).Error; err != nil {
+			" content, remarks, area, year").Where("mid IN (?)", newIds).Find(&ml).Error; err != nil {
 			log.Println("BatchFind BasicInfo Failed: ", err)
 			return nil
 		}

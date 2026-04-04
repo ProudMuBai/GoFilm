@@ -78,14 +78,12 @@ const router = createRouter({
 })
 
 // 添加全局前置守卫拦截未登录的跳转
-router.beforeEach((to, from, next) =>{
+router.beforeEach((to, from) =>{
     // 如果访问的是 /manage 下的路由, 且 token信息为空 则跳转到登录界面
     let matchPath = new RegExp(/^\/manage\//).test(to.path)
     let token = getToken()
     if ( matchPath && !token ) {
-        next('/login')
-    } else {
-        next()
+       return '/login'
     }
 })
 
