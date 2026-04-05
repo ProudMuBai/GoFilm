@@ -315,7 +315,7 @@ func BatchUpdateDetails(ml []MovieDetail) (err error) {
 // ExistMovieDetailByMid 通过mid判断是否存在对应信息
 func ExistMovieDetailByMid(mid int64) bool {
 	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("mid", mid).Count(&count)
+	db.Mdb.Model(&MovieDetail{}).Where("mid", mid).Count(&count)
 	return count > 0
 }
 
@@ -443,10 +443,30 @@ func SlaveDetailCache(id string, ml []MovieDetail) error {
 		// 只执行保存操作, 不考虑更新情况
 		s := SlaveMovieInfo{Sid: id, Mid: GenerateHashKey(m.Name), DbId: m.DbId, PlayList: m.PlayList}
 		r, _ := json.Marshal(s)
-		data[s.Mid] = string(r)
+		// redis中的存储key优先db_id
+		if s.DbId > 0 {
+			data[fmt.Sprintf("%d", s.DbId)] = string(r)
+		} else {
+			data[s.Mid] = string(r)
+		}
 	}
 	// 使用 Sid:Mid为key, 用以区分不同站点数据
 	return db.Rdb.HSet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetailKey, id), data).Err()
+}
+
+// GetSlaveDetailInCache 从redis缓存中获取播放信息
+func GetSlaveDetailInCache(sid, mid string) SlaveMovieInfo {
+	// 初始化返回值
+	var s SlaveMovieInfo
+	v, err := db.Rdb.HGet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetailKey, sid), mid).Result()
+	if err != nil {
+		// 如果没有获取到对应值, 则直接continue
+		//log.Println("Get MultipleSiteDetail Failed: ", err)
+		return s
+	}
+	// 如果获取到数据则直接退出本次循环
+	_ = json.Unmarshal([]byte(v), &s)
+	return s
 }
 
 // SyncMovieDetail 同步redis中的影片数据到mysql中
@@ -749,17 +769,26 @@ func GetMultiplePlay(mIds []string, dbId int64) []SlaveMovieInfo {
 			continue
 		}
 		var s SlaveMovieInfo
+		// 优先使用dbID为key去redis中获取
+		if s = GetSlaveDetailInCache(c.Id, fmt.Sprintf("%d", dbId)); s.Mid != "" {
+			l = append(l, s)
+			continue
+		}
 		for _, mid := range mIds {
 			// 初始化临时变量 SlaveMovieInfo
-			v, err := db.Rdb.HGet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetailKey, c.Id), mid).Result()
-			if err != nil {
-				// 如果没有获取到对应值, 则直接continue
-				continue
+			if s = GetSlaveDetailInCache(c.Id, mid); s.Mid != "" {
+				l = append(l, s)
+				break
 			}
-			// 如果获取到数据则直接退出本次循环
-			_ = json.Unmarshal([]byte(v), &s)
-			l = append(l, s)
-			break
+			//v, err := db.Rdb.HGet(db.Cxt, fmt.Sprintf(config.MultipleSiteDetailKey, c.Id), mid).Result()
+			//if err != nil {
+			//	// 如果没有获取到对应值, 则直接continue
+			//	continue
+			//}
+			//// 如果获取到数据则直接退出本次循环
+			//_ = json.Unmarshal([]byte(v), &s)
+			//l = append(l, s)
+			//break
 		}
 		// 如果迭代完s依旧为空,则去mysql中进行匹配
 		if s.Mid == "" {

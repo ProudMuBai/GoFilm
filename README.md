@@ -4,7 +4,7 @@
 
 效果展示: <a href="https://m.mubai.link/" target="_blank">点击访问演示站点</a>  
 
-新版本测试访问站点: [测试内容站点](https://m.mubai.us.ci/)
+新版本测试访问站点: [新版本站点](https://www.mubai.us.ci/)
 
 ## 简介
 
@@ -21,14 +21,15 @@
 **部署方式**
 
 - [Docker部署](https://github.com/ProudMuBai/GoFilm/blob/main/film/README.md) 
-- [1Panel部署(可视化面板操作)](https://blog.mubai.link/2024/04/21/Docs/gofilm/)
+- [1Panel部署(可视化面板操作)](https://blog.mubai.link/procedure/application/github/GoFilm/)
 
 **使用指南**
+
+- 程序使用文档:  提供项目安装部署以及相应的初始化使用步骤说明  [GoFilm 部署文档](https://blog.mubai.link/procedure/application/github/GoFilm/)
 
 - 后端项目路径 `GoFilm/server`, 包含 项目结构说明,  后端程序源码, API接口说明, 本地启动注意事项 [查看](https://github.com/ProudMuBai/GoFilm/tree/main/server)
 - 前端项目路径 `GoFilm/client`,  包含 项目结构说明,  前端项目源码,  配置文件说明, 本地启动方式  [查看](https://github.com/ProudMuBai/GoFilm/tree/main/client)
 - 部署文件 `GoFilm/film`, 包含项目部署所需的所有文件以及相应的说明文件  [查看](https://github.com/ProudMuBai/GoFilm/tree/main/film)
-- 程序使用文档:  提供项目安装部署以及相应的初始化使用步骤说明  [点击前往](https://blog.mubai.link/2024/04/21/Docs/gofilm/)
 
 
 
@@ -52,25 +53,26 @@
 **更新说明**
 
 - 更换主体数据存储方式, 精简部分无意义字段, 节省服务器内存
-- 使用中出现问题可在项目 Issues 中进行描述, 有需要添加的新功能和好的建议也可以提供
+- 更换视频播放器, 优化部分功能键,新增播放列表和下一集控键
 - 新版本安装方法以及使用说明请查看本项目 film 文件夹下的说明文件
 
->新增内容:
+>更新内容:
 >
->- 新增移动端观看历史
->- 新增采集失败记录功能 && 基于失败的采集进行重新采集处理
->- 默认定时任务新增定期处理失败采集功能
->- 修复Banner首页轮播横幅参数修改提交异常问题
->- 修复首页一级分类导航无数据问题
->- 修复首页界面影片信息卡片异常显示问题
->- 优化影片详情以及播放页的组件背景显示问题
+>- 采集优化, 采集逻辑大幅度改动, 主站点采集前进行分类设置(将不需要的分类设置为不展示), 可精简采集内容
+>- 数据存储方式变更, 主附站点数据存储转为MySQL存储, 减少Redis内存消耗
+>- 更新采集内容缓存, 通过定时任务(每周日凌晨四点)统一同步到MySQL, 降低MySQL数据更新频率
+>- 资源匹配逻辑修改, 变更对不同站点的影片匹配逻辑
+>- DockerFile 更新, 由于golang版本以及相关依赖升级导致旧文件无法正常构建镜像. 
+>- UI 不分列表展示区域数据重复问题
+>- 播放页逻辑变更, 更换播放器为 `xgplayer`
 >
 >后续计划:
 >
 >- 新增功能测试 && buf修复
->- 完善历史观看界面功能 && 优化相应UI组件
->- 针对播放器进行优化 OR 更换播放器组件
->- 采集方式细节化, 实现定向采集以及单一影片的实时手动更新功能
+>- 优化UI组件
+>- 针对播放器进行BUG测试优化以及功能完善
+>- 采集方式细节化, 实现采集数据的精简
+>- 聚合采集, 实现通过影片名称搜索动态添加数据到站点中
 
 ## 目录结构
 

@@ -1,17 +1,27 @@
-FROM golang:latest
+FROM golang:tip-alpine3.23 AS builder
 
-ENV GO111MODULE=auto \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64 \
-        GOPROXY=https://goproxy.cn,direct
+RUN apk add --no-cache ca-certificates git build-base
 
-MAINTAINER "bai"
- 
-WORKDIR /opt/server
- 
-ADD ./server /opt/server
- 
-RUN go build main.go
- 
-EXPOSE 3061
+
+
+WORKDIR /build
+
+COPY ./server/go.mod ./server/go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
+
+
+COPY ./server .
+
+
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -ldflags="-s -w" -o /build/gofilm ./main.go
+
+
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /build/gofilm /gofilm
+
+ENTRYPOINT ["/gofilm"]

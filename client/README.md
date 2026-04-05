@@ -118,7 +118,7 @@ server: {
 
 4. 执行 `npm run build` 将项目进行打包构建
 5. 将打包后生成的 dist目录中的所有文件复制到 nginx的 html文件夹下
-6. 使用浏览器访问 nginx 的服务地址, 例:  IP:Port, http://localhost:3600
+6. 使用浏览器访问 nginx 的服务地址, 例:  IP:Port, http://localhost:3600 或 http://127.0.0.1:3600
 
 
 

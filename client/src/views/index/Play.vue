@@ -1,6 +1,7 @@
 <template>
   <div class="player_area" v-show="data.loading">
-    <div ref="playerContainer" class="player_p"/>
+    <div id="player-full" />
+    <div ref="playerContainer" class="player_p" @touchmove.prevent @wheel.prevent />
     <div class="current_play_info">
       <div class="play_info_left">
         <h3 class="current_play_title"><a
@@ -207,7 +208,6 @@ const saveFilmHistory = () => {
 // 在浏览器关闭前或页面刷新前将当前影片的观看信息存入历史记录中
 window.addEventListener('beforeunload', saveFilmHistory)
 
-
 // 初始化页面数据
 onBeforeMount(() => {
   let query = router.currentRoute.value.query
@@ -240,6 +240,7 @@ onBeforeMount(() => {
       poster: posterImg,
       width: "",
       height: "",
+      fluid: true,
       autoplay: data.options.autoplay,
       lang: 'zh-cn', // 设置语言为中文
       volume: 0.7,   // 初始音量
@@ -248,9 +249,7 @@ onBeforeMount(() => {
         urlList: data.options.urls,
       },
       playsinline: true,
-      // "x5-playsinline": true, // 针对腾讯 X5 内核（微信、QQ、部分安卓）
-      // "x5-video-player-type": "h5-page", // 关键：使用同层播放器
-      // "webapp-role": "foo", // 某些特定环境下的 hack
+      miniprogress: true,
       "x5-video-orientation": "landscape",
       "x5-video-player-fullscreen": "true",
       plugins: [HlsPlugin, playListPlugin],
@@ -270,13 +269,10 @@ onBeforeMount(() => {
       },
       keyboard: {playbackRate: 3},
       mobile: {
-        disableGesture: true,
-        // controls: true,
-        rotateFullScreen: true,
+        rotateFullscreen: true,
         hideDefaultControls: true,
         gestureX: true,
-        gestureYL: true,
-        disableVolume: true,
+        gestureY: true,
         scopeR: 0.15,
         pressRate: 3,//长按倍速
         disablePress: false,
@@ -318,10 +314,8 @@ watch(data.options, (newVal) => {
     mPlayer.play()
   }
 })
-
-
+// 自定义播放列表插件
 const {POSITIONS} = Plugin
-
 class playListPlugin extends Plugin {
   // 插件的名称，将作为插件实例的唯一key值
   static get pluginName() {
@@ -374,7 +368,7 @@ class playListPlugin extends Plugin {
       }
       el.addEventListener('wheel', (e:any)=> {
           e.preventDefault()
-          this.listContainer && (this.listContainer.scrollTop += e.deltaY+50)
+          this.listContainer && (this.listContainer.scrollTop += e.deltaY)
       });
       this.listContainer && this.listContainer.appendChild(el);
     })
@@ -438,19 +432,49 @@ class playListPlugin extends Plugin {
 </script>
 
 <style>
+/*xgplayer 样式修改*/
 .xg-right-grid .icon-dianying1 {
   display: block;
   color: #ffffff;
   padding: 0;
-  font-size: 25px;
+  font-size: 16px;
   line-height: 40px;
 }
-
 .xgplayer-playlist-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   height: 100%;
+}
+.xgplayer-playnext .xgplayer-icon svg {
+  width: 15px;
+}
+.xgplayer xg-icon:not(.xgplayer-playnext) svg {
+  width: 20px;
+}
+.xgplayer .xgplayer-progress-btn{
+  width: 10px;
+  height: 10px;
+  border-radius: 10px;
+}
+.xgplayer .xgplayer-progress-btn:before{
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+}
+.xgplayer .flex-controls .xg-inner-controls{
+  bottom: 0;
+}
+
+@media only screen and (orientation: landscape) {
+  .xgplayer-mobile.xgplayer-is-fullscreen .xg-top-bar, .xgplayer-mobile.xgplayer-is-fullscreen .xg-pos{
+    left: 3%;
+    right: 3%;
+  }
+  .xgplayer .xgplayer-playnext svg{
+    width: 16px !important;
+  }
+
 }
 
 .playListContainer {
@@ -488,12 +512,10 @@ class playListPlugin extends Plugin {
 
 </style>
 
+<!--公共样式-->
 <style scoped>
 @import "/src/assets/css/film.css";
-/*vue3-video-play 相关设置*/
-/*//播放器控件区域大小*/
-
-
+/*公共样式区域*/
 /*当前播放的影片信息展示*/
 .current_play_info {
   width: 100%;
@@ -542,52 +564,6 @@ class playListPlugin extends Plugin {
   min-height: 100%;
 }
 
-
-@media (min-width: 768px) {
-  .player_area {
-    padding: 10px 6%;
-  }
-
-  .tags a {
-    padding: 5px 10px;
-    /*    background-color: rgba(155, 73, 231, 0.72);*/
-    background: linear-gradient(#9B49E7B8, #9B49E799);
-    color: #c4c2c2;
-    font-size: 13px;
-    border-radius: 6px;
-    margin-right: 15px;
-  }
-
-  .tags span {
-    padding: 6px 12px;
-    /*background-color: #404042;*/
-    background: linear-gradient(#fff2, #ffffff1a);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #b5b2b2;
-    border-radius: 5px;
-    margin: 0 8px;
-    font-size: 12px;
-  }
-
-  .play_content a {
-    white-space: nowrap;
-    font-size: 12px;
-    min-width: calc(10% - 24px);
-    padding: 6px 10px;
-    color: #ffffff;
-    border-radius: 6px;
-    margin: 8px 12px;
-    background: #888888;
-  }
-
-  .play_info_right a:hover {
-    color: #FFBB5C;
-    background: rgb(0, 0, 0, 0.2);
-  }
-
-}
-
-
 .player_p {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -630,11 +606,15 @@ class playListPlugin extends Plugin {
 
 </style>
 
-<!--移动端-->
+<!--移动端 && pc端-->
 <style scoped>
 
 /*适应小尺寸*/
 @media (max-width: 768px) {
+  :deep(.xgplayer xg-start-inner){
+    border-radius: 50%!important;
+    background: rgba(0, 0, 0, .38)!important;
+  }
   .player_area {
     padding: 5px 10px;
   }
@@ -695,6 +675,51 @@ class playListPlugin extends Plugin {
     color: #FFBB5C;
     background: rgb(0, 0, 0, 0.2);
   }
+}
+
+/*pc端样式*/
+@media (min-width: 768px) {
+  .player_area {
+    padding: 10px 6%;
+  }
+
+  .tags a {
+    padding: 5px 10px;
+    /*    background-color: rgba(155, 73, 231, 0.72);*/
+    background: linear-gradient(#9B49E7B8, #9B49E799);
+    color: #c4c2c2;
+    font-size: 13px;
+    border-radius: 6px;
+    margin-right: 15px;
+  }
+
+  .tags span {
+    padding: 6px 12px;
+    /*background-color: #404042;*/
+    background: linear-gradient(#fff2, #ffffff1a);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #b5b2b2;
+    border-radius: 5px;
+    margin: 0 8px;
+    font-size: 12px;
+  }
+
+  .play_content a {
+    white-space: nowrap;
+    font-size: 12px;
+    min-width: calc(10% - 24px);
+    padding: 6px 10px;
+    color: #ffffff;
+    border-radius: 6px;
+    margin: 8px 12px;
+    background: #888888;
+  }
+
+  .play_info_right a:hover {
+    color: #FFBB5C;
+    background: rgb(0, 0, 0, 0.2);
+  }
+
 }
 </style>
 

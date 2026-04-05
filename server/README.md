@@ -84,10 +84,20 @@ server
 
 ### 本地运行
 
-1.  修改 /server/plugin/db 目录下的 mysql.go 和 redis.go 中的连接地址和用户名密码
-2. 在 server 目录下执行 `go run main.go`
+1.  数据库初始化, 本地需要有 MySQL 和 Redis 数据库, MySQL中需手动创建名为 `FilmSite` 的数据库
+2.  修改 `server/config/DataConfig.go` 目录下的 mysql.go 和 redis.go 中的连接地址和用户名密码
 
+```go
 
+// mysql连接配置信息
+MysqlDsn = "root:root@(192.168.20.5:3601)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
+// redis连接配置信息
+RedisAddr     = `192.168.20.5:3602`
+RedisPassword = `root`
+RedisDBNo     = 0
+```
+
+3. 在 server 目录下执行 `go run main.go`
 
 
 

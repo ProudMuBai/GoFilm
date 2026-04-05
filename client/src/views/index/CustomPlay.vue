@@ -56,6 +56,7 @@ onMounted(() => {
     width: "",
     height: "",
     autoplay: data.options.autoplay,
+    miniprogress: true,
     lang: 'zh-cn', // 设置语言为中文
     volume: 0.7,   // 初始音量
     playbackRate:[3, 2, 1.5, 1, 0.75, 0.5],
@@ -82,6 +83,7 @@ onMounted(() => {
       hideDefaultControls: true,
       pressRate: 3,//长按倍速
       disablePress: false,
+      miniprogress: true,
     }
   })
 })
