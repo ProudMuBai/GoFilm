@@ -1,47 +1,56 @@
 <template>
-    <div  class="container">
-        <div class="search_group">
-                <input v-model="data.search" @keydown="e=>{e.keyCode==13 && searchMovie()}" placeholder="输入关键字搜索 动漫,剧集,电影 " class="search"/>
-                <el-button @click="searchMovie" :icon="Search"  style="" />
+  <div class="container">
+    <div class="search_group">
+      <div class="InputContainer">
+        <input  name="text" class="input" placeholder="输入关键字搜索 动漫,剧集,电影" v-model="data.search" @keydown="e=>{e.keyCode==13 && searchMovie()}" />
+        <div class="border" />
+        <button class="micButton" @click="searchMovie">
+          <svg viewBox="0 0 512 512" class="searchIcon"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="header-container">
+        <h3>{{ data.oldSearch }}</h3>
+        <span>共找到<b>{{ data.page.total }}</b>部与"<b>{{ data.oldSearch }}</b>"相关的影视作品</span>
+    </div>
+    <div class="card-group" v-if="data.list && data.list.length > 0">
+      <div class="card"  v-for="(m,i) in data.list" >
+        <div class="card-left">
+          <div class="loader" v-if="m.loading" />
+          <img v-show="!m.loading && !m.error" :src="m.picture" @load="()=>{data.list[i].loading=false}" @error="()=>{data.list[i].error=true}"/>
+          <!-- 失败占位 -->
+          <img v-if="m.error" src="/src/assets/image/404.png" @load="()=>{data.list[i].loading=false}" />
         </div>
-        <div v-if="data.list && data.list.length > 0 " class="search_res">
-            <div class="title">
-                <h2>{{ data.oldSearch }}</h2>
-                <p>共找到{{ data.page.total }}部与"{{ data.oldSearch }}"相关的影视作品</p>
-            </div>
-            <div class="content">
-                <div class="film_item" v-for="m in data.list">
-                    <a :href="`/filmDetail?link=${m.id}`" :style="{backgroundImage: `url('${m.picture}')`}"></a>
-                    <div class="film_intro">
-                        <h3>{{ m.name }}</h3>
-                        <p class="tags">
-                            <span class="tag_c">{{ m.cName }}</span>
-                            <span>{{ m.year }}</span>
-                            <span>{{ m.area }}</span>
-                        </p>
-                        <p><em>导演:</em>{{ m.director }}</p>
-                        <p><em>主演:</em>{{ m.actor }}</p>
-                        <p class="blurb"><em>剧情:</em>{{ m.blurb.replaceAll('　　', '') }}</p>
-                        <el-button :icon="CaretRight" @click="play(m.id)">立即播放</el-button>
-                    </div>
-                </div>
-            </div>
-            <div class="pagination_container">
-                <el-pagination background layout="prev, pager, next"
-                               v-model:current-page="data.page.current"
-                               @current-change="changeCurrent"
-                               :pager-count="5"
-                               :background="true"
-                               :page-size="data.page.pageSize"
-                               :total="data.page.total"
-                               :prev-icon="ArrowLeftBold"
-                               :next-icon="ArrowRightBold"
-                               hide-on-single-page
-                               class="pagination"/>
-            </div>
+        <div class="card-right">
+          <h3>{{ m.name }}</h3>
+          <p class="tags">
+            <span class="tag_c">{{ `${m.cName?m.cName:'暂未分类'}` }}</span>
+            <span>{{  `${m.year?m.year:'未知'}` }}</span>
+            <span class="tag-area">{{  `${m.area?m.area:'未知'}`  }}</span>
+          </p>
+          <p><em>导演:</em>{{ `${m.director?m.director:'未知'}` }}</p>
+          <p><em>主演:</em>{{ `${m.actor?m.actor:'未知'}` }}</p>
+          <p class="blurb"><em>剧情:</em>{{ `${m.blurb.trim()?m.blurb.replace(/\s/g, ''):'暂无简介'}` }}</p>
+          <el-button :icon="CaretRight" @click="play(m.id)">立即播放</el-button>
         </div>
+      </div>
     </div>
     <el-empty v-if="data.oldSearch != '' && (!data.list || data.list.length == 0) " description="未查询到对应影片"/>
+
+    <div class="pagination_container ">
+      <el-pagination background layout="prev, pager, next"
+                     v-model:current-page="data.page.current"
+                     @current-change="changeCurrent"
+                     :pager-count="5"
+                     :page-size="data.page.pageSize"
+                     :total="data.page.total"
+                     :prev-icon="ArrowLeftBold"
+                     :next-icon="ArrowRightBold"
+                     hide-on-single-page
+                     class="pagination"/>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -56,321 +65,338 @@ import {ElMessage} from "element-plus";
 const router = useRouter()
 const route = useRoute()
 const data = reactive({
-    list: [],
-    page: {
-        current: 0,
-    },
-    oldSearch: '',
-    search: '',
+  list: [],
+  page: {
+    current: 0,
+    pageSize: 0,
+    total: 0,
+  },
+  oldSearch: '',
+  search: '',
 })
 // 监听路由参数的变化
 watch(
     [route],
     (oldRoute, newRoute) => {
-        refreshPage(router.currentRoute.value.query.search, router.currentRoute.value.query.current)
+      refreshPage(router.currentRoute.value.query.search, router.currentRoute.value.query.current)
     },
 )
 
 // 点击播放
 const play = (id: string | number) => {
-    location.href = `/play?id=${id}&episode=0&source=0`
+  location.href = `/play?id=${id}&episode=0&source=0`
 }
 
 // 搜索按钮事件
-const searchMovie = ()=>{
-    if (data.search.length <=0) {
-        ElMessage.error({message: '搜索信息不能为空', duration:1000})
-        return
-    }
-    location.href = location.href = `/search?search=${data.search}`
+const searchMovie = () => {
+  if (data.search.length <= 0) {
+    ElMessage.error({message: '搜索信息不能为空', duration: 1000})
+    return
+  }
+  location.href = location.href = `/search?search=${data.search}`
 }
 
 // 执行搜索请求
 const refreshPage = (keyword: any, current: any) => {
-    ApiGet('/searchFilm', {keyword: keyword, current: current}).then((resp: any) => {
-      if (resp.code == 0) {
-        data.list = resp.data.list
-        data.page = resp.data.page
-        data.oldSearch = keyword
-      } else {
-        ElMessage.warning({message: resp.msg, duration: 1000})
-      }
+  ApiGet('/searchFilm', {keyword: keyword, current: current}).then((resp: any) => {
+    if (resp.code == 0) {
+      data.list = resp.data.list.map((item: any) => {
+        item.blurb = item.blurb.replace(/<[^>]*>/g, '')
+        // 给列表内的每个元素添加加载中和失败状态
+        item.loading = true
+        item.error = false
+        return item
+      })
+      data.page = resp.data.page
+      data.oldSearch = keyword
+      data.search = keyword
+    } else {
+      ElMessage.warning({message: resp.msg, duration: 1000})
+    }
 
-    })
+  })
 }
 
 onMounted(() => {
-    if (router.currentRoute.value.query.search == null) {
-        return
-    }
-    refreshPage(router.currentRoute.value.query.search + '', router.currentRoute.value.query.current)
+  if (router.currentRoute.value.query.search == null) {
+    return
+  }
+  refreshPage(router.currentRoute.value.query.search + '', router.currentRoute.value.query.current)
 })
 // 分页器
 const changeCurrent = (currentVal: number) => {
-    let query = router.currentRoute.value.query
-    location.href = `/search?search=${query.search}&current=${currentVal}`
+  let query = router.currentRoute.value.query
+  location.href = `/search?search=${query.search}&current=${currentVal}`
 }
 
 </script>
 
-<!--移动端-->
 <style scoped>
 @import "/src/assets/css/pagination.css";
-@media (max-width: 768px) {
-    .title h2 {
-        margin: 8px auto;
-    }
-    .film_item {
-        flex-basis: calc(100% - 20px);
-        margin: 0 10px 25px 10px;
-        display: flex;
-        background: #2e2e2e;
-        padding: 10px;
-        min-height: 180px;
-        max-height: 200px;
-        border-radius: 16px;
-    }
-    .film_item a {
-        flex: 2;
-        border-radius: 8px;
-        background-size: cover;
-    }
-
-    .film_intro {
-        max-width: 60%;
-        margin-left: 10px;
-        flex: 3;
-        text-align: left;
-        padding: 0 10px;
-        font-size: 15px;
-        position: relative;
-    }
-
-    .film_intro h3 {
-        font-size: 16px;
-
-        font-weight: bold;
-    }
-
-    .film_item h3, p, button {
-        margin: 2px 0 2px 0;
-    }
-
-    .film_item p {
-        max-width: 90%;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        font-size: 13px;
-
-    }
-
-    .film_item p em {
-        font-weight: bold;
-        margin-right: 8px;
-    }
-
-    .film_item button {
-        background-color: orange;
-        border-radius: 20px;
-        border: none !important;
-        color: #ffffff;
-        font-weight: bold;
-        position: absolute;
-        margin-bottom: 2px;
-        bottom: 0;
-    }
-    .blurb{
-        display: none!important;
-    }
-    .tags {
-        display: flex;
-        width: 90%;
-        justify-content: space-between;
-    }
-    .tags .tag_c{
-        background: rgba(155, 73, 231, 0.72);
-    }
-    .tags span {
-        border-radius: 5px;
-        padding: 3px 5px;
-        background: rgba(66, 66, 66);
-        color: #c9c4c4;
-        margin-right: 5px;
-    }
-
-    .search_group {
-        width: 80%;
-        margin: 0 auto;
-        display: flex;
-    }
-    .search {
-        flex: 10;
-        background-color: #2e2e2e!important;
-        border: none!important;
-        height: 40px;
-        border-radius: 6px 0 0 6px;
-        padding-left: 20px;
-        color: #c9c4c4;
-        font-size: 15px;
-        font-weight: bold;
-    }
-    .search::placeholder{
-        font-size: 15px;
-        color: #999999;
-    }
-    .search:focus {
-        outline: none;
-    }
-    .search_group button {
-        flex: 1;
-        margin: 0;
-        background-color: #2e2e2e;
-        color: rgba(155,73,231,0.72);
-        border: none!important;
-        height: 40px;
-        border-radius: 0 8px 8px 0;
-        font-size: 20px;
-        /*margin-bottom: 2px*/
-    }
-
-}
-
-</style>
-<!--pc端-->
-<style scoped>
-
-.title {
-    margin-bottom: 20px;
-}
-.container {
-    width: 100%;
-}
-
-.content {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-}
-.search_res {
-    width: 100%;
-}
 
 
+/*-------------------------pc------------------------------*/
 @media (min-width: 768px) {
-    .film_item {
-        flex-basis: calc(50% - 18px);
-        max-width: 50%;
-        display: flex;
-        background: #2e2e2e;
-        padding: 16px;
-        min-height: 250px;
-        max-height: 280px;
-        border-radius: 16px;
-        margin-bottom: 25px;
-    }
-    .film_item a {
-        flex: 1;
-        border-radius: 8px;
-        background-size: cover;
-    }
+  .InputContainer {
+    width: 40%;
+  }
+  .card-group {
+    justify-content: space-between;
+  }
+  .card {
+    width: calc(50% - 4%);
+    min-height: 230px;
+  }
+  .card-left{
+    width: 23%;
+  }
+  .card-right{
+    width: 70%;
+  }
+  .card-right h3{
+    font-size: 20px;
+  }
+  .card-right p {
+    font-size: 15px;
+  }
+  .card-right span {
+    font-size: 12px;
+  }
+}
+/*-------------------------wrap------------------------------*/
+@media (max-width: 768px) {
+  .InputContainer {
+    width: 80%;
+  }
+  .card-group {
+    justify-content: center;
+  }
+  .card {
+    width: calc(100% - 10%);
+    min-height: 185px;
+  }
+  .card-left{
+    width: 38%;
+  }
+  .card-right{
+    width: 60%;
+  }
+  .card-right h3{
+    font-size: 16px;
+  }
+  .card-right p {
+    font-size: 10px;
+  }
+  .card-right span {
+    font-size: 10px;
+  }
+}
+/*--------------------Search---------------------------*/
+.InputContainer {
+  height: 40px;
+  margin: 20px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  padding-left: 15px;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.075);
+}
 
-    .film_intro {
-        max-width: 75%;
-        margin-left: 10px;
-        flex: 3;
-        /*flex-grow: 4;*/
-        text-align: left;
-        padding: 0 10px;
-        font-size: 15px;
-        position: relative;
-    }
+.input {
+  width: 90%;
+  height: 100%;
+  border: none;
+  outline: none;
+  font-size: 0.9em;
+  background-color: transparent !important;
+  color: #ffffffbd;
+  caret-color: #ffffff;
+}
+.input::placeholder {
+  color: rgb(255 255 255 / 0.69);
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+}
 
-    .film_item h3, p, button {
-        margin: 3px 0 12px 0;
-    }
+.searchIcon {
+  width: 13px;
+}
 
-    .film_item p {
-        max-width: 90%;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .film_item p em {
-        font-weight: bold;
-        margin-right: 8px;
-    }
-
-    .film_item button {
-        background-color: orange;
-        border-radius: 20px;
-        border: none !important;
-        color: #ffffff;
-        font-weight: bold;
-        position: absolute;
-        margin-bottom: 2px;
-        bottom: 0;
-    }
-
-    .tags {
-        display: flex;
-        width: 90%;
-        justify-content: space-between;
-    }
-    .tags .tag_c{
-        background: rgba(155, 73, 231, 0.72);
-    }
-    .tags span {
-        border-radius: 5px;
-        padding: 3px 5px;
-        background: rgba(66, 66, 66);
-        color: #c9c4c4;
-        margin-right: 10px;
-    }
-
-    .search_group {
-        width: 45%;
-        margin: 20px auto;
-        display: flex;
-    }
-    .search {
-        flex: 10;
-        background-color: #2e2e2e!important;
-        border: none!important;
-        height: 40px;
-        border-radius: 6px 0 0 6px;
-        padding-left: 20px;
-        color: #c9c4c4;
-        font-size: 15px;
-        font-weight: bold;
-    }
-    .search::placeholder{
-        font-size: 15px;
-        color: #999999;
-    }
-    .search:focus {
-        outline: none;
-    }
-    .search_group button {
-        flex: 1;
-        margin: 0;
-        background-color: #2e2e2e;
-        color: rgba(155,73,231,0.72);
-        border: none!important;
-        height: 40px;
-        border-radius: 0 6px 6px 0;
-        font-size: 20px;
-    }
-
+.border {
+  height: 40%;
+  width: 1.3px;
+  background-color: #ffffff82;
 }
 
 
+.micButton {
+  width: 10%;
+  padding: 0px 15px 0px 12px;
+  border: none;
+  background-color: transparent;
+  height: 40px;
+  cursor: pointer;
+  transition-duration: .3s;
+}
+
+.searchIcon path {
+  fill: #ffffffbd;
+}
 
 
+.micButton:hover {
+  border-radius: 0 10px 10px 0;
+  background-color: rgb(201 38 237 / 0.3);
+  transition-duration: .3s;
+}
+/*-----------------------header-container-------------------------------------------*/
+.header-container{
+  margin: 20px auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255, 0.15);
+}
+.header-container b {
+  color: #FFC570;
+}
+.header-container h3 {
+  margin: 0 auto;
+}
+/*-----------------------card style---------------------------------*/
+.card-group {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap
+  /*  aspect-ratio: 9/16;*/
+}
+.card {
+  display: flex;
+  justify-content: start;
+  aspect-ratio: 17/5;
+  padding: 6px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.card-left {
+  height: 100%;
+}
+.card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+}
+.card-right {
+  text-align: start;
+  padding-left: 2%;
+}
+.card-right h3 {
+  color: #FFC570;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.card-right .tags {
+  display: flex;
+  width: 90%;
+  justify-content: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+.card-right .tag-area {
+  max-width: 39%;
+  -webkit-line-clamp: 1;
+  white-space: nowrap;
+  overflow: hidden;
+
+}
+.card-right span {
+  margin-right: 8px;
+  border-radius: 3px;
+  padding: 2px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.card-right .tag_c{
+  background: rgba(155, 73, 231, 0.72);
+}
+.card-right p {
+  max-width: 90%;
+
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+.card-right .blurb {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.card-right p em {
+  font-weight: bold;
+  color: #fff;
+  margin-right: 5px;
+}
+.card-right button {
+  background-color: orange;
+  border-radius: 20px;
+  border: none !important;
+  color: #ffffff;
+  font-weight: bold;
+  position: absolute;
+  margin-bottom: 10px;
+  bottom: 0;
+}
+.card-right h3, span, p {
+  margin: 3px 0;
+}
+/*--------------------------image loading----------------------------------------------*/
+/* 容器样式 */
+.loader {
+  height: 100%;
+  width: 100%;
+  background-color: transparent;
+  background-image: linear-gradient(
+      45deg,
+      rgba(255,255,255,0.1) 25%,
+      rgba(255,255,255,0.3) 25%,
+      rgba(255,255,255,0.3) 50%,
+      rgba(255,255,255,0.1) 50%,
+      rgba(255,255,255,0.1) 75%,
+      rgba(255,255,255,0.3) 75%,
+      rgba(255,255,255,0.3) 100%
+  );
+  /* 3. 设置条纹的大小 (宽和高相等即为正方形条纹) */
+  background-size: 20px 20px;
+  /* 4. 应用动画 */
+  animation: stripes-move 1.5s linear infinite;
+}
+/* --- 动画定义 --- */
+@keyframes stripes-move {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40% 40%;
+  }
+}
 </style>
 

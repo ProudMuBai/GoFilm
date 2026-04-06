@@ -103,6 +103,7 @@ const (
 
 	// MysqlDsn mysql服务配置信息 root:root 设置mysql账户的用户名和密码
 	MysqlDsn = "root:root@(192.168.20.5:3601)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
+	//MysqlDsn = "host=db.mvmvnpnwqhbiqozgpsuu.supabase.co user=postgres password=MuBai0916$$ dbname=FilmSite port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	//MysqlDsn = "root:MuBai0916$@(47.254.16.58:3610)/FilmSite?charset=utf8mb4&parseTime=True&loc=Local"
 
 	/*
@@ -115,6 +116,9 @@ const (
 	RedisAddr     = `192.168.20.5:3602`
 	RedisPassword = `root`
 	RedisDBNo     = 0
+	//RedisAddr     = `redis-18413.c340.ap-northeast-2-1.ec2.cloud.redislabs.com:18413`
+	//RedisPassword = `MuBai0916$`
+	//RedisDBNo     = 0
 
 	//RedisAddr     = `47.254.16.58:3620`
 	//RedisPassword = `MuBai0916$`

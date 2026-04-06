@@ -16,7 +16,7 @@
     font-weight: bold;
     width: 45px;
     height: 45px;
-    background: #2e2e2e !important;
+    background: rgba(255,255,255,0.3) !important;
     color: #ffffff;
     border-radius: 50%;
     /*margin: 0 3px!important;*/
@@ -30,7 +30,7 @@
     font-weight: bold;
     width: 45px;
     height: 45px;
-    background: #2e2e2e !important;
+    background: rgba(255,255,255,0.3) !important;
     color: #ffffff;
     border-radius: 50%;
 }
@@ -39,7 +39,7 @@
     font-weight: bold;
     width: 45px;
     height: 45px;
-    background: #2e2e2e !important;
+    background: rgba(255,255,255,0.3) !important;
     color: #ffffff;
     border-radius: 50%;
 }
@@ -48,7 +48,7 @@
     font-weight: bold;
     width: 45px;
     height: 45px;
-    background: #2e2e2e !important;
+    background: rgba(255,255,255,0.3) !important;
     color: #ffffff;
     border-radius: 50%;
 }

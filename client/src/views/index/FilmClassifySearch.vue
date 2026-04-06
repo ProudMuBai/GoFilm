@@ -25,7 +25,6 @@
                      v-model:current-page="d.page.current"
                      @current-change="changeCurrent"
                      :pager-count="5"
-                     :background="true"
                      :page-size="d.page.pageSize"
                      :total="d.page.total"
                      :prev-icon="ArrowLeftBold"
