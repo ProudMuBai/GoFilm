@@ -44,7 +44,7 @@ provide('global', {isMobile: isMobile})
   min-height: 60px;
   transform: translateZ(0);
   z-index: 1000;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.45);
   top: 0;
 }
 

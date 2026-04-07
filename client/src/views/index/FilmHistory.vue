@@ -1,10 +1,10 @@
 <template>
   <div v-if="global.isMobile" class="container">
-    <div class="card" v-for="h in data.historyList">
+    <div class="card" v-for="h in data.historyList" >
       <div class="card-left">
         <a class="card-link" :href="h.link" :style="{backgroundImage: `url(${h.picture})`}"></a>
       </div>
-      <div class="card-right">
+      <div class="card-right" @click="router.push(h.link)">
         <h5 class="card-title"> {{ h.name }}</h5>
         <div class="card-content">
           <p class="card-episode">{{ `已观看: ${h.progress}` }}</p>
@@ -21,12 +21,15 @@
 <script setup lang="ts">
 import {inject, onMounted, reactive} from "vue";
 import {COOKIE_KEY_MAP, cookieUtil} from "../../utils/cookie";
+import {useRouter} from "vue-router";
 
 const data = reactive({
   historyList: [{}]
 })
 
 const global = inject<any>('global')
+
+const router = useRouter()
 
 // 清除对应的历史记录
 const cleanHistory = (id: number) => {
@@ -66,27 +69,32 @@ onMounted(() => {
 }
 
 .card {
-  width: 100%;
+  width: 94%;
   max-height: 250px;
   display: flex;
   padding: 5px 5px;
   flex-direction: row;
   background: linear-gradient(#fff2, transparent);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  /*  border-bottom: 1px solid rgba(255, 255, 255, 0.1);*/
-  margin: 5px auto;
+  margin: 3%;
   border-radius: 5px;
+  transform: translateY(0%);
+}
+.card:active{
+  background-color: rgba(0, 0, 0, 0.2);
+  transform: translateY(-3%);
+  transition: 0.5s;
 }
 
 .card-left {
-  flex-basis: 27%;
-  min-width: 27%;
+  flex-basis: 30%;
+  min-width: 30%;
   display: flex;
 }
 
 .card-right {
-  flex-basis: 68%;
-  max-width: 68%;
+  flex-basis: 65%;
+  max-width: 65%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -102,6 +110,7 @@ onMounted(() => {
   border-radius: 3px;
   background-repeat: no-repeat;
   background-size: cover;
+  opacity: 0.9;
 
 }
 
@@ -118,7 +127,7 @@ onMounted(() => {
 .card-content p {
   margin-top: 3px;
   margin-bottom: 0;
-  color: var(--text-content-color);
+  color: var(--text-content-color-light);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -133,8 +142,9 @@ onMounted(() => {
 
 .icon-cancel1 {
   flex-basis: 5%;
+  height: 5%;
   margin-right: 0;
-  color: var(--text-content-color);
+  color: var(--text-content-color-light);
 }
 
 

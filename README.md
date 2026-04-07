@@ -4,7 +4,7 @@
 
 效果展示: <a href="https://m.mubai.link/" target="_blank">点击访问演示站点</a>  
 
-新版本测试访问站点: [新版本站点](https://www.mubai.us.ci/)
+新版本测试访问站点: [新版本站点](https://www.mubai.cn.mt/)  [备用域名](https://m2.mubai.link/)
 
 ## 简介
 
@@ -68,6 +68,7 @@
 >
 >后续计划:
 >
+>- 有无前端UI大佬救一救啊, 界面改的没思绪了.
 >- 新增功能测试 && buf修复
 >- 优化UI组件
 >- 针对播放器进行BUG测试优化以及功能完善

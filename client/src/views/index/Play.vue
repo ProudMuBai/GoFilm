@@ -1,7 +1,7 @@
 <template>
   <div class="player_area" v-show="data.loading">
     <div id="player-full" />
-    <div ref="playerContainer" class="player_p" @touchmove.prevent @wheel.prevent />
+    <div ref="playerContainer" class="player_container" />
     <div class="current_play_info">
       <div class="play_info_left">
         <h3 class="current_play_title"><a
@@ -238,9 +238,10 @@ onBeforeMount(() => {
       el: playerContainer.value,
       url: data.options.url,
       poster: posterImg,
-      width: "",
-      height: "",
+      width: "100%",
+      height: "100%",
       fluid: true,
+      videoFillMode: "contain",
       autoplay: data.options.autoplay,
       lang: 'zh-cn', // 设置语言为中文
       volume: 0.7,   // 初始音量
@@ -311,7 +312,12 @@ watch(data.options, (newVal) => {
     mPlayer.currentTime = 0
     mPlayer.src = newVal.url
     // mPlayer.load()
-    mPlayer.play()
+    mPlayer.play().then(()=>{
+      let playBtn = mPlayer.root.querySelector('.xg-icon-play')
+      if (playBtn) {
+        playBtn.style.display = 'none'
+      }
+    })
   }
 })
 // 自定义播放列表插件
@@ -433,6 +439,26 @@ class playListPlugin extends Plugin {
 
 <style>
 /*xgplayer 样式修改*/
+/*播放容器*/
+.player_container {
+  width: 100%;
+  padding-top: 56.29%!important;
+  aspect-ratio: 16 / 9;
+  margin: 0;
+  position: relative;
+  border-radius: 6px;
+  display: flex;
+  box-shadow: 3px 3px 12px rgba(255, 255, 255, 0.2);
+}
+.player_area .xgplayer-is-fullscreen {
+  padding-top: 0 !important;
+}
+/*进度条颜色*/
+
+.xgplayer .xgplayer-progress-played,.xg-mini-progress xg-mini-progress-played {
+  background: linear-gradient(-90deg, #00EAEA80 0%, #E337F780 100%);
+}
+
 .xg-right-grid .icon-dianying1 {
   display: block;
   color: #ffffff;
@@ -564,14 +590,7 @@ class playListPlugin extends Plugin {
   min-height: 100%;
 }
 
-.player_p {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  margin: 0;
-  position: relative;
-  border-radius: 6px;
-  display: flex;
-}
+
 
 
 /*右侧播放源选择区域*/

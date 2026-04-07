@@ -38,7 +38,7 @@
     </div>
     <el-empty v-if="data.oldSearch != '' && (!data.list || data.list.length == 0) " description="未查询到对应影片"/>
 
-    <div class="pagination_container ">
+    <div class="pagination_container" v-if="data.list && data.list.length > 0" >
       <el-pagination background layout="prev, pager, next"
                      v-model:current-page="data.page.current"
                      @current-change="changeCurrent"
@@ -60,7 +60,6 @@ import {useRoute, useRouter} from "vue-router";
 import {ApiGet} from "../../utils/request";
 import {ArrowLeftBold, ArrowRightBold, CaretRight, Search} from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
-
 
 const router = useRouter()
 const route = useRoute()
@@ -116,7 +115,7 @@ const refreshPage = (keyword: any, current: any) => {
 
   })
 }
-
+// 组件挂载完成后触发数据初始化
 onMounted(() => {
   if (router.currentRoute.value.query.search == null) {
     return
@@ -140,6 +139,12 @@ const changeCurrent = (currentVal: number) => {
   .InputContainer {
     width: 40%;
   }
+  .input {
+    width: 90%;
+  }
+  .micButton {
+    width: 10%;
+  }
   .card-group {
     justify-content: space-between;
   }
@@ -158,6 +163,7 @@ const changeCurrent = (currentVal: number) => {
   }
   .card-right p {
     font-size: 15px;
+    margin-bottom: 5px;
   }
   .card-right span {
     font-size: 12px;
@@ -167,6 +173,12 @@ const changeCurrent = (currentVal: number) => {
 @media (max-width: 768px) {
   .InputContainer {
     width: 80%;
+  }
+  .input {
+    width: 80%;
+  }
+  .micButton {
+    width: 20%;
   }
   .card-group {
     justify-content: center;
@@ -207,7 +219,6 @@ const changeCurrent = (currentVal: number) => {
 }
 
 .input {
-  width: 90%;
   height: 100%;
   border: none;
   outline: none;
@@ -239,7 +250,6 @@ input:-webkit-autofill:active {
 
 
 .micButton {
-  width: 10%;
   padding: 0px 15px 0px 12px;
   border: none;
   background-color: transparent;
@@ -255,7 +265,7 @@ input:-webkit-autofill:active {
 
 .micButton:hover {
   border-radius: 0 10px 10px 0;
-  background-color: rgb(201 38 237 / 0.3);
+  background-color: #fde2e245;
   transition-duration: .3s;
 }
 /*-----------------------header-container-------------------------------------------*/
@@ -293,6 +303,12 @@ input:-webkit-autofill:active {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
+  transform: translateY(0%);
+}
+.card:active {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-3%);
+  transition: 0.5s;
 }
 .card-left {
   height: 100%;
@@ -327,7 +343,6 @@ input:-webkit-autofill:active {
   -webkit-line-clamp: 1;
   white-space: nowrap;
   overflow: hidden;
-
 }
 .card-right span {
   margin-right: 8px;
@@ -339,16 +354,18 @@ input:-webkit-autofill:active {
 .card-right .tag_c{
   background: rgba(155, 73, 231, 0.72);
 }
-.card-right p {
+.card-right p:not(.blurb) {
   max-width: 90%;
-
+  white-space: nowrap;
   overflow: hidden;
-  margin-bottom: 5px;
+  text-overflow: ellipsis;
 }
 .card-right .blurb {
+  max-width: 90%;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .card-right p em {
   font-weight: bold;

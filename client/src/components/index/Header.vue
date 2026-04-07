@@ -72,7 +72,6 @@ const data = reactive({
   site: Object,
 })
 
-
 // 加载观看历史记录信息
 const handleHistory = (flag: boolean) => {
   data.historyFlag = flag
@@ -182,7 +181,8 @@ onMounted(() => {
   .header {
     width: 100% !important;
     height: 40px;
-    background: radial-gradient(circle, #d275cd, rgba(155, 73, 231, 0.72), #4ad1e5);
+/*    background: radial-gradient(circle, #d275cd, rgba(155, 73, 231, 0.72), #4ad1e5);*/
+    background: radial-gradient(circle, #d275cd91, rgb(155 73 231 / 65%), #4ad1e5c2);;
   }
 
   .nav_left {
