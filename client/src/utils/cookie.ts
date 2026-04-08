@@ -1,6 +1,7 @@
 
 const COOKIE_KEY_MAP = {
-    'FILM_HISTORY':'filmHistory'
+    'FILM_HISTORY':'filmHistory',
+    'FILM_Favorites': `filmFavorites`,
 }
 
 const cookieUtil =

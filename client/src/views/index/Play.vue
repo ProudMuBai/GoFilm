@@ -1,7 +1,7 @@
 <template>
   <div class="player_area" v-show="data.loading">
-    <div id="player-full" />
-    <div ref="playerContainer" class="player_container" />
+    <div id="player-full"/>
+    <div ref="playerContainer" class="player_container"/>
     <div class="current_play_info">
       <div class="play_info_left">
         <h3 class="current_play_title"><a
@@ -11,10 +11,8 @@
             <el-icon>
               <Promotion/>
             </el-icon>
-            {{ data.detail.cName }}</a>
-          <span>{{
-              data.detail.classTag ? data.detail.classTag.replaceAll(',', '/') : '未知'
-            }}</span>
+            {{ data.detail.cName.replace(/\s/g, '') ? data.detail.cName : '暂无分类' }}</a>
+          <span>{{ data.detail.classTag ? data.detail.classTag.replaceAll(',', '/') : '未知' }}</span>
           <span class="hidden-sm-and-down">{{ data.detail.year }}</span>
           <span class="hidden-sm-and-down">{{ data.detail.area }}</span>
         </div>
@@ -170,9 +168,7 @@ const playNext = () => {
     return
   }
   if (data.autoplay) {
-    setTimeout(() => {
-      playChange({sourceId: data.currentTabId, episodeIndex: data.current.index + 1, target: ''})
-    }, 100)
+    playChange({sourceId: data.currentTabId, episodeIndex: data.current.index + 1, target: ''})
   }
 }
 
@@ -261,7 +257,7 @@ onBeforeMount(() => {
         fetchOptions: {mode: 'cors'},
         targetLatency: 10, // 直播目标延迟，默认 10 秒
         maxLatency: 20, // 直播允许的最大延迟，默认 20 秒
-        preloadTime: 100 ,// 默认值
+        preloadTime: 100,// 默认值
         disconnectTime: 0, // 直播断流时间，默认 0 秒，（独立使用时等于 maxLatency）
         // preloadTime: 30 // 默认值
       },
@@ -289,15 +285,24 @@ onBeforeMount(() => {
       if (currentTime) {
         mPlayer.currentTime = currentTime
       }
+      // 播放器准备就绪后重置下一集按钮的click为自己的方法
+      mPlayer.getPlugin('playNext').nextHandler = playNext
+    })
+    mPlayer.on(Events.PLAY, () => {
+      let playBtn = mPlayer.root.querySelector('.xgplayer-start')
+      if (playBtn) {
+        playBtn.style.display = 'none'
+      }
     })
     // 播放完成事件
     mPlayer.on(Events.ENDED, () => {
       data.autoplay && playNext()
     })
+    // 播放器url发生变化时触发
     // 下一集按钮点击事件
-    mPlayer.on(Events.PLAYNEXT, () => {
-      playNext()
-    })
+    // mPlayer.on(Events.PLAYNEXT, (url:any) => {
+    //   playNext()
+    // })
   })
 })
 
@@ -308,20 +313,14 @@ let mPlayer: any = null
 // 监测播放器数据信息变化
 watch(data.options, (newVal) => {
   if (mPlayer) {
-    mPlayer.pause();
+    mPlayer.pause()
     mPlayer.currentTime = 0
-    mPlayer.src = newVal.url
-    // mPlayer.load()
-    mPlayer.play().then(()=>{
-      let playBtn = mPlayer.root.querySelector('.xg-icon-play')
-      if (playBtn) {
-        playBtn.style.display = 'none'
-      }
-    })
+    mPlayer.switchURL(data.options.url)
   }
 })
 // 自定义播放列表插件
 const {POSITIONS} = Plugin
+
 class playListPlugin extends Plugin {
   // 插件的名称，将作为插件实例的唯一key值
   static get pluginName() {
@@ -372,9 +371,9 @@ class playListPlugin extends Plugin {
         // 播放后自动收起列表（可选体验优化）
         this.toggleList()
       }
-      el.addEventListener('wheel', (e:any)=> {
-          e.preventDefault()
-          this.listContainer && (this.listContainer.scrollTop += e.deltaY)
+      el.addEventListener('wheel', (e: any) => {
+        e.preventDefault()
+        this.listContainer && (this.listContainer.scrollTop += e.deltaY)
       });
       this.listContainer && this.listContainer.appendChild(el);
     })
@@ -384,7 +383,6 @@ class playListPlugin extends Plugin {
   afterPlayerInit() {
     // TODO 播放器调用start初始化播放源之后的逻辑
     this.bind('click', (e: any) => {
-      console.log('---------------------------------click')
       e.stopPropagation(); // 阻止冒泡
       this.toggleList();
     })
@@ -410,20 +408,16 @@ class playListPlugin extends Plugin {
     if (this.listContainer) {
       const isHidden = (this.listContainer.style.display == 'none' || this.listContainer.style.display == '')
       this.listContainer.style.display = isHidden ? 'block' : 'none'
-      let mobilePlugin = mPlayer.getPlugin('mobile');
-      if (isHidden) {
-        // console.log(mPlayer.plugins)
-        // console.log(mPlayer.getPlugin('cssfullscreen'))
-        // mPlayer.getPlugin('cssfullscreen').show();
-        // mobilePlugin.disable();
-      } else {
-        // mPlayer.getPlugin('cssfullscreen').hide();
-        // mobilePlugin.enable();
-      }
+      // let mobilePlugin = mPlayer.getPlugin('mobile');
     }
   }
 
   afterCreate() {
+    // 播放器数据加载完成后重新渲染列表数据
+    this.on([Events.LOADED_DATA], () => {
+      // console.log(`----------------------------------`,data.current.index)
+      this.renderListItems()
+    })
   }
 
   destroy() {
@@ -442,7 +436,7 @@ class playListPlugin extends Plugin {
 /*播放容器*/
 .player_container {
   width: 100%;
-  padding-top: 56.29%!important;
+  padding-top: 56.29% !important;
   aspect-ratio: 16 / 9;
   margin: 0;
   position: relative;
@@ -450,12 +444,14 @@ class playListPlugin extends Plugin {
   display: flex;
   box-shadow: 3px 3px 12px rgba(255, 255, 255, 0.2);
 }
+
 .player_area .xgplayer-is-fullscreen {
   padding-top: 0 !important;
 }
+
 /*进度条颜色*/
 
-.xgplayer .xgplayer-progress-played,.xg-mini-progress xg-mini-progress-played {
+.xgplayer .xgplayer-progress-played, .xg-mini-progress xg-mini-progress-played {
   background: linear-gradient(-90deg, #00EAEA80 0%, #E337F780 100%);
 }
 
@@ -466,38 +462,45 @@ class playListPlugin extends Plugin {
   font-size: 16px;
   line-height: 40px;
 }
+
 .xgplayer-playlist-wrapper {
   position: relative;
   display: flex;
   align-items: center;
   height: 100%;
 }
+
 .xgplayer-playnext .xgplayer-icon svg {
   width: 15px;
 }
+
 .xgplayer xg-icon:not(.xgplayer-playnext) svg {
   width: 20px;
 }
-.xgplayer .xgplayer-progress-btn{
+
+.xgplayer .xgplayer-progress-btn {
   width: 10px;
   height: 10px;
   border-radius: 10px;
 }
-.xgplayer .xgplayer-progress-btn:before{
+
+.xgplayer .xgplayer-progress-btn:before {
   width: 8px;
   height: 8px;
   border-radius: 8px;
 }
-.xgplayer .flex-controls .xg-inner-controls{
+
+.xgplayer .flex-controls .xg-inner-controls {
   bottom: 0;
 }
 
 @media only screen and (orientation: landscape) {
-  .xgplayer-mobile.xgplayer-is-fullscreen .xg-top-bar, .xgplayer-mobile.xgplayer-is-fullscreen .xg-pos{
+  .xgplayer-mobile.xgplayer-is-fullscreen .xg-top-bar, .xgplayer-mobile.xgplayer-is-fullscreen .xg-pos {
     left: 3%;
     right: 3%;
   }
-  .xgplayer .xgplayer-playnext svg{
+
+  .xgplayer .xgplayer-playnext svg {
     width: 16px !important;
   }
 
@@ -591,8 +594,6 @@ class playListPlugin extends Plugin {
 }
 
 
-
-
 /*右侧播放源选择区域*/
 /*影片播放列表信息展示*/
 /*影片播放列表信息展示*/
@@ -630,10 +631,11 @@ class playListPlugin extends Plugin {
 
 /*适应小尺寸*/
 @media (max-width: 768px) {
-  :deep(.xgplayer xg-start-inner){
-    border-radius: 50%!important;
-    background: rgba(0, 0, 0, .38)!important;
+  :deep(.xgplayer xg-start-inner) {
+    border-radius: 50% !important;
+    background: rgba(0, 0, 0, .38) !important;
   }
+
   .player_area {
     padding: 5px 10px;
   }

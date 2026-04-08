@@ -116,6 +116,7 @@ watchEffect(() => {
 
 </script>
 
+<!--公共样式-->
 <style scoped>
 :deep(.el-empty) {
   --el-empty-fill-color-1: rgba(155, 73, 231, 0.72);
@@ -136,14 +137,11 @@ watchEffect(() => {
 .card {
   width: 100%;
   aspect-ratio: 3/4.1;
-  /*  padding: 1.9rem;*/
   padding: 0;
   background: #f5f5f5;
   position: relative;
   display: flex;
   align-items: flex-end;
-  box-shadow: 0 7px 20px rgba(43, 8, 37, 0.2);
-  /*  transition: all 0.3s ease-out;*/
   transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) 0.1s;
   overflow: hidden;
 }
@@ -221,6 +219,7 @@ watchEffect(() => {
 /*Hover*/
 .card:active, .card:hover {
   transform: translateY(-2%);
+  box-shadow: 0 6px 18px rgba(255,255,255, 0.35);
 }
 
 .card:hover .card-img {
@@ -256,6 +255,7 @@ watchEffect(() => {
 }
 </style>
 
+<!--双端适配-->
 <style scoped>
 /*wrap*/
 @media (max-width: 768px) {

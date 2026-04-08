@@ -25,7 +25,7 @@
           <b style="font-size: 22px;" class="iconfont icon-history"/>
         </a>
         <Transition name="fade-slide" duration="300">
-          <div v-if="data.historyFlag" class="dropdown-container">
+          <div v-if="data.historyFlag"  class="dropdown-container" >
             <div class="history-h">
               <b class="iconfont icon-record history-h-icon"/>
               <span class="history-h-title">历史观看记录</span>
@@ -223,18 +223,19 @@ onMounted(() => {
 
   /*搜索栏*/
   .search_group {
-    width: 80%;
-    margin: 10px auto;
+    width: 60%;
+    margin: 10px 0;
     display: flex;
+    justify-content: start;
   }
 
   .search {
-    flex: 10;
-    background-color: #2e2e2e !important;
-    border: none !important;
+    width: 80%;
+    background-color: transparent;
+    border: 1px solid #ffffff1a;
     height: 40px;
     border-radius: 6px 0 0 6px;
-    padding-left: 20px;
+    padding-left: 12px;
     color: #c9c4c4;
     font-size: 15px;
     font-weight: bold;
@@ -242,6 +243,7 @@ onMounted(() => {
   }
 
   .search::placeholder {
+    flex: 1;
     font-size: 15px;
     color: #999999;
   }
@@ -253,13 +255,16 @@ onMounted(() => {
   .search_group button {
     flex: 1;
     margin: 0;
-    background-color: #2e2e2e;
-    color: rgb(171, 44, 68);
-    border: none !important;
+    background-color: transparent;
+    border:  1px solid #ffffff1a;
+    border-left: none;
+    color: #D96868;
     height: 40px;
     border-radius: 0 6px 6px 0;
     font-size: 20px;
-    /*margin-bottom: 2px*/
+  }
+  .search_group button:hover {
+    background: rgb(0 0 0 / 0.15);
   }
 
   .nav_right {
@@ -345,12 +350,11 @@ onMounted(() => {
     display: inline-block;
     position: absolute;
     left: 22px;
-    border: 2px solid orangered;
-    background: rgba(220, 59, 182, 0.97);
+    border: 2px solid #D96868;
+    background: #FF88BA;
     border-radius: 50%;
     top: 15px;
   }
-
 
   .history-c-item .history-c-item-t {
     width: 100%;
@@ -382,7 +386,8 @@ onMounted(() => {
   .history-h-icon {
     flex: 1;
     font-size: 24px;
-    color: orangered;
+    color: #D96868;
+    margin-top: 8px;
   }
 
   .history-h-icon::before {
@@ -391,8 +396,9 @@ onMounted(() => {
 
   .history-h-title {
     flex: 3;
-    text-align: left;
+    text-align: center;
     font-size: 18px;
+    line-height: 60px;
   }
 
   .history-del {
@@ -422,7 +428,7 @@ onMounted(() => {
     z-index: 1000;
     border-radius: 8px;
     overflow: hidden;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.65);
     transform: translate3d(-50%, 0, 0);
 
   }

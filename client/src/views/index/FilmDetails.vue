@@ -26,7 +26,7 @@
     </div>
     <!-- pc端title-->
     <div class="title hidden-sm-and-down ">
-      <a class="picture" href="" :style="{backgroundImage: `url('${data.detail.picture}')`}"></a>
+      <a class="picture" href="" :style="{backgroundImage: `url('${data.detail.picture}')`}"><span class="full-c" /></a>
       <h2>{{ data.detail.name }}</h2>
       <ul class="tags">
         <li class="t_c">
@@ -34,7 +34,7 @@
             <el-icon>
               <Promotion/>
             </el-icon>
-            {{ data.detail.cName }}
+            {{ data.detail.cName.replace(/\s/g, '') ? data.detail.cName : '暂无分类' }}
           </a>
         </li>
         <li v-if="data.detail.classTag">
@@ -43,16 +43,15 @@
         <li>{{ data.detail.year }}</li>
         <li>{{ data.detail.area }}</li>
       </ul>
-      <p><span>导演:</span> {{ data.detail.director }}</p>
-      <p><span>主演:</span> {{ data.detail.actor }}</p>
+      <p><span>导演:</span> {{ data.detail.director.replace(/\s/g, '') ? data.detail.director : '未知' }}</p>
+      <p><span>主演:</span> {{ data.detail.actor.replace(/\s/g, '') ? data.detail.actor : '未知' }}</p>
       <p><span>上映:</span> {{ data.detail.releaseDate }}</p>
       <p v-if="data.detail.remarks"><span>连载:</span>{{ data.detail.remarks }}</p>
       <p><span>评分:</span><b id="score">{{ data.detail.dbScore }}</b></p>
       <div class="cus_wap">
         <p style="min-width: 40px"><span>剧情:</span></p>
         <p ref="textContent" class="text_content">
-          <el-button v-if="`${data.detail.content}`.length > 140" class="multi_text"
-                     style="color:#a574b7;"
+          <el-button v-if="`${data.detail.content}`.length > 140" class="multi_text" style="color:#a574b7;"
                      @click="showContent(multiBtn.state)" link>{{ multiBtn.text }}
           </el-button>
           <span class="cus_info" v-html="data.detail.content"></span>
@@ -65,6 +64,12 @@
             <CaretRight/>
           </el-icon>
           立即播放
+        </el-button>
+        <el-button color="#9b49e7" class="player" size="large" round plain>
+          <el-icon>
+            <Star/>
+          </el-icon>
+          收藏
         </el-button>
       </p>
     </div>
@@ -99,7 +104,7 @@ import {useRouter} from "vue-router";
 import {onBeforeMount, reactive, ref,} from "vue";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from 'element-plus'
-import {Promotion, CaretRight} from "@element-plus/icons-vue";
+import {Promotion, CaretRight, Star} from "@element-plus/icons-vue";
 import RelateList from "../../components/index/RelateList.vue";
 
 // 获取路由对象
@@ -219,11 +224,15 @@ onBeforeMount(() => {
   }
 
   .picture_mt {
-    max-height: 180px;
-    min-width: 30%;
+    min-width: 35%;
+    aspect-ratio: 3/4;
     margin-right: 12px;
     border-radius: 5px;
     background-size: cover;
+  }
+
+  .picture_mt:active {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   }
 
   .title_mt_right {
@@ -232,8 +241,12 @@ onBeforeMount(() => {
   }
 
   .title_mt_right h3 {
+    max-width: 90%;
     font-size: 14px;
     margin: 0 0 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .title_mt_right p {
@@ -303,15 +316,48 @@ onBeforeMount(() => {
 
 .picture {
   position: absolute;
-  width: 190px;
-  height: 270px;
+  width: 220px;
+  aspect-ratio: 3/4;
   right: 30px;
   top: 30px;
   border-radius: 8px;
   background-size: cover;
-
 }
 
+.picture:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.picture .full-c {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.full-c::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -30%;
+  width: 30%;
+  height: 100%;
+  opacity: 0;
+  background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgb(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+}
+
+.full-c:hover::before {
+  left: 130%;
+  transition: all 0.6s ease-in-out;
+  opacity: 1;
+}
 
 .tags {
   list-style-type: none;
@@ -332,7 +378,7 @@ onBeforeMount(() => {
 }
 
 .tags > .t_c {
-  background: rgba(155, 73, 231, 0.72);
+  background: linear-gradient(#9b49e7, #9b49e7bf);
   margin-left: 0;
 }
 
@@ -399,6 +445,10 @@ onBeforeMount(() => {
   float: right;
   clear: both;
   margin-right: 10px;
+}
+
+.el-icon {
+  margin-right: 3px;
 }
 
 </style>
