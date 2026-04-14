@@ -213,4 +213,22 @@ button:focus-visible {
 }
 
 
+/*loading 骨架屏样式*/
+.skeleton {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 45%, #e0e0e0 55%, #f0f0f0 100%);
+    background-size: 200% 100%;
+    animation: skeleton-shine 2s infinite ease-in-out;
+}
+
+@keyframes skeleton-shine {
+    0% {
+        background-position: 200% 0; /* 动画开始时，背景图在右侧 */
+    }
+    100% {
+        background-position: -200% 0; /* 动画结束时，背景图移动到左侧 */
+    }
+}
 

@@ -454,6 +454,9 @@ class playListPlugin extends Plugin {
 .xgplayer .xgplayer-progress-played, .xg-mini-progress xg-mini-progress-played {
   background: linear-gradient(-90deg, #00EAEA80 0%, #E337F780 100%);
 }
+.xgplayer .xgplayer-drag {
+  background: #00EAEA80;
+}
 
 .xg-right-grid .icon-dianying1 {
   display: block;

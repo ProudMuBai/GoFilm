@@ -5,8 +5,8 @@
         <!--v2测试-->
         <!--Wrap-->
         <template v-if="global.isMobile && item.id != -99">
-          <div class="card">
-            <img class="card-img" :src="item.picture" :alt="item.name?.split('[')[0]" @error="handleImg">
+          <div class="card skeleton">
+            <img class="card-img skeleton" :src="item.picture" :alt="item.name?.split('[')[0]" @load="handLoadImg" @error="handleImg">
             <div class="tag_group">
               <span class="cus_tag " v-if="item.cName.replace(/\s/g, '')" >{{ item.cName }}</span>
               <span class="cus_tag ">{{ item.year ? item.year.slice(0, 4) : '未知' }}</span>
@@ -27,7 +27,7 @@
         <!--PC-->
         <template v-if="!global.isMobile && item.id != -99">
           <div class="card">
-            <img class="card-img" :src="item.picture" :alt="item.name?.split('[')[0]" @error="handleImg">
+            <img class="card-img skeleton" :src="item.picture" :alt="item.name?.split('[')[0]" @load="handLoadImg" @error="handleImg">
             <div class="tag_group">
               <span class="cus_tag ">{{ item.year.replace(/\s/g, '') ? item.year.slice(0, 4) : '未知' }}</span>
               <span v-if="item.cName.replace(/\s/g, '')" class="cus_tag ">{{ item.cName }}</span>
@@ -46,7 +46,6 @@
           <a :href="`/filmDetail?link=${item.id}`"
              class="content_text_tag">{{ item.name.split("[")[0] }}</a>
         </template>
-
       </div>
     </template>
     <el-empty v-if="d.list.length <= 0" style="padding: 10px 0;margin: 0 auto" description="暂无相关数据"/>
@@ -74,6 +73,16 @@ const handleImg = (e: Event) => {
   // e.target.style.display = "none"
   e.target.src = '/src/assets/image/404.png'
 }
+// 图片加载完成事件
+const handLoadImg = (e: Event) => {
+  // e.target.style.display = "none"
+  // 若图片正常加载则去除骨架屏效果
+  if (e.target.src.indexOf('image/404.png') == -1 ) {
+    e.target.classList.remove('skeleton');
+  }
+}
+
+
 
 const toDetail = (id: any) => {
   location.href = `/filmDetail?link=${id}`
@@ -118,6 +127,7 @@ watchEffect(() => {
 
 <!--公共样式-->
 <style scoped>
+
 :deep(.el-empty) {
   --el-empty-fill-color-1: rgba(155, 73, 231, 0.72);
   --el-empty-fill-color-2: #67d9e891;
