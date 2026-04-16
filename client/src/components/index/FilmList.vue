@@ -260,7 +260,9 @@ watchEffect(() => {
   position: absolute;
   width: 0;
   height: 0;
-  border-width: 6px;
+  bottom: -5px;
+  right: -5px;
+  border-width: 5px;
   border-style: solid;
 }
 </style>
@@ -377,9 +379,7 @@ watchEffect(() => {
   }
 
   .cus_remark::after {
-    bottom: -6px;
-    right: -6px;
-    border-color: transparent transparent transparent #67d9e8cc;
+    border-color: transparent transparent transparent rgb(103 217 232 / 0.5);
   }
 
   .card-external-title {
@@ -485,14 +485,12 @@ watchEffect(() => {
     top: 8px;
     font-size: 12px;
     padding: 3px 6px;
-    background-color: #ff69b4fa; /* 粉红色 */
+    background-color: #FF69B4C7; /* 粉红色 */
   }
 
   /* 核心：画小三角 */
   .cus_remark::after {
-    bottom: -6px;
-    right: -7px;
-    border-color: transparent transparent transparent #ff69b4fa;
+    border-color: transparent transparent transparent #FF69B480;
   }
 }
 </style>

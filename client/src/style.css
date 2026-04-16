@@ -20,6 +20,7 @@
     --text-title-color: #FBA518;
     --text-content-color: #9499a0;
     --text-content-color-light: rgba(255, 255, 255, 0.6);
+    --text-content-color-highlight: rgb(255, 255, 255);
 
     /*公共颜色*/
 
@@ -44,6 +45,8 @@
 
     --bg-fill-light: #8d00fb1a;
 
+    --border-color-light: rgba(255, 255, 255, 0.1);
+    --border-color-highlight: rgba(255, 255, 255, 0.25);
 }
 
 
@@ -135,6 +138,20 @@ button:focus-visible {
     color: rgba(255, 255, 255, 0.75);
 }
 
+/*单行文本溢出*/
+.single-line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/*多行文本溢出*/
+.multi-line {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-all;
+}
 
 /*滚动条样式*/
 @media (min-width: 768px) {

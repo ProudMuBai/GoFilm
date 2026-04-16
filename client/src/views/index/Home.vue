@@ -50,8 +50,8 @@
             <h3 class="hot_title">🔥热播{{ item.nav.name }}</h3>
             <template v-for="(m,i) in item.hot.slice(0,12)">
               <div class="content_right_item">
-                <a :href="`/filmDetail?link=${m.mid}`"><b class="top_item">{{ i + 1 + '.' }}</b>
-                  <span>{{ m.name }}</span></a>
+                <a :href="`/filmDetail?link=${m.mid}`"><b class="top_item" :style="{ backgroundColor: i==0?'#B931FC':i==1?'#FF71CD':i==2?'#59D5E0':'#FEEE917C' }" >{{ i + 1 + '.' }}</b>
+                  <span class="single-line">{{ m.name }}</span></a>
               </div>
             </template>
           </el-col>
@@ -175,7 +175,7 @@ a {
 }
 
 .nav_category > a:hover {
-  color: #1890ff;
+  color: #FFBB64;
 }
 
 .nav_ul > li {
@@ -198,13 +198,15 @@ a {
 
 .content_right {
   width: 100%;
-  padding-left: 18px;
+  padding: 0 20px;
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
 }
 
 .content_right_item {
   display: flex;
   padding-left: 10px;
-  border-bottom: 1px solid rgb(46, 46, 46);
+  border-bottom: 1px solid var(--border-color-highlight);
 }
 
 .content_right_item > a {
@@ -215,27 +217,37 @@ a {
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
-  -o-text-overflow: ellipsis;
+  justify-content: start;
   white-space: nowrap;
 }
 
 .hot_title {
   text-align: left;
   margin: 8px 0;
+  color: #FFBB64;
 }
 
 :deep(.top_item) {
-  color: red;
-  /*font-style: oblique 10deg;*/
   font-style: italic;
-  /*font-family: Inter;*/
   margin-right: 6px;
+  padding: 2px 3px 0 3px;
+  line-height: 100%;
+  border-radius: 5px;
 }
 
-.content_right_item a span:hover {
-  color: orange;
+.content_right_item span{
+  font-size: 14px;
+  font-weight: bold;
+  display: inline-block;
+  max-width: 80%;
+  transition: transform 0.3s ease;
+  line-height: 100%;
 }
 
+.content_right_item:hover span {
+  color: #FFBB64;
+  transform: translateX(10px);
+}
 
 </style>
 
