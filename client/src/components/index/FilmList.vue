@@ -146,7 +146,6 @@ watchEffect(() => {
 
 .card {
   width: 100%;
-  aspect-ratio: 3/4.1;
   padding: 0;
   background: #f5f5f5;
   position: relative;
@@ -282,6 +281,7 @@ watchEffect(() => {
   .c_content .item {
     /*  flex-basis: calc(33% - 7px);
       max-width: 33%;*/
+    aspect-ratio: 3/4;
     position: relative;
     margin: 0 4px 20px 4px;
     box-sizing: border-box;
@@ -411,6 +411,7 @@ watchEffect(() => {
   }
 
   .card {
+    aspect-ratio: 3/4.1;
     border-radius: 0.5em;
   }
 

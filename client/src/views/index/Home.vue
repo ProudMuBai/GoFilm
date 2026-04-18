@@ -204,7 +204,7 @@ a {
 }
 
 .content_right_item {
-  display: flex;
+  margin-bottom: 5px;
   padding-left: 10px;
   border-bottom: 1px solid var(--border-color-highlight);
 }
@@ -212,7 +212,7 @@ a {
 .content_right_item > a {
   padding: 10px 15px 10px 0;
   color: hsla(0, 0%, 100%, .87);
-  display: block;
+  display: flex;
   flex-grow: 1;
   text-align: left;
   overflow: hidden;
@@ -223,7 +223,7 @@ a {
 
 .hot_title {
   text-align: left;
-  margin: 8px 0;
+  margin: 16px 0;
   color: #FFBB64;
 }
 
@@ -238,8 +238,8 @@ a {
 .content_right_item span{
   font-size: 14px;
   font-weight: bold;
-  display: inline-block;
-  max-width: 80%;
+  max-width: 75%;
+  padding-top: 2px;
   transition: transform 0.3s ease;
   line-height: 100%;
 }
@@ -253,6 +253,7 @@ a {
 
 <!--移动端修改-->
 <style scoped>
+/*pc*/
 @media (min-width: 768px) {
   .cus_content_item {
     padding: 10px;
@@ -261,6 +262,7 @@ a {
   }
 }
 
+/*wrap*/
 @media (max-width: 768px) {
   .cus_content_item {
     padding: 0 6px 0 0;
