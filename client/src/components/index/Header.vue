@@ -1,67 +1,97 @@
 <template>
   <div class="header">
-    <!-- 左侧logo以及搜索 -->
-    <div class="nav_left">
-      <!--        <img class="logo" src="/src/assets/logo.png">-->
-      <!--<el-avatar class="logo" :size="45" :src="data.site.logo" alt="GoFilm"/>-->
+    <!-- pc -->
+    <template v-if="!global.isMobile">
+      <!-- 左侧logo以及搜索 -->
+      <div class="nav_left">
+        <!--        <img class="logo" src="/src/assets/logo.png">-->
+        <!--<el-avatar class="logo" :size="45" :src="data.site.logo" alt="GoFilm"/>-->
+        <a href="/" class="site">{{ data.site.siteName }}</a>
+        <div class="search_group">
+          <input v-model="keyword" @keydown="(e)=>{e.keyCode == 13 && searchFilm()}" placeholder="搜索 动漫,剧集,电影 "
+                 class="search"/>
+          <el-button @click="searchFilm" :icon="Search"/>
+        </div>
+      </div>
+      <!--右侧顶级分类导航 -->
+      <div class="nav_right">
+        <div class="nav_link">
+          <a href="/">首页</a>
+          <template v-for="n in data.nav">
+            <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
+          </template>
+        </div>
+        <div class="history-link" v-on:mouseenter="handleHistory(true)"
+             v-on:mouseleave="handleHistory(false)">
+          <a :href="`/filmClassify?Pid=${nav.variety.id}`">
+            <b style="font-size: 22px;" class="iconfont icon-history"/>
+          </a>
+          <Transition name="fade-slide" duration="300">
+            <div v-if="data.historyFlag"  class="dropdown-container" >
+              <div class="history-h">
+                <b class="iconfont icon-record history-h-icon"/>
+                <span class="history-h-title">历史观看记录</span>
+                <a v-if="data.historyList.length > 0" class="iconfont icon-clear1 history-del" @click="clearHistory"/>
+              </div>
+              <div v-if="data.historyList.length > 0" class="history-c">
+                <a :href="h.link" class="history-c-item" v-for="h in data.historyList">
+                  <span class="history-c-item-t">{{ h.name }}</span>
+                  <span class="history-c-item-e">{{ h.episode }}</span>
+                </a>
+              </div>
+              <el-empty style="padding: 10px 0;" v-else description="暂无观看记录"/>
+            </div>
+          </Transition>
+        </div>
+      </div>
+    </template>
+    <!-- wrap -->
+    <template v-else>
       <a href="/" class="site">{{ data.site.siteName }}</a>
-      <div class="search_group">
-        <input v-model="keyword" @keydown="(e)=>{e.keyCode == 13 && searchFilm()}" placeholder="搜索 动漫,剧集,电影 "
-               class="search"/>
-        <el-button @click="searchFilm" :icon="Search"/>
+      <div class="menu-group">
+        <div class="search_group">
+          <input v-model="keyword" @keydown="(e)=>{e.keyCode == 13 && searchFilm()}" placeholder="搜索 动漫,电影 "
+                 class="search"/>
+          <el-button @click="searchFilm" :icon="Search"/>
+        </div>
+<!--        <a href="/search" class="iconfont icon-search2"/>-->
+        <b class="iconfont icon-caidan" @click="data.drawer = !data.drawer" />
       </div>
-    </div>
-    <!--右侧顶级分类导航 -->
-    <div class="nav_right">
-      <div class="nav_link">
-        <a href="/">首页</a>
-        <template v-for="n in data.nav">
-          <a :href="`/filmClassify?Pid=${n.id}`">{{ n.name }}</a>
+      <el-drawer v-model="data.drawer" title="I am the title" direction="ltr" :append-to="el" size="65%" :show-close="false"
+                 class="cus-drawer" @opened="handleDrawer(0)" @closed="handleDrawer(1)" >
+        <template #header>
+          <a href="/" class="drawer-title site">{{ data.site.siteName }}</a>
         </template>
-      </div>
-      <div class="history-link hidden-md-and-down" v-on:mouseenter="handleHistory(true)"
-           v-on:mouseleave="handleHistory(false)">
-        <a :href="`/filmClassify?Pid=${nav.variety.id}`">
-          <b style="font-size: 22px;" class="iconfont icon-history"/>
-        </a>
-        <Transition name="fade-slide" duration="300">
-          <div v-if="data.historyFlag"  class="dropdown-container" >
-            <div class="history-h">
-              <b class="iconfont icon-record history-h-icon"/>
-              <span class="history-h-title">历史观看记录</span>
-              <a v-if="data.historyList.length > 0" class="iconfont icon-clear1 history-del" @click="clearHistory"/>
-            </div>
-            <div v-if="data.historyList.length > 0" class="history-c">
-              <a :href="h.link" class="history-c-item" v-for="h in data.historyList">
-                <span class="history-c-item-t">{{ h.name }}</span>
-                <span class="history-c-item-e">{{ h.episode }}</span>
-              </a>
-            </div>
-            <el-empty style="padding: 10px 0;" v-else description="暂无观看记录"/>
-          </div>
-        </Transition>
-      </div>
-      <!--        <span style="color:#777; font-weight: bold">|</span>-->
-      <a href="/search" class="hidden-md-and-up">
-        <el-icon style="font-size: 18px">
-          <Search/>
-        </el-icon>
-      </a>
-
-
-    </div>
+        <div class="drawer-nav">
+          <a href="/" class="iconfont icon-home">首页&emsp;</a>
+          <a v-for="n in data.nav" :href="`/filmClassify?Pid=${n.id}`" :class="`iconfont ${n.name.search('电影') != -1?'icon-film':n.name.search('剧') != -1?'icon-tv':n.name.search('动漫')!= -1?'icon-cartoon':'icon-variety'}`">{{ n.name }}</a>
+        </div>
+      </el-drawer>
+    </template>
     <!--弹窗模块,显示按钮对应信息-->
   </div>
 </template>
 
 <script lang="ts" setup>
-import {onMounted, reactive, ref, watch} from "vue";
+import {inject, onMounted, reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
-import {Search, CircleClose} from '@element-plus/icons-vue'
+import {Search, CircleClose, CircleCloseFilled } from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
 import {ApiGet} from "../../utils/request";
 import {cookieUtil, COOKIE_KEY_MAP} from "../../utils/cookie";
 
+const handleDrawer = (model:number) => {
+  switch (model) {
+    case 0:
+      document.body.style.overflow="hidden";
+      return
+    case 1:
+      document.body.style.overflow="auto";
+      return
+  }
+}
+// 获取全局属性
+const global = inject('global')
 // 搜索关键字
 const keyword = ref<string>('')
 // 弹窗隐藏显示
@@ -70,7 +100,11 @@ const data = reactive({
   historyList: [{}],
   nav: Array,
   site: Object,
+  drawer: false,
 })
+
+// 获取侧边菜单的挂载元素
+const el = document.getElementsByClassName('main')[0]
 
 // 加载观看历史记录信息
 const handleHistory = (flag: boolean) => {
@@ -138,62 +172,103 @@ onMounted(() => {
 </script>
 
 
-<!--移动端适配-->
-<style>
-/*小尺寸时隐藏状态栏*/
-@media (max-width: 768px) {
-  .nav_right {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    height: 40px;
-  }
-
-  .nav_link {
-    display: flex;
-    justify-content: space-between;
-    height: 40px;
-    width: 90%;
-    overflow-y: scroll;
-  }
-
-  .nav_link a {
-    white-space: nowrap;
-    color: #ffffff;
-    flex-basis: calc(19% - 5px);
-    padding: 0 10px;
-    line-height: 40px;
-
-  }
-
-  .nav_right .hidden-md-and-up {
-    color: #ffffff;
-    flex-basis: calc(19% - 5px);
-    padding: 0 10px;
-    line-height: 40px;
-  }
-
-  .nav_right a:hover {
-    color: #ffffff;
-    /*background-color: transparent;*/
-  }
-
-  .header {
-    width: 100% !important;
-    height: 40px;
-/*    background: radial-gradient(circle, #d275cd, rgba(155, 73, 231, 0.72), #4ad1e5);*/
-    background: radial-gradient(circle, #d275cd91, rgb(155 73 231 / 65%), #4ad1e5c2);;
-  }
-
-  .nav_left {
-    display: none !important;
-    width: 90% !important;
-    margin: 0 auto;
-  }
-}
-</style>
-
+<!--双端适配-->
 <style scoped>
+/*wrap*/
+@media (max-width: 768px) {
+  .header {
+    width: 100%;
+    z-index: 0;
+    max-height: 40px;
+    margin: 0 auto;
+    display: flex;
+    padding: 0 6%;
+    height: 40px;
+    background: rgb(0, 0, 0, 0.25);
+/*    background: radial-gradient(circle, #d275cd91, rgb(155 73 231 / 65%), #4ad1e5c2);*/
+    justify-content: space-between;
+  }
+  .site {
+    font-weight: 600;
+    font-style: italic;
+    font-size: 24px;
+    margin-right: 5px;
+    text-align: center;
+    background: linear-gradient(118deg, #e91a90, #c965b3, #988cd7, #00acfd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .menu-group{
+    display: flex;
+    flex: 1;
+    justify-content: end;
+  }
+  .menu-group .iconfont{
+    margin-left: 10px;
+    line-height: 40px;
+    color: #F3F2EC;
+  }
+  .icon-caidan{
+    font-size: 22px;
+  }
+  .icon-caidan:active{
+    color: #EBD6FB;
+  }
+  .icon-search2{
+    font-size: 26px;
+  }
+
+  .search_group {
+    width: 60%;
+    display: flex;
+    justify-content: start;
+    padding-top: 5px;
+  }
+
+  .search {
+    width: 80%;
+    background-color: transparent;
+    border: 1px solid #ffffff40;
+    height: 30px;
+    border-radius: 15px 0 0 15px;
+    padding-left: 12px;
+    color: #F9F6C4;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 40px;
+  }
+
+  .search::placeholder {
+    flex: 1;
+    font-size: 12px;
+    color: #999999;
+  }
+
+  .search:focus {
+    outline: none;
+  }
+
+  .search_group button {
+    flex: 1;
+    margin: 0;
+    background-color: transparent;
+    border:  1px solid #ffffff40;
+    border-left: none;
+    color: #F9F6C4;
+    height: 30px;
+    padding: 0 6px;
+    border-radius: 0 15px 15px 0;
+    font-size: 20px;
+  }
+  .search_group button:active {
+    background: rgb(0 0 0 / 0.1);
+    border:  1px solid #ffffff40;
+  }
+
+}
+
+/*pc*/
 @media (min-width: 768px) {
   .header {
     width: 78%;
@@ -264,7 +339,8 @@ onMounted(() => {
     font-size: 20px;
   }
   .search_group button:hover {
-    background: rgb(0 0 0 / 0.15);
+    background: rgb(0 0 0 / 0.1);
+    border:  1px solid #ffffff1a;
   }
 
   .nav_right {

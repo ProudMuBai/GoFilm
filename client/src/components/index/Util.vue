@@ -64,12 +64,15 @@ const changeStyle = (type: string) => {
     case 'light':
       control.darkTheme = false
       localStorage.setItem("theme", 'light')
-      document.getElementsByClassName('main')[0].style.background = `linear-gradient(45deg, #356697, rgb(105, 68, 140), rgb(151, 109, 133), rgb(92 104 149))`
+      document.getElementsByClassName('main')[0].classList.remove('dark')
+      document.getElementsByClassName('main')[0].classList.add('light')
+
       break
     case  'dark':
       control.darkTheme = true
       localStorage.setItem("theme", 'dark')
-      document.getElementsByClassName('main')[0].style.background = `#16161a`
+      document.getElementsByClassName('main')[0].classList.remove('light')
+      document.getElementsByClassName('main')[0].classList.add('dark')
       break
     case 'more':
       control.show = !control.show

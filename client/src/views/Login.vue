@@ -55,7 +55,7 @@ const login = ()=>{
   width: 100vw;
   height: 100vh;
   color: #343333;
-  background: url("../assets/image/managebg.png");
+  background: url("https://pic1.imgdb.cn/item/69e4378a3c746ca9770a0364.png");
 }
 .container-bg {
   background-color: #b07ada;

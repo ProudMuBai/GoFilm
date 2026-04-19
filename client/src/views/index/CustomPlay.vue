@@ -19,9 +19,6 @@
 </template>
 
 <script setup lang="ts">
-import {Search} from "@element-plus/icons-vue";
-import posterImg from "../../assets/image/play.png";
-// import {VideoPlayer} from "@videojs-player/vue";
 import {onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
 import Player from "xgplayer"
@@ -52,7 +49,7 @@ onMounted(() => {
   playerInstance.value = new Player({
     el: playerContainer.value,
     url: data.options.url,
-    poster: posterImg,
+    poster: 'https://pic1.imgdb.cn/item/69e4378a3c746ca9770a0363.jpg',
     width: "",
     height: "",
     autoplay: data.options.autoplay,
@@ -133,26 +130,35 @@ const play = () => {
   font-size: 16px;
   width: 100%;
   padding: 0  40px;
-  border: none;
   outline-style: none;
-  border-radius: 16px 0 0 16px;
+  border-radius: 50px 0 0 50px;
   min-height: 40px;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.1);
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.075);
+  color: #ffffffbd;
+  border: 1px solid var(--border-color-highlight);
+  border-right: none;
 }
 .cus-input:focus{
   border: 0;
 }
 
+.cus-input::placeholder{
+  color: rgb(255 255 255 / 0.53);
+}
 .icon-play {
   height: 100%;
   font-size: 16px;
-  border-radius: 0 16px 16px 0;
-  background: deeppink;
+  border-radius: 0 50px 50px 0;
+  background: #f56c6ca3;
   color: rgba(255,255,255,0.8);
   outline-style: none;
+  border: 1px solid var(--border-color-highlight);
 }
-.icon-play:hover {
-  background: hotpink;
+.icon-play:hover, .icon-play:active {
+  background: #FF69B4A6;
+  outline-style: none;
+  border: none;
 }
 
 /*播放器样式.*/

@@ -72,7 +72,6 @@ import {ApiGet} from "@/utils/request";
 import {ElMessage} from "element-plus";
 import RelateList from "../../components/index/RelateList.vue";
 import {Promotion} from "@element-plus/icons-vue";
-import posterImg from '../../assets/image/play.png'
 import {cookieUtil, COOKIE_KEY_MAP} from '@/utils/cookie'
 // 引入视频播放器组件
 import Player, {Events, Plugin} from "xgplayer"
@@ -233,7 +232,7 @@ onBeforeMount(() => {
     mPlayer = new Player({
       el: playerContainer.value,
       url: data.options.url,
-      poster: posterImg,
+      poster: 'https://pic1.imgdb.cn/item/69e4378a3c746ca9770a0363.jpg',
       width: "100%",
       height: "100%",
       fluid: true,

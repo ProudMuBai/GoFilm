@@ -1,9 +1,11 @@
 <template>
   <div class="film" v-show="data.loading">
     <!-- 移动端title   -->
-    <div class="hidden-sm-and-up">
+    <div v-if="global.isMobile">
       <div class="title_mt  ">
-        <a class="picture_mt" href="" :style="{backgroundImage: `url('${data.detail.picture}')`}"></a>
+        <a class="picture_mt" href="" >
+          <img class="picture-c" :src="data.detail.picture" alt="load error" @error="handleImg" />
+        </a>
         <div class="title_mt_right">
           <h3>{{ data.detail.name }}</h3>
           <ul class="tags">
@@ -25,8 +27,10 @@
       </div>
     </div>
     <!-- pc端title-->
-    <div class="title hidden-sm-and-down ">
-      <a class="picture" href="" :style="{backgroundImage: `url('${data.detail.picture}')`}"><span class="full-c" /></a>
+    <div v-else class="title" >
+      <a href="" class="picture">
+        <img class="pic" :src="data.detail.picture" alt="load error" @error="handleImg" >
+      </a>
       <h2>{{ data.detail.name }}</h2>
       <ul class="tags">
         <li class="t_c">
@@ -101,11 +105,12 @@
 
 <script setup lang="ts">
 import {useRouter} from "vue-router";
-import {onBeforeMount, reactive, ref,} from "vue";
+import {inject, onBeforeMount, reactive, ref,} from "vue";
 import {ApiGet} from "../../utils/request";
 import {ElMessage} from 'element-plus'
 import {Promotion, CaretRight, Star} from "@element-plus/icons-vue";
 import RelateList from "../../components/index/RelateList.vue";
+import notFoundImg from '/src/assets/image/404.png'
 
 // 获取路由对象
 const router = useRouter()
@@ -148,6 +153,9 @@ const data = reactive({
   currentTabId: '',
 })
 
+// 获取全局属性
+const global = inject('global')
+
 // 对部分信息过长进行处理
 const handleLongText = (t: string): string => {
   let res = ''
@@ -159,6 +167,10 @@ const handleLongText = (t: string): string => {
   return res.trimEnd()
 }
 
+// 图片加载失败事件
+const handleImg = (e: Event) =>{
+  e.target && (e.target.src = notFoundImg)
+}
 
 // 播放源切换
 const changeTab = (id: string) => {
@@ -225,7 +237,7 @@ onBeforeMount(() => {
 
   .picture_mt {
     min-width: 35%;
-    aspect-ratio: 3/4;
+    max-width: 35%;
     margin-right: 12px;
     border-radius: 5px;
     background-size: cover;
@@ -233,6 +245,12 @@ onBeforeMount(() => {
 
   .picture_mt:active {
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  }
+
+  .picture-c {
+    width: 100%;
+    aspect-ratio: 3/4;
+    border-radius: 5px;
   }
 
   .title_mt_right {
@@ -257,8 +275,8 @@ onBeforeMount(() => {
 
   .mt_content {
     margin-top: 5px;
-    border-top: 1px solid #777777;
-    border-bottom: 1px solid #777777;
+    border-top: 1px solid var(--border-color-highlight);
+    border-bottom: 1px solid  var(--border-color-highlight);
     width: 100%;
     padding: 5px;
   }
@@ -322,38 +340,33 @@ onBeforeMount(() => {
   top: 30px;
   border-radius: 8px;
   background-size: cover;
+  overflow: hidden;
 }
 
 .picture:hover {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
 }
 
-.picture .full-c {
-  display: block;
+.picture .pic {
   width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
+  aspect-ratio: 3/4;
+
 }
 
-.full-c::before {
+
+.picture::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -30%;
-  width: 30%;
+  left: -60%;
+  width: 25%;
   height: 100%;
-  opacity: 0;
-  background: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0) 0%,
-      rgb(255, 255, 255, 0.5) 50%,
-      rgba(255, 255, 255, 0) 100%
-  );
+  opacity: 1;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 100%);
   transform: skewX(-25deg);
 }
 
-.full-c:hover::before {
+.picture:hover::before {
   left: 130%;
   transition: all 0.6s ease-in-out;
   opacity: 1;

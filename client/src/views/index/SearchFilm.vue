@@ -1,44 +1,46 @@
 <template>
   <div class="container">
-    <div class="search_group">
-      <div class="InputContainer">
-        <input  class="input" placeholder="输入关键字搜索 动漫,剧集,电影" v-model="data.search" @keydown="e=>{e.keyCode==13 && searchMovie()}" />
-        <div class="border" />
-        <button class="micButton" @click="searchMovie">
-          <svg viewBox="0 0 512 512" class="searchIcon"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>
-          </svg>
-        </button>
-      </div>
+    <div class="InputContainer">
+      <input class="input" placeholder="输入关键字搜索 动漫,剧集,电影" v-model="data.search"
+             @keydown="e=>{e.keyCode==13 && searchMovie()}"/>
+      <div class="border"/>
+      <button class="micButton" @click="searchMovie">
+        <svg viewBox="0 0 512 512" class="searchIcon">
+          <path
+              d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>
+        </svg>
+      </button>
     </div>
     <div class="header-container">
-        <h3>{{ data.oldSearch }}</h3>
-        <span>共找到<b>{{ data.page.total }}</b>部与"<b>{{ data.oldSearch }}</b>"相关的影视作品</span>
+      <h3>{{ data.oldSearch }}</h3>
+      <span>共找到<b>{{ data.page.total }}</b>部与"<b>{{ data.oldSearch }}</b>"相关的影视作品</span>
     </div>
     <div class="card-group" v-if="data.list && data.list.length > 0">
-      <div class="card"  v-for="(m,i) in data.list" >
+      <div class="card" v-for="(m,i) in data.list" @click="play(m.id)" >
         <div class="card-left">
-          <div class="loader" v-if="m.loading" />
-          <img v-show="!m.loading && !m.error" :src="m.picture" @load="()=>{data.list[i].loading=false}" @error="()=>{data.list[i].error=true}"/>
+          <div class="loader" v-if="m.loading"/>
+          <img v-show="!m.loading && !m.error" :src="m.picture" @load="()=>{data.list[i].loading=false}"
+               @error="()=>{data.list[i].error=true}"/>
           <!-- 失败占位 -->
-          <img v-if="m.error" src="/src/assets/image/404.png" @load="()=>{data.list[i].loading=false}" />
+          <img v-if="m.error" src="/src/assets/image/404.png" @load="()=>{data.list[i].loading=false}"/>
         </div>
         <div class="card-right">
           <h3>{{ m.name }}</h3>
           <p class="tags">
-            <span class="tag_c">{{ `${m.cName?m.cName:'暂未分类'}` }}</span>
-            <span>{{  `${m.year?m.year:'未知'}` }}</span>
-            <span class="tag-area">{{  `${m.area?m.area:'未知'}`  }}</span>
+            <span class="tag_c">{{ `${m.cName ? m.cName : '暂未分类'}` }}</span>
+            <span>{{ `${m.year ? m.year : '未知'}` }}</span>
+            <span class="tag-area">{{ `${m.area ? m.area : '未知'}` }}</span>
           </p>
-          <p><em>导演:</em>{{ `${m.director?m.director:'未知'}` }}</p>
-          <p><em>主演:</em>{{ `${m.actor?m.actor:'未知'}` }}</p>
-          <p class="blurb"><em>剧情:</em>{{ `${m.blurb.trim()?m.blurb.replace(/\s/g, ''):'暂无简介'}` }}</p>
+          <p><em>导演:</em>{{ `${m.director ? m.director : '未知'}` }}</p>
+          <p><em>主演:</em>{{ `${m.actor ? m.actor : '未知'}` }}</p>
+          <p class="blurb"><em>剧情:</em>{{ `${m.blurb.trim() ? m.blurb.replace(/\s/g, '') : '暂无简介'}` }}</p>
           <el-button :icon="CaretRight" @click="play(m.id)">立即播放</el-button>
         </div>
       </div>
     </div>
     <el-empty v-if="data.oldSearch != '' && (!data.list || data.list.length == 0) " description="未查询到对应影片"/>
 
-    <div class="pagination_container" v-if="data.list && data.list.length > 0" >
+    <div class="pagination_container" v-if="data.list && data.list.length > 0">
       <el-pagination background layout="prev, pager, next"
                      v-model:current-page="data.page.current"
                      @current-change="changeCurrent"
@@ -139,70 +141,90 @@ const changeCurrent = (currentVal: number) => {
   .InputContainer {
     width: 40%;
   }
+
   .input {
     width: 90%;
   }
+
   .micButton {
     width: 10%;
   }
+
   .card-group {
     justify-content: space-between;
   }
+
   .card {
     width: calc(50% - 4%);
     min-height: 230px;
   }
-  .card-left{
+
+  .card-left {
     width: 23%;
   }
-  .card-right{
+
+  .card-right {
     width: 70%;
   }
-  .card-right h3{
+
+  .card-right h3 {
     font-size: 20px;
   }
+
   .card-right p {
     font-size: 15px;
     margin-bottom: 5px;
   }
+
   .card-right span {
     font-size: 12px;
   }
 }
+
 /*-------------------------wrap------------------------------*/
 @media (max-width: 768px) {
   .InputContainer {
     width: 80%;
   }
+
   .input {
     width: 80%;
   }
+
   .micButton {
     width: 20%;
   }
+
   .card-group {
     justify-content: center;
   }
+
   .card {
     width: calc(100% - 10%);
     min-height: 185px;
   }
-  .card-left{
+
+  .card-left {
     width: 38%;
   }
-  .card-right{
+
+  .card-right {
     width: 60%;
   }
-  .card-right h3{
+
+  .card-right h3 {
     font-size: 16px;
   }
+
   .card-right p {
     font-size: 10px;
   }
+
   .card-right span {
     font-size: 10px;
   }
 }
+
 /*--------------------Search---------------------------*/
 .InputContainer {
   height: 40px;
@@ -227,9 +249,11 @@ const changeCurrent = (currentVal: number) => {
   color: #ffffffbd;
   caret-color: #ffffff;
 }
+
 .input::placeholder {
   color: rgb(255 255 255 / 0.69);
 }
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -268,21 +292,25 @@ input:-webkit-autofill:active {
   background-color: #fde2e245;
   transition-duration: .3s;
 }
+
 /*-----------------------header-container-------------------------------------------*/
-.header-container{
+.header-container {
   margin: 20px auto;
   padding: 0 20px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  border-bottom: 1px solid rgba(255,255,255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
+
 .header-container b {
   color: #FFC570;
 }
+
 .header-container h3 {
   margin: 0 auto;
 }
+
 /*-----------------------card style---------------------------------*/
 .card-group {
   width: 100%;
@@ -290,6 +318,7 @@ input:-webkit-autofill:active {
   flex-wrap: wrap
   /*  aspect-ratio: 9/16;*/
 }
+
 .card {
   display: flex;
   justify-content: start;
@@ -305,23 +334,28 @@ input:-webkit-autofill:active {
   overflow: hidden;
   transform: translateY(0%);
 }
-.card:active {
+
+.card:active, .card:hover {
   background-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-3%);
   transition: 0.5s;
 }
+
 .card-left {
   height: 100%;
 }
+
 .card img {
   width: 100%;
   height: 100%;
   border-radius: 6px;
 }
+
 .card-right {
   text-align: start;
   padding-left: 2%;
 }
+
 .card-right h3 {
   color: #FFC570;
   max-width: 100%;
@@ -329,6 +363,7 @@ input:-webkit-autofill:active {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
 .card-right .tags {
   display: flex;
   width: 90%;
@@ -344,6 +379,7 @@ input:-webkit-autofill:active {
   white-space: nowrap;
   overflow: hidden;
 }
+
 .card-right span {
   margin-right: 8px;
   border-radius: 3px;
@@ -351,15 +387,18 @@ input:-webkit-autofill:active {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.card-right .tag_c{
+
+.card-right .tag_c {
   background: rgba(155, 73, 231, 0.72);
 }
+
 .card-right p:not(.blurb) {
   max-width: 90%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .card-right .blurb {
   max-width: 90%;
   display: -webkit-box;
@@ -367,11 +406,13 @@ input:-webkit-autofill:active {
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+
 .card-right p em {
   font-weight: bold;
   color: #fff;
   margin-right: 5px;
 }
+
 .card-right button {
   background-color: orange;
   border-radius: 20px;
@@ -382,9 +423,11 @@ input:-webkit-autofill:active {
   margin-bottom: 10px;
   bottom: 0;
 }
+
 .card-right h3, span, p {
   margin: 3px 0;
 }
+
 /*--------------------------image loading----------------------------------------------*/
 /* 容器样式 */
 .loader {
@@ -393,19 +436,20 @@ input:-webkit-autofill:active {
   background-color: transparent;
   background-image: linear-gradient(
       45deg,
-      rgba(255,255,255,0.1) 25%,
-      rgba(255,255,255,0.3) 25%,
-      rgba(255,255,255,0.3) 50%,
-      rgba(255,255,255,0.1) 50%,
-      rgba(255,255,255,0.1) 75%,
-      rgba(255,255,255,0.3) 75%,
-      rgba(255,255,255,0.3) 100%
+      rgba(255, 255, 255, 0.1) 25%,
+      rgba(255, 255, 255, 0.3) 25%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.1) 75%,
+      rgba(255, 255, 255, 0.3) 75%,
+      rgba(255, 255, 255, 0.3) 100%
   );
   /* 3. 设置条纹的大小 (宽和高相等即为正方形条纹) */
   background-size: 20px 20px;
   /* 4. 应用动画 */
   animation: stripes-move 1.5s linear infinite;
 }
+
 /* --- 动画定义 --- */
 @keyframes stripes-move {
   0% {

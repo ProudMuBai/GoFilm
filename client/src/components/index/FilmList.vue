@@ -53,9 +53,9 @@
 </template>
 
 <script setup lang="ts">
-
 import {inject, reactive, watchEffect} from 'vue'
 import {Discount} from "@element-plus/icons-vue";
+import notFoundImg from '/src/assets/image/404.png'
 
 const props = defineProps({
   list: Array,
@@ -63,7 +63,7 @@ const props = defineProps({
 })
 const d = reactive({
   col: 0,
-  list: Array,
+  list: [],
   width: 0,
 })
 
@@ -71,7 +71,7 @@ const global = inject('global')
 // 图片加载失败事件
 const handleImg = (e: Event) => {
   // e.target.style.display = "none"
-  e.target.src = '/src/assets/image/404.png'
+  e.target.src = notFoundImg
 }
 // 图片加载完成事件
 const handLoadImg = (e: Event) => {
@@ -95,6 +95,9 @@ watchEffect(() => {
   let isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent)
   // 如果是PC, 为防止flex布局最后一行元素不足出现错位, 使用空元素补齐list
   let c = isMobile ? 3 : props.col ? props.col : 0
+  if (!props.list) {
+    return;
+  }
   let l: any = props.list
   let len = l.length
   d.width = isMobile ? 31 : Math.floor(100 / c)

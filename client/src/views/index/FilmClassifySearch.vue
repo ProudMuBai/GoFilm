@@ -10,9 +10,9 @@
       <div class="t_item" v-for="k in d.search.sortList ">
         <div class="t_title">{{d.search.titles[k]}} <b class="iconfont icon-triangle"/> </div>
         <div class="tag_group">
-          <a href="javascript:void(false)" :class="`tag ${t['Value'] === d.searchParams[k]?'t_active':''}`" v-for="t in d.search.tags[k]" @click="handleTag(k,t['Value'])" >
+          <span :class="`tag ${t['Value'] === d.searchParams[k]?'t_active':''}`" v-for="t in d.search.tags[k]" @click="handleTag(k,t['Value'])" >
             {{t['Name']}}
-          </a>
+          </span>
         </div>
       </div>
     </div>
@@ -144,7 +144,7 @@ onMounted(() => {
   display: block;
   font-size: 14px;
   padding-bottom: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   border-bottom: 1px solid rgba(255,255,255, 0.12);
 }
 
@@ -177,15 +177,22 @@ onMounted(() => {
 
 .tag {
   display: inline-block;
+  cursor: pointer;
+  color: var(--text-content-color-light);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 5px;
   text-align: center;
 }
 
+.tag:hover, .tag:active{
+  color: #F7C85C;
+}
+
 .t_active {
   background: rgba(255,255,255,0.12);
-  color: #ffa500cc!important;
-  border: none!important;
+  color: #F7C85C;
+
+  vertical-align: top;   /* 或 middle，消除基线影响 */
 }
 
 

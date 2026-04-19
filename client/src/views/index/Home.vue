@@ -42,7 +42,7 @@
           </el-col>
         </el-row>
         <el-row class="cus_content">
-          <el-col :md="24" :lg="20" :xl="20" class="cus_content">
+          <el-col :md="24" :lg="20" :xl="20">
             <!--影片列表-->
             <FilmList v-if="item.movies" :col="6" :list="item.movies.slice(0,12)"/>
           </el-col>
