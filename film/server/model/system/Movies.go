@@ -192,7 +192,7 @@ func AddSlaveMovieInfoIndex() {
 	// 如果不存在索引则创建对应索引
 	if !db.Mdb.Migrator().HasIndex(&s, "idx_mid") {
 		// 添加索引
-		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_sid ON %s (sid DESC)", tableName))
+		//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_sid ON %s (sid DESC)", tableName))
 		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_mid ON %s (mid DESC)", tableName))
 		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_dbId ON %s (db_id DESC", tableName))
 	}
@@ -730,7 +730,8 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 
 	// 优先进行名称相似匹配, 先对影片名称进行精简, 只保留主体用于匹配同系列影片
 	name := util.CleanFilmName(search.Name)
-	sql = fmt.Sprintf(`select mid from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
+	//sql = fmt.Sprintf(`select mid from %s where (name LIKE "%%%s%%" or sub_title LIKE "%%%[2]s%%") AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
+	sql = fmt.Sprintf(`select mid from %s where MATCH(name, sub_title) AGAINST('%s') AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
 
 	// 添加其他相似匹配规则 同属二级分类
 	sql = fmt.Sprintf(`%s (select mid from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
@@ -792,7 +793,10 @@ func GetMultiplePlay(mIds []string, dbId int64) []SlaveMovieInfo {
 		}
 		// 如果迭代完s依旧为空,则去mysql中进行匹配
 		if s.Mid == "" {
-			if err := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("sid = ? AND (mid IN (?) OR db_id = ?)", c.Id, mIds, dbId).First(&s).Error; err != nil {
+			//if err := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("sid = ? AND (mid IN (?) OR db_id = ?)", c.Id, mIds, dbId).First(&s).Error; err != nil {
+			//mq := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("sid = ? AND mid IN (?)", c.Id, dbId).Limit(1)
+			//dq := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("sid = ? AND db_id = ?", c.Id, dbId).Limit(1)
+			if err := db.Mdb.Raw("(SELECT sid, play_list FROM `slave_infos` WHERE sid = ? AND mid IN (?)) UNION ALL (SELECT sid, play_list FROM `slave_infos` WHERE sid = ? AND db_id = ? ORDER BY `slave_infos`.`id` LIMIT 1) LIMIT 1", c.Id, mIds, c.Id, dbId).First(&s).Error; err != nil {
 				log.Println("GetMultiplePlay Failed: ", err)
 				continue
 			}

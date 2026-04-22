@@ -1,13 +1,13 @@
 <template>
   <el-container>
-    <el-header>
+    <el-header v-show="!data.isNavHidden">
       <Header/>
       <!--<NewHeader />-->
     </el-header>
     <el-main>
       <router-view></router-view>
     </el-main>
-    <el-footer>
+    <el-footer v-show="!data.isNavHidden">
       <Footer/>
     </el-footer>
   </el-container>
@@ -16,15 +16,48 @@
 <script setup lang="ts">
 import Header from "../components/index/Header.vue";
 import Footer from "../components/index/Footer.vue";
-import {provide} from "vue";
+import {onMounted, onUnmounted, provide, reactive} from "vue";
 // import NewHeader from "../components/index/NewHeader.vue";
 
+// 页面数据
+const data = reactive({
+  lastScrollTop: 0,
+  isNavHidden: false,
+})
 
 // 在全局注入一个当前是pc还是wrap的状态
 const userAgent = navigator.userAgent.toLowerCase()
 let isMobile = /Mobile|Tablet|Android|iPhone|iPad|iPod|BlackBerry|webOS|Windows Phone|SymbianOS|IEMobile|Opera Mini/i.test(userAgent)
 // 传递一个全局状态对象
 provide('global', {isMobile: isMobile})
+
+//
+// 导航栏显示状态控制
+const handleScroll = ()=>{
+  // 获取当前滚动条距离顶部的距离
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+  // 只有当滚动超过一定距离（例如100px）后才开始判断，避免在顶部微小滚动时触发
+  if (scrollTop > 200) {
+    data.isNavHidden = scrollTop > data.lastScrollTop;
+  } else {
+    // 滚动到顶部附近时，始终显示导航栏
+    data.isNavHidden = false;
+  }
+
+  // 更新上一次的滚动位置
+  data.lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // 防止负值
+}
+
+// 页面挂载完成时添加监听事件
+onMounted(()=>{
+  // 添加页面滚动监听, 用于导航栏隐藏状态
+  window.addEventListener('scroll', handleScroll);
+})
+// 卸载时取消页面滚动监听
+onUnmounted(()=>{
+  window.removeEventListener('scroll', handleScroll);
+})
 
 </script>
 

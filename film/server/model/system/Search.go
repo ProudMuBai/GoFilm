@@ -74,14 +74,17 @@ func AddSearchIndex() {
 	var s SearchInfo
 	tableName := s.TableName()
 	// 添加索引
-	db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_pid ON %s (pid)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_cid ON %s (cid)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_time ON %s (update_stamp DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_hits ON %s (hits DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_score ON %s (score DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_release ON %s (release_stamp DESC)", tableName))
-	db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_year ON %s (year DESC)", tableName))
+	//db.Mdb.Exec(fmt.Sprintf("CREATE UNIQUE INDEX idx_mid ON %s (mid)", tableName)
+	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_pid ON %s (pid)", tableName))
+	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_cid ON %s (cid)", tableName))
+	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_time ON %s (update_stamp DESC)", tableName))
+	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_hits ON %s (hits DESC)", tableName))
+	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_score ON %s (score DESC)", tableName))
+	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_release ON %s (release_stamp DESC)", tableName))
+	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_year ON %s (year DESC)", tableName))
+
+	// 一次执行完所有索引的创建
+	db.Mdb.Exec(fmt.Sprintf("ALTER TABLE %s ADD UNIQUE INDEX idx_mid (mid DESC), ADD INDEX idx_pid (pid), ADD INDEX idx_cid (cid), ADD INDEX idx_time (update_stamp DESC), ADD INDEX idx_hits (hits DESC), ADD INDEX idx_score (score DESC), ADD INDEX idx_release (release_stamp DESC), ADD INDEX idx_year (year DESC), ADD FULLTEXT INDEX idx_names (name, sub_title) WITH PARSER ngram", tableName))
 
 }
 
@@ -289,7 +292,7 @@ func BatchSaveOrUpdate(ml []MovieDetail) error {
 			if err != nil {
 				log.Println("Save Search Info error: ", err)
 			}
-			break
+			continue
 		}
 		// 如果不存在对应信息则保存一份tag
 		BatchHandleSearchTag(s)

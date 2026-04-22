@@ -73,7 +73,7 @@
 </template>
 
 <script lang="ts" setup>
-import {inject, onMounted, reactive, ref, watch} from "vue";
+import {inject, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {useRouter} from "vue-router";
 import {Search, CircleClose, CircleCloseFilled } from '@element-plus/icons-vue'
 import {ElMessage} from "element-plus";
@@ -102,6 +102,7 @@ const data = reactive({
   site: Object,
   drawer: false,
 })
+
 
 // 获取侧边菜单的挂载元素
 const el = document.getElementsByClassName('main')[0]
@@ -167,6 +168,8 @@ onMounted(() => {
   })
   getBasicInfo()
 })
+
+
 
 
 </script>
@@ -289,7 +292,7 @@ onMounted(() => {
     font-weight: 600;
     font-style: italic;
     font-size: 24px;
-    margin-right: 5px;
+    margin-right: 12px;
     background: linear-gradient(118deg, #e91a90, #c965b3, #988cd7, #00acfd);
     -webkit-background-clip: text;
     background-clip: text;

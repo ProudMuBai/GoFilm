@@ -26,9 +26,9 @@ func InitMysql() (err error) {
 			SingularTable: true, //是否使用 结构体名称作为表名 (关闭自动变复数)
 			//NameReplacer:  strings.NewReplacer("spider_", ""), // 替表名和字段中的 Me 为 空
 		},
-		//Logger: logger.Default.LogMode(logger.Warn), //设置日志级别为Info
-		//Logger: logger.Default.LogMode(logger.Info), //设置日志级别为Info
-		Logger: logger.Default.LogMode(logger.Error), //设置日志级别为Info
+		//Logger: logger.Default.LogMode(logger.Warn), //设置日志级别为 Warn
+		Logger: logger.Default.LogMode(logger.Info), //设置日志级别为Info
+		//Logger: logger.Default.LogMode(logger.Error), //设置日志级别为 Error
 	})
 	return
 }

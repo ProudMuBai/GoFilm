@@ -156,10 +156,13 @@ func CleanFilmName(name string) string {
 	//for rePrefix.MatchString(name) {
 	//	name = rePrefix.ReplaceAllString(name, "")
 	//}
+
+	// 去除名称末尾的空格以及后续内容
+	name = regexp.MustCompile(`\s+\S*$`).ReplaceAllString(name, "")
 	// 2.定义需要清洗的特殊标识关键字集合
 	var noisePatterns = []string{
-		`第 [零一二三四五六七八九十\d]+ 季`, `第 [零一二三四五六七八九十\d]+ 话`, `第 [零一二三四五六七八九十\d]+ 集`,
-		`Season\s*\d+`, `S\d+`, `Ep\d+`, `\d{1,3}\s*(话 | 集)`,
+		`第[零一二三四五六七八九十\d]+季`, `第[零一二三四五六七八九十\d]+话`, `第[零一二三四五六七八九十\d]+集`,
+		`Season\s*\d+`, `S\d+`, `Ep\d+`, `\d{1,3}\s*(话|集)`,
 		`\s+(II|III|IV|V|VI|VII|VIII|IX|X)\s*$`,
 		`剧场版`, `电影版`, `OVA`, `OAD`, `SP`, `特别篇`, `总集篇`, `外传`, `序`, `破`, `急`, `终章`,
 		`\d{3,4}[Pp]`, `HD`, `FHD`, `UHD`, `4K`, `BD`, `BluRay`, `BDRip`, `HEVC`, `H264`, `H265`,
@@ -168,7 +171,7 @@ func CleanFilmName(name string) string {
 		`Uncensored`, `NoCen`, `Dubbed`, `Subbed`, `Raw`, `生肉`, `熟肉`,
 	}
 	// 3. 处理拼接完整的正则表达式
-	fullPattern := `(?i)(?:\s+|\.+|_+|-+) (` + strings.Join(noisePatterns, "|") + `).*$`
+	fullPattern := `(?i)(?:\s*|\.+|_+|-+)*(` + strings.Join(noisePatterns, "|") + `).*$`
 	cutRegex := regexp.MustCompile(fullPattern)
 	// 去除满足匹配集的子串
 	name = cutRegex.ReplaceAllString(name, "")
