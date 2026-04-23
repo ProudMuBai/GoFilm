@@ -45,9 +45,12 @@ func CopyRequestInfo(r RequestInfo) RequestInfo {
 // RefererUrl 记录上次请求的url
 var RefererUrl string
 
+var respData []byte
+
 // CreateClient 初始化请求客户端
 func CreateClient() *colly.Collector {
 	c := colly.NewCollector()
+	//c := colly.NewCollector(colly.Debugger(&debug.LogDebugger{}))
 
 	// 设置请求使用clash的socks5代理
 	//setProxy(c)
@@ -68,13 +71,32 @@ func CreateClient() *colly.Collector {
 	c.OnRequest(func(request *colly.Request) {
 		// 设置一些请求头信息
 		request.Headers.Set("Content-Type", "application/json;charset=UTF-8")
-		request.Headers.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
+		//request.Headers.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
 		//request.Headers.Set("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
 		// 请求完成后设置请求头Referer
 		if len(RefererUrl) <= 0 || !strings.Contains(RefererUrl, request.URL.Host) {
 			RefererUrl = ""
 		}
 		request.Headers.Set("Referer", RefererUrl)
+	})
+	// 请求响应成功的回调
+	c.OnResponse(func(response *colly.Response) {
+		if (response.StatusCode == 200 || (response.StatusCode >= 300 && response.StatusCode <= 399)) && len(response.Body) > 0 {
+			// 将响应结构封装到 RequestInfo.Resp中
+			// 创建新的切片, 方式内容溢出
+			//log.Printf("len(r.Resp): %d, len(response.Body): %d", len(r.Resp), len(response.Body))
+			//fmt.Printf("URL: %s | Status: %d\n", response.Request.URL, response.StatusCode)
+			//log.Printf("len(response.Body): %d", len(response.Body))
+			// 清空切片内容用于赋值新切片
+			respData = make([]byte, len(response.Body))
+			copy(respData, response.Body)
+		} else {
+			respData = []byte{}
+		}
+		// 将请求url保存到RefererUrl 用于 Header Refer属性
+		RefererUrl = response.Request.URL.String()
+		// 拿到response后输出请求url
+		//log.Println("\n请求成功: ", response.Request.URL)
 	})
 	// 请求期间报错的回调
 	c.OnError(func(response *colly.Response, err error) {
@@ -94,24 +116,14 @@ func ApiGet(r *RequestInfo) {
 	extensions.RandomUserAgent(Client)
 	//extensions.Referer(Client)
 	// 请求成功后的响应
-	Client.OnResponse(func(response *colly.Response) {
-		if (response.StatusCode == 200 || (response.StatusCode >= 300 && response.StatusCode <= 399)) && len(response.Body) > 0 {
-			// 将响应结构封装到 RequestInfo.Resp中
-			r.Resp = response.Body
-		} else {
-			r.Resp = []byte{}
-		}
-		// 将请求url保存到RefererUrl 用于 Header Refer属性
-		RefererUrl = response.Request.URL.String()
-		// 拿到response后输出请求url
-		//log.Println("\n请求成功: ", response.Request.URL)
-	})
 	// 处理请求参数
 	err := Client.Visit(fmt.Sprintf("%s?%s", r.Uri, r.Params.Encode()))
 	if err != nil {
 		r.Err = err.Error()
 		log.Println("获取数据失败: ", err)
 	}
+	// 如果没有异常信息则获取请求结果
+	r.Resp = respData
 }
 
 // ApiTest 处理API请求后的数据, 主测试

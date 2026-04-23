@@ -160,11 +160,13 @@ const changeCurrent = (currentVal: number) => {
   }
 
   .card-left {
-    width: 23%;
+    min-width: 23%;
+    max-width: 30%;
+    aspect-ratio: 3/5;
   }
-
   .card-right {
-    width: 70%;
+    min-width: 55%;
+    max-width: 68%;
   }
 
   .card-right h3 {

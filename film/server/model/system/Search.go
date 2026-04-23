@@ -84,7 +84,11 @@ func AddSearchIndex() {
 	//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_year ON %s (year DESC)", tableName))
 
 	// 一次执行完所有索引的创建
-	db.Mdb.Exec(fmt.Sprintf("ALTER TABLE %s ADD UNIQUE INDEX idx_mid (mid DESC), ADD INDEX idx_pid (pid), ADD INDEX idx_cid (cid), ADD INDEX idx_time (update_stamp DESC), ADD INDEX idx_hits (hits DESC), ADD INDEX idx_score (score DESC), ADD INDEX idx_release (release_stamp DESC), ADD INDEX idx_year (year DESC), ADD FULLTEXT INDEX idx_names (name, sub_title) WITH PARSER ngram", tableName))
+	db.Mdb.Exec(fmt.Sprintf("ALTER TABLE %s ADD UNIQUE INDEX idx_mid (mid DESC), ADD INDEX idx_pid (pid), ADD INDEX idx_cid (cid), ADD INDEX idx_time (update_stamp DESC),"+
+		" ADD INDEX idx_hits (hits DESC), ADD INDEX idx_score (score DESC), ADD INDEX idx_release (release_stamp DESC), ADD INDEX idx_year (year DESC), "+
+		"ADD FULLTEXT INDEX idx_names (name, sub_title) WITH PARSER ngram", tableName))
+	// 全文索引无法同时创建需要分别创建
+	db.Mdb.Exec(fmt.Sprintf("ALTER TABLE %s ADD FULLTEXT INDEX idx_tags (class_tag) WITH PARSER ngram", tableName))
 
 }
 
@@ -374,12 +378,14 @@ func SearchFilmKeyword(keyword string, page *Page) []int64 {
 	var ids []int64
 	// 1. 先统计搜索满足条件的数据量
 	var count int64
-	db.Mdb.Model(&SearchInfo{}).Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Count(&count)
+	//db.Mdb.Model(&SearchInfo{}).Where("name LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Or("sub_title LIKE ?", fmt.Sprint(`%`, keyword, `%`)).Count(&count)
+	// 搜索时使用精确匹配,防止默认的分词
+	db.Mdb.Model(&SearchInfo{}).Where("MATCH(name,sub_title) AGAINST(? IN BOOLEAN MODE)", fmt.Sprintf(`"%s"`, keyword)).Count(&count)
 	page.Total = int(count)
 	page.PageCount = int((page.Total + page.PageSize - 1) / page.PageSize)
 	// 2. 获取满足条件的数据
 	db.Mdb.Model(&SearchInfo{}).Limit(page.PageSize).Offset((page.Current-1)*page.PageSize).Select("mid").
-		Where("name LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Or("sub_title LIKE ?", fmt.Sprintf(`%%%s%%`, keyword)).Order("year DESC, update_stamp DESC").Find(&ids)
+		Where("MATCH(name,sub_title) AGAINST(? IN BOOLEAN MODE)", fmt.Sprintf(`"%s"`, keyword)).Order("year DESC, update_stamp DESC").Find(&ids)
 
 	return ids
 }
@@ -458,7 +464,11 @@ func HandleTagStr(title string, tags ...string) []map[string]string {
 // GetSearchInfosByTags 查询满足searchTag条件的影片分页数据
 func GetSearchInfosByTags(st SearchTagsVO, page *Page) []int64 {
 	// 准备查询语句的条件
-	qw := db.Mdb.Model(&SearchInfo{})
+	var s SearchInfo
+	qw := db.Mdb.Table(s.TableName()).Select(fmt.Sprintf("%s.mid", s.TableName()))
+	// 生成左连接的子查询
+	//qweFlag := false
+	//qwe := db.Mdb.Table(s.TableName()).Select("mid")
 	// 通过searchTags的非空属性值, 拼接对应的查询条件
 	t := reflect.TypeOf(st)
 	v := reflect.ValueOf(st)
@@ -477,6 +487,7 @@ func GetSearchInfosByTags(st SearchTagsVO, page *Page) []int64 {
 			switch k {
 			case "pid", "cid", "year":
 				qw = qw.Where(fmt.Sprintf("%s = ?", k), value)
+				//qwe = qwe.Where(fmt.Sprintf("%s = ?", k), value)
 			case "area", "language":
 				if strings.EqualFold(value.(string), "其它") {
 					qw = qw.Where(fmt.Sprintf("%s NOT IN ?", k), ts)
@@ -488,9 +499,15 @@ func GetSearchInfosByTags(st SearchTagsVO, page *Page) []int64 {
 					for _, t := range ts {
 						qw = qw.Where("class_tag NOT LIKE ?", fmt.Sprintf("%%%v%%", t))
 					}
+					// 通过cl整合需要排除的tag
+					//cl := strings.Join(ts, " ")
+					//qweFlag = true
+					//qwe = qwe.Where("MATCH(class_tag) AGAINST(? IN BOOLEAN MODE)", fmt.Sprintf("%s", cl))
+					//db.Mdb.Table(fmt.Sprintf("%s as s1", s.TableName()))
 					break
 				}
-				qw = qw.Where("class_tag LIKE ?", fmt.Sprintf("%%%v%%", value))
+				qw = qw.Where("MATCH(class_tag) AGAINST(? IN BOOLEAN MODE)", fmt.Sprintf(`"%v"`, value))
+				//qw = qw.Where("class_tag LIKE ?", fmt.Sprintf("%%%v%%", value))
 			case "sort":
 				if strings.EqualFold(value.(string), "release_stamp") {
 					qw.Order(fmt.Sprintf("year DESC ,%v DESC", value))
@@ -502,12 +519,15 @@ func GetSearchInfosByTags(st SearchTagsVO, page *Page) []int64 {
 			}
 		}
 	}
+	//if qweFlag {
+	//	qw = qw.Joins("LEFT JOIN (?) as s2 ON search.mid = s2.mid", qwe).Where("s2.mid IS NULL")
+	//}
 
 	// 返回分页参数
 	GetPage(qw, page)
 	// 查询具体的searchInfo 分页数据
 	var ids []int64
-	if err := qw.Select("mid").Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&ids).Error; err != nil {
+	if err := qw.Limit(page.PageSize).Offset((page.Current - 1) * page.PageSize).Find(&ids).Error; err != nil {
 		log.Println(err)
 		return nil
 	}
@@ -547,7 +567,7 @@ func GetSearchPage(s SearchVo) []SearchInfo {
 	query := db.Mdb.Model(&SearchInfo{})
 	// 如果参数不为空则追加对应查询条件
 	if s.Name != "" {
-		query = query.Where("name LIKE ?", fmt.Sprintf("%%%s%%", s.Name))
+		query = query.Where("MATCH(name, sub_title) AGAINST(? IN BOOLEAN MODE)", fmt.Sprintf(`"%s"`, s.Name))
 	}
 	// 分类ID为负数则默认不追加该条件
 	if s.Cid > 0 {
@@ -556,7 +576,7 @@ func GetSearchPage(s SearchVo) []SearchInfo {
 		query = query.Where("pid = ?", s.Pid)
 	}
 	if s.Plot != "" {
-		query = query.Where("class_tag LIKE ?", fmt.Sprintf("%%%s%%", s.Plot))
+		query = query.Where("MATCH(class_tag) AGAINST(?)", s.Plot)
 	}
 	if s.Area != "" {
 		query = query.Where("area = ?", s.Area)
@@ -690,7 +710,7 @@ func FindFilmIds(params map[string]string, page *Page) ([]int64, error) {
 				query = query.Where("cid = ?", cid)
 			}
 		case "wd":
-			query = query.Where("name like ?", fmt.Sprintf("%%%s%%", v))
+			query = query.Where("MATCH(name, sub_title) AGAINST(?)", v)
 		case "h":
 			if h, err := strconv.ParseInt(v, 10, 64); err == nil {
 				query = query.Where("update_stamp >= ?", time.Now().Unix()-h*3600)

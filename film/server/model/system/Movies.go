@@ -193,8 +193,9 @@ func AddSlaveMovieInfoIndex() {
 	if !db.Mdb.Migrator().HasIndex(&s, "idx_mid") {
 		// 添加索引
 		//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_sid ON %s (sid DESC)", tableName))
-		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_mid ON %s (mid DESC)", tableName))
-		db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_dbId ON %s (db_id DESC", tableName))
+		//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_mid ON %s (mid DESC)", tableName))
+		//db.Mdb.Exec(fmt.Sprintf("CREATE INDEX idx_dbId ON %s (db_id DESC, sid DESC)", tableName))
+		db.Mdb.Exec(fmt.Sprintf("ALTER TABLE %s ADD INDEX idx_mid (mid DESC),ADD INDEX idx_ds (db_id DESC, sid DESC)", tableName))
 	}
 }
 
@@ -478,7 +479,7 @@ func SyncMovieDetail(sid string, grade SourceGrade, mode int) {
 	case MasterCollect:
 		// 循环扫描detail信息, 存储完成后进行删除
 		for {
-			vs, nextCursor, err := db.Rdb.HScan(db.Cxt, config.MovieDetailKey, cursor, "", config.FilmScanSize).Result()
+			vs, nextCursor, err := db.Rdb.HScan(db.Cxt, config.MovieDetailKey, cursor, "*", config.FilmScanSize).Result()
 			if err != nil {
 				log.Println("ScanMovieDetail Failed: ", err)
 			}
@@ -581,7 +582,7 @@ func GetDetailByMid(mid int64) MovieDetail {
 				log.Println("Find BasicInfo Failed: ", err)
 				return m
 			}
-			//// 执行本地图片匹配
+			// 执行本地图片匹配
 			ReplaceDetailPic(&m)
 			return m
 		}
@@ -734,20 +735,25 @@ func GetRelateMovieBasicInfo(search SearchInfo, page *Page) []MovieBasicInfo {
 	sql = fmt.Sprintf(`select mid from %s where MATCH(name, sub_title) AGAINST('%s') AND cid=%d AND search.deleted_at IS NULL union`, search.TableName(), name, search.Cid)
 
 	// 添加其他相似匹配规则 同属二级分类
-	sql = fmt.Sprintf(`%s (select mid from %s where cid=%d AND `, sql, search.TableName(), search.Cid)
+	sql = fmt.Sprintf(`%s (select mid from %s where cid=%d AND`, sql, search.TableName(), search.Cid)
 	// 根据剧情标签查找相似影片, classTag 使用的分隔符为 , | /首先去除 classTag 中包含的所有空格
 	search.ClassTag = strings.ReplaceAll(search.ClassTag, " ", "")
 	// 如果 classTag 中包含分割符则进行拆分匹配
-	cl := strings.Split(util.FormatSpecialChar(search.ClassTag), ",")
-	if len(cl) > 0 {
-		s := "("
-		for _, c := range cl {
-			s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, c)
-		}
-		sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
-	} else {
-		sql = fmt.Sprintf(`%s class_tag like "%%%s%%"`, sql, search.ClassTag)
-	}
+	//cl := strings.Split(util.FormatSpecialChar(search.ClassTag), ",")
+	// 将
+	search.ClassTag = strings.ReplaceAll(util.FormatSpecialChar(search.ClassTag), ",", " ")
+	//if len(cl) > 0 {
+	//	s := "("
+	//	for _, c := range cl {
+	//		//s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, c)
+	//		s = fmt.Sprintf(`%s class_tag like "%%%s%%" OR`, s, c)
+	//	}
+	//	sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
+	//	sql = fmt.Sprintf("%s %s)", sql, strings.TrimSuffix(s, "OR"))
+	//} else {
+	//	sql = fmt.Sprintf(`%s class_tag like "%%%s%%"`, sql, search.ClassTag)
+	//}
+	sql = fmt.Sprintf(`%s MATCH(class_tag) AGAINST('%s')`, sql, search.ClassTag)
 	// 除名称外的相似影片使用随机排序
 	//sql = fmt.Sprintf("%s ORDER BY RAND() limit %d,%d)", sql, page.Current, page.PageSize)
 	sql = fmt.Sprintf("%s AND search.deleted_at IS NULL limit %d,%d)", sql, page.Current, page.PageSize)
@@ -775,6 +781,7 @@ func GetMultiplePlay(mIds []string, dbId int64) []SlaveMovieInfo {
 			l = append(l, s)
 			continue
 		}
+		// 如果匹配失败则使用name生成的mIds获取数据
 		for _, mid := range mIds {
 			// 初始化临时变量 SlaveMovieInfo
 			if s = GetSlaveDetailInCache(c.Id, mid); s.Mid != "" {
@@ -791,13 +798,25 @@ func GetMultiplePlay(mIds []string, dbId int64) []SlaveMovieInfo {
 			//l = append(l, s)
 			//break
 		}
-		// 如果迭代完s依旧为空,则去mysql中进行匹配
+
+		// Redis中没有匹配到对应数据, 则去slave_info表中获取数据
+		//如果 dbID 不为0 则优先使用sid 和 dbId 去mysql中锁定对应数据
 		if s.Mid == "" {
-			//if err := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("sid = ? AND (mid IN (?) OR db_id = ?)", c.Id, mIds, dbId).First(&s).Error; err != nil {
-			//mq := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("sid = ? AND mid IN (?)", c.Id, dbId).Limit(1)
-			//dq := db.Mdb.Model(&SlaveMovieInfo{}).Select("sid, play_list").Where("sid = ? AND db_id = ?", c.Id, dbId).Limit(1)
-			if err := db.Mdb.Raw("(SELECT sid, play_list FROM `slave_infos` WHERE sid = ? AND mid IN (?)) UNION ALL (SELECT sid, play_list FROM `slave_infos` WHERE sid = ? AND db_id = ? ORDER BY `slave_infos`.`id` LIMIT 1) LIMIT 1", c.Id, mIds, c.Id, dbId).First(&s).Error; err != nil {
-				log.Println("GetMultiplePlay Failed: ", err)
+			//if err := db.Mdb.Select("sid, play_list").Where("sid = ? AND db_id = ?", c.Id, dbId).Last(&s).Error; err != nil {
+			//	log.Println("GetMultiplePlay Failed: ", err)
+			//} else {
+			//	continue
+			//}
+			if err := db.Mdb.Select("sid, play_list").Where("sid = ? AND db_id = ?", c.Id, dbId).Last(&s).Error; err == nil {
+				l = append(l, s)
+				continue
+			}
+		}
+		// 如果db_id依旧获取失败, 则使用mIds进行最后的获取
+		if s.Mid == "" {
+			//if err := db.Mdb.Raw("(SELECT sid, play_list FROM `slave_infos` WHERE sid = ? AND mid IN (?)) UNION ALL (SELECT sid, play_list FROM `slave_infos` WHERE sid = ? AND db_id = ? ORDER BY `slave_infos`.`id` LIMIT 1) LIMIT 1", c.Id, mIds, c.Id, dbId).First(&s).Error; err != nil {
+			if err := db.Mdb.Select("sid, play_list").Where("sid = ? AND mid IN (?)", c.Id, mIds).Last(&s).Error; err != nil {
+				//log.Println("GetMultiplePlay Failed: ", err)
 				continue
 			}
 			l = append(l, s)

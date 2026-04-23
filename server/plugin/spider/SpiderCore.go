@@ -100,7 +100,6 @@ func (jc *JsonCollect) GetFilmDetail(r util.RequestInfo) (list []system.MovieDet
 	if err = json.Unmarshal(r.Resp, &detailPage); err != nil {
 		return
 	}
-
 	// 将影视原始详情信息保存到redis中
 	// 获取主站点uri
 	//mc := system.GetCollectSourceListByGrade(system.MasterCollect)[0]
